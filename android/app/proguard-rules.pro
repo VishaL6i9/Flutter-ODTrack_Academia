@@ -23,6 +23,10 @@
 # Keep model classes
 -keep class com.academicaffairs.odtrack.odtrack_academia.models.** { *; }
 
+# Play Store / Play Core rules
+-dontwarn com.google.android.play.core.**
+-keep class com.google.android.play.core.** { *; }
+
 # General Android rules
 -dontwarn okio.**
 -dontwarn retrofit2.**
