@@ -118,7 +118,7 @@ flutter build ios --release
 ## Development Milestones
 
 - [x] M1: Project setup and basic structure
-- [ ] M2: Login + dashboard skeleton
+- [x] M2: Login + dashboard skeleton
 - [ ] M3: OD full flow integrated with backend
 - [ ] M4: Staff screens + timetable
 - [ ] M5: Security audit & penetration test
