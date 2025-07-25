@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:odtrack_academia/core/constants/app_constants.dart';
+import 'package:odtrack_academia/providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -13,14 +16,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   late TabController _tabController;
   final _studentFormKey = GlobalKey<FormState>();
   final _staffFormKey = GlobalKey<FormState>();
-  
-  // Student form controllers
+
+  // Student login controllers
   final _registerNumberController = TextEditingController();
-  final _dobController = TextEditingController();
-  
-  // Staff form controllers
+  DateTime? _selectedDate;
+
+  // Staff login controllers
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -32,7 +37,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   void dispose() {
     _tabController.dispose();
     _registerNumberController.dispose();
-    _dobController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -40,51 +44,40 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (next.isAuthenticated) {
+        context.go(AppConstants.dashboardRoute);
+      }
+      if (next.error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.error!),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    });
+
+    final authState = ref.watch(authProvider);
+
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
           child: Column(
             children: [
               const SizedBox(height: 40),
-              // App Logo and Title
-              const Icon(
-                Icons.school,
-                size: 80,
-                color: Colors.blue,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'ODTrack Academia™',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'OD Request Management System',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[600],
-                ),
-              ),
+              _buildHeader(),
               const SizedBox(height: 40),
-              
-              // Tab Bar
-              TabBar(
-                controller: _tabController,
-                tabs: const [
-                  Tab(text: 'Student'),
-                  Tab(text: 'Staff'),
-                ],
-              ),
-              
-              // Tab Views
-              Expanded(
+              _buildTabBar(),
+              const SizedBox(height: 24),
+              SizedBox(
+                height: 400,
                 child: TabBarView(
                   controller: _tabController,
                   children: [
-                    _buildStudentLogin(),
-                    _buildStaffLogin(),
+                    _buildStudentLogin(authState.isLoading),
+                    _buildStaffLogin(authState.isLoading),
                   ],
                 ),
               ),
@@ -95,17 +88,81 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     );
   }
 
-  Widget _buildStudentLogin() {
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Icon(
+            Icons.school,
+            size: 40,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          AppConstants.appName,
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'OD Request Management System',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Colors.grey[600],
+              ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTabBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicator: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        labelColor: Colors.white,
+        unselectedLabelColor: Colors.grey[600],
+        tabs: const [
+          Tab(
+            icon: Icon(Icons.person),
+            text: 'Student',
+          ),
+          Tab(
+            icon: Icon(Icons.work),
+            text: 'Staff',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStudentLogin(bool isLoading) {
     return Form(
       key: _studentFormKey,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           TextFormField(
             controller: _registerNumberController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Register Number',
-              prefixIcon: Icon(Icons.person),
+              prefixIcon: const Icon(Icons.badge),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -115,29 +172,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             },
           ),
           const SizedBox(height: 16),
-          TextFormField(
-            controller: _dobController,
-            decoration: const InputDecoration(
-              labelText: 'Date of Birth (DDMMYYYY)',
-              prefixIcon: Icon(Icons.calendar_today),
+          InkWell(
+            onTap: () => _selectDate(context),
+            child: InputDecorator(
+              decoration: InputDecoration(
+                labelText: 'Date of Birth',
+                prefixIcon: const Icon(Icons.calendar_today),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                _selectedDate != null
+                    ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
+                    : 'Select your date of birth',
+                style: TextStyle(
+                  color: _selectedDate != null ? null : Colors.grey[600],
+                ),
+              ),
             ),
-            keyboardType: TextInputType.number,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your date of birth';
-              }
-              if (value.length != 8) {
-                return 'Please enter date in DDMMYYYY format';
-              }
-              return null;
-            },
           ),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _handleStudentLogin,
-              child: const Text('Login'),
+              onPressed: isLoading ? null : _handleStudentLogin,
+              child: isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Login'),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Demo: Use any register number with any date',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 12,
             ),
           ),
         ],
@@ -145,17 +219,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     );
   }
 
-  Widget _buildStaffLogin() {
+  Widget _buildStaffLogin(bool isLoading) {
     return Form(
       key: _staffFormKey,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           TextFormField(
             controller: _emailController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Email',
-              prefixIcon: Icon(Icons.email),
+              prefixIcon: const Icon(Icons.email),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             keyboardType: TextInputType.emailAddress,
             validator: (value) {
@@ -171,11 +247,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           const SizedBox(height: 16),
           TextFormField(
             controller: _passwordController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Password',
-              prefixIcon: Icon(Icons.lock),
+              prefixIcon: const Icon(Icons.lock),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            obscureText: true,
+            obscureText: _obscurePassword,
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your password';
@@ -187,8 +276,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _handleStaffLogin,
-              child: const Text('Login'),
+              onPressed: isLoading ? null : _handleStaffLogin,
+              child: isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Login'),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Demo: Use any email and password',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 12,
             ),
           ),
         ],
@@ -196,21 +299,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     );
   }
 
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().subtract(const Duration(days: 365 * 20)),
+      firstDate: DateTime(1950),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
   void _handleStudentLogin() {
-    if (_studentFormKey.currentState!.validate()) {
-      // TODO: Implement student login logic
+    if (_studentFormKey.currentState!.validate() && _selectedDate != null) {
+      ref.read(authProvider.notifier).loginStudent(
+            _registerNumberController.text,
+            _selectedDate!,
+          );
+    } else if (_selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Student login not implemented yet')),
+        const SnackBar(
+          content: Text('Please select your date of birth'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
 
   void _handleStaffLogin() {
     if (_staffFormKey.currentState!.validate()) {
-      // TODO: Implement staff login logic
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Staff login not implemented yet')),
-      );
+      ref.read(authProvider.notifier).loginStaff(
+            _emailController.text,
+            _passwordController.text,
+          );
     }
   }
 }
