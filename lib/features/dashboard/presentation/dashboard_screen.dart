@@ -4,13 +4,23 @@ import 'package:go_router/go_router.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:odtrack_academia/core/constants/app_constants.dart';
 import 'package:odtrack_academia/providers/auth_provider.dart';
+
 import 'package:odtrack_academia/providers/od_request_provider.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  
+
+  
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final user = authState.user!;
 
@@ -81,6 +91,7 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ]),
           const SizedBox(height: 24),
+
           _buildQuickActions(context, [
             _ActionCard(
               title: 'New OD Request',
@@ -90,11 +101,13 @@ class DashboardScreen extends ConsumerWidget {
               onTap: () => context.push(AppConstants.newOdRoute),
             ),
             _ActionCard(
-              title: 'View Timetable',
-              subtitle: 'Check your class schedule',
+              title: 'View Selected Timetable',
+              subtitle: 'Check the schedule for selected year/section',
               icon: MdiIcons.timetable,
               color: Colors.purple,
-              onTap: () => context.push(AppConstants.timetableRoute),
+              onTap: () {
+                context.push(AppConstants.timetableRoute);
+              },
             ),
             _ActionCard(
               title: 'Staff Directory',
@@ -142,6 +155,7 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ]),
           const SizedBox(height: 24),
+
           _buildQuickActions(context, [
             _ActionCard(
               title: 'OD Inbox',
@@ -151,11 +165,13 @@ class DashboardScreen extends ConsumerWidget {
               onTap: () => context.push(AppConstants.staffInboxRoute),
             ),
             _ActionCard(
-              title: 'My Schedule',
-              subtitle: 'View your timetable',
+              title: 'View Selected Timetable',
+              subtitle: 'Check the schedule for selected year/section',
               icon: MdiIcons.timetable,
               color: Colors.purple,
-              onTap: () => context.push(AppConstants.timetableRoute),
+              onTap: () {
+                context.push(AppConstants.timetableRoute);
+              },
             ),
             _ActionCard(
               title: 'Staff Directory',
