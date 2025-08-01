@@ -22,14 +22,11 @@ class _NewOdScreenState extends ConsumerState<NewOdScreen> {
   bool _isSubmitting = false;
 
   final List<String> _periods = [
-    '1st Period (9:00 - 9:50)',
-    '2nd Period (9:50 - 10:40)',
-    '3rd Period (11:00 - 11:50)',
-    '4th Period (11:50 - 12:40)',
-    '5th Period (1:30 - 2:20)',
-    '6th Period (2:20 - 3:10)',
-    '7th Period (3:30 - 4:20)',
-    '8th Period (4:20 - 5:10)',
+    '1st Period (9:00 - 10:00)',
+    '2nd Period (10:00 - 11:00)',
+    '3rd Period (11:15 - 12:15 PM)',
+    '4th Period (12:15 PM - 1:15 PM)',
+    '6th Period (2:15 PM - 3:15 PM)',
   ];
 
   @override
