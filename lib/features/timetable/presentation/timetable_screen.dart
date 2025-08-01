@@ -1,24 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:odtrack_academia/features/timetable/presentation/timetable_data.dart';
 
-class TimetableScreen extends ConsumerWidget {
+class TimetableScreen extends ConsumerStatefulWidget {
   const TimetableScreen({super.key});
 
-  static const List<String> _days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  static const List<String> _periods = [
-    '9:00-9:50',
-    '9:50-10:40',
-    '11:00-11:50',
-    '11:50-12:40',
-    '1:30-2:20',
-    '2:20-3:10',
-    '3:30-4:20',
-    '4:20-5:10',
-  ];
+  @override
+  ConsumerState<TimetableScreen> createState() => _TimetableScreenState();
+}
+
+class _TimetableScreenState extends ConsumerState<TimetableScreen> {
+  late String _selectedYear;
+  late String _selectedSection;
+  late TextEditingController _searchController;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    _selectedYear = TimetableData.allTimetables[0].year;
+    _selectedSection = TimetableData.allTimetables[0].section;
+    _searchController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Timetable'),
@@ -27,149 +39,211 @@ class TimetableScreen extends ConsumerWidget {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(),
-            const SizedBox(height: 16),
-            _buildTimetableGrid(context),
+            _buildFilterSection(),
+            const SizedBox(height: 24),
+            _buildTimetable(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildFilterSection() {
     return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(MdiIcons.timetable, size: 32, color: Colors.blue),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Class Schedule',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    '3rd Year Computer Science - Section A',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTimetableGrid(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header row with periods
-            Row(
+            const Text(
+              'Filter Options',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
               children: [
-                const SizedBox(width: 80, child: Text('')), // Empty cell for day column
-                ..._periods.map((period) => Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    child: Text(
-                      period,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                )),
+                _buildDropdown(
+                  label: 'Year',
+                  value: _selectedYear,
+                  items: TimetableData.allTimetables.map((t) => t.year).toSet().toList(),
+                  onChanged: (newValue) {
+                    setState(() {
+                      _selectedYear = newValue!;
+                      _selectedSection = TimetableData.allTimetables
+                          .firstWhere((t) => t.year == _selectedYear)
+                          .section;
+                    });
+                  },
+                ),
+                _buildDropdown(
+                  label: 'Section',
+                  value: _selectedSection,
+                  items: TimetableData.allTimetables
+                      .where((t) => t.year == _selectedYear)
+                      .map((t) => t.section)
+                      .toList(),
+                  onChanged: (newValue) {
+                    setState(() {
+                      _selectedSection = newValue!;
+                    });
+                  },
+                ),
               ],
             ),
-            const Divider(),
-            // Timetable rows
-            ..._days.map((day) => _buildDayRow(day)),
+            const SizedBox(height: 16),
+            _buildSearchField(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDayRow(String day) {
-    final subjects = _getDemoSubjects(day);
-    
-    return Column(
-      children: [
-        Row(
+  Widget _buildDropdown({
+    required String label,
+    required String value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          items: items
+              .map((item) => DropdownMenuItem(
+                    value: item,
+                    child: Text(item),
+                  ))
+              .toList(),
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchField() {
+    return TextFormField(
+      controller: _searchController,
+      decoration: InputDecoration(
+        labelText: 'Search Subject',
+        prefixIcon: const Icon(Icons.search),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
+      onChanged: (value) {
+        setState(() {}); // Rebuild to apply filter
+      },
+    );
+  }
+
+  Widget _buildTimetable() {
+    final selectedTimetable = TimetableData.allTimetables.firstWhere(
+      (t) => t.year == _selectedYear && t.section == _selectedSection,
+    );
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: 80,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Text(
-                  day.substring(0, 3),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
+            _buildHeader(selectedTimetable),
+            const SizedBox(height: 16),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                columns: [
+                  const DataColumn(label: Text('Day')),
+                  ...TimetableData.periods.map((period) => DataColumn(label: Text(period))),
+                ],
+                rows: TimetableData.days.map((day) => _buildDayRow(day)).toList(),
               ),
             ),
-            ...subjects.map((subject) => Expanded(
-              child: Container(
-                margin: const EdgeInsets.all(2),
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: _getSubjectColor(subject).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(
-                    color: _getSubjectColor(subject).withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Text(
-                  subject,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: _getSubjectColor(subject),
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            )),
           ],
         ),
-        if (day != _days.last) const Divider(height: 1),
+      ),
+    );
+  }
+
+  DataRow _buildDayRow(String day) {
+    final subjects = _getFilteredSubjects(day);
+    return DataRow(
+      cells: [
+        DataCell(Text(day, style: const TextStyle(fontWeight: FontWeight.bold))),
+        ...subjects.map((subject) => DataCell(_buildSubjectCell(subject))),
       ],
     );
   }
 
-  List<String> _getDemoSubjects(String day) {
-    final Map<String, List<String>> schedule = {
-      'Monday': ['DSA', 'DBMS', 'OS', 'CN', 'LUNCH', 'SE', 'Lab', 'Lab'],
-      'Tuesday': ['DBMS', 'DSA', 'CN', 'OS', 'LUNCH', 'SE', 'Free', 'Free'],
-      'Wednesday': ['OS', 'CN', 'DSA', 'DBMS', 'LUNCH', 'Lab', 'Lab', 'Lab'],
-      'Thursday': ['CN', 'OS', 'SE', 'DSA', 'LUNCH', 'DBMS', 'Free', 'Free'],
-      'Friday': ['SE', 'DBMS', 'OS', 'CN', 'LUNCH', 'DSA', 'Free', 'Free'],
-    };
-    
-    return schedule[day] ?? List.filled(8, 'Free');
+  Widget _buildSubjectCell(String subject) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: TimetableData.getSubjectColor(subject).withAlpha(25),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        subject,
+        style: TextStyle(
+          color: TimetableData.getSubjectColor(subject),
+          fontWeight: FontWeight.w500,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
   }
 
-  Color _getSubjectColor(String subject) {
-    final Map<String, Color> colors = {
-      'DSA': Colors.blue,
-      'DBMS': Colors.green,
-      'OS': Colors.orange,
-      'CN': Colors.purple,
-      'SE': Colors.teal,
-      'Lab': Colors.red,
-      'LUNCH': Colors.grey,
-      'Free': Colors.grey.shade300,
-    };
-    
-    return colors[subject] ?? Colors.grey;
+  Widget _buildHeader(Timetable selectedTimetable) {
+    return Row(
+      children: [
+        Icon(MdiIcons.timetable, size: 32, color: Theme.of(context).primaryColor),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${selectedTimetable.year} - ${selectedTimetable.section}',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const Text(
+                'Class Schedule',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<String> _getFilteredSubjects(String day) {
+    final selectedTimetable = TimetableData.allTimetables.firstWhere(
+      (t) => t.year == _selectedYear && t.section == _selectedSection,
+    );
+    final allSubjects = selectedTimetable.schedule[day] ?? List.filled(5, 'Free');
+    if (_searchController.text.isEmpty) {
+      return allSubjects;
+    } else {
+      return allSubjects
+          .map((subject) =>
+              subject.toLowerCase().contains(_searchController.text.toLowerCase()) ? subject : 'Free')
+          .toList();
+    }
   }
 }
