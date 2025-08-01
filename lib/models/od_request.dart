@@ -45,6 +45,9 @@ class ODRequest {
   @HiveField(12)
   final String? rejectionReason;
 
+  @HiveField(13)
+  final String? staffId;
+
   const ODRequest({
     required this.id,
     required this.studentId,
@@ -59,6 +62,7 @@ class ODRequest {
     this.approvedAt,
     this.approvedBy,
     this.rejectionReason,
+    this.staffId,
   });
 
   factory ODRequest.fromJson(Map<String, dynamic> json) => _$ODRequestFromJson(json);
