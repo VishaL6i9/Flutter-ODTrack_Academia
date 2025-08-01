@@ -66,4 +66,5 @@ android {
 
 flutter {
     source = "../.."
+    buildDir = File("C:/GradleBuilds/ODTrack/app/flutter")
 }
