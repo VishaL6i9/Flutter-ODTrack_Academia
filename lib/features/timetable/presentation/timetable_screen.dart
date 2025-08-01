@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-import 'package:odtrack_academia/features/timetable/presentation/timetable_data.dart';
+import 'package:odtrack_academia/features/staff_directory/data/staff_data.dart';
+import 'package:odtrack_academia/features/timetable/data/timetable_data.dart';
+import 'package:odtrack_academia/features/timetable/presentation/staff_timetable_screen.dart';
+import 'package:odtrack_academia/models/period_slot.dart';
 
 class TimetableScreen extends ConsumerStatefulWidget {
   const TimetableScreen({super.key});
@@ -18,7 +21,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize with the first timetable's data
     _selectedYear = TimetableData.allTimetables[0].year;
     _selectedSection = TimetableData.allTimetables[0].section;
     _searchController = TextEditingController();
@@ -35,7 +37,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Timetable'),
+        title: const Text('Class Timetable'),
         backgroundColor: theme.colorScheme.inversePrimary,
       ),
       body: ListView(
@@ -73,7 +75,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                 if (newValue != null) {
                   setState(() {
                     _selectedYear = newValue;
-                    // Update section to the first available for the new year
                     _selectedSection = TimetableData.allTimetables
                         .firstWhere((t) => t.year == _selectedYear)
                         .section;
@@ -162,21 +163,28 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
             columns: [
               const DataColumn(label: Text('Day', style: TextStyle(fontWeight: FontWeight.bold))),
               ...TimetableData.periods.map((period) => DataColumn(
-                label: Text(
-                  period.replaceFirst('-', '\n'),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                ),
-              )),
+                    label: Text(
+                      period.replaceFirst('-', '\n'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                  )),
             ],
             rows: TimetableData.days.map((day) {
-              final subjects = selectedTimetable.schedule[day] ?? List.filled(8, 'Free');
+              final periodSlots = selectedTimetable.schedule[day] ?? List.filled(5, const PeriodSlot(subject: 'Free'));
               return DataRow(
                 cells: [
                   DataCell(Text(day, style: const TextStyle(fontWeight: FontWeight.bold))),
-                  ...subjects.map((subject) {
-                    final isHighlighted = searchTerm.isNotEmpty && subject.toLowerCase().contains(searchTerm);
-                    return DataCell(_buildSubjectCell(subject, isHighlighted, theme));
+                  ...periodSlots.map((slot) {
+                    final isHighlighted = searchTerm.isNotEmpty && slot.subject.toLowerCase().contains(searchTerm);
+                    return DataCell(
+                      _buildSubjectCell(slot, isHighlighted, theme),
+                      onTap: () {
+                        if (slot.staffId != null) {
+                          _showStaffInfoDialog(context, slot.staffId!);
+                        }
+                      },
+                    );
                   }),
                 ],
               );
@@ -187,7 +195,8 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
     );
   }
 
-  Widget _buildSubjectCell(String subject, bool isHighlighted, ThemeData theme) {
+  Widget _buildSubjectCell(PeriodSlot slot, bool isHighlighted, ThemeData theme) {
+    final subject = slot.subject;
     if (subject == 'Free' || subject == 'LUNCH') {
       return Center(
         child: Text(
@@ -206,8 +215,8 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
         color: color.withAlpha(isHighlighted ? 80 : 25),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isHighlighted ? color : Colors.transparent,
-          width: 2,
+          color: isHighlighted ? color : (slot.staffId != null ? color.withAlpha(100) : Colors.transparent),
+          width: slot.staffId != null ? 1.5 : 2,
         ),
         boxShadow: isHighlighted
             ? [BoxShadow(color: color.withAlpha(77), blurRadius: 8, spreadRadius: 1)]
@@ -224,6 +233,46 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showStaffInfoDialog(BuildContext context, String staffId) {
+    final staffMember = StaffData.allStaff.firstWhere((s) => s.id == staffId);
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(staffMember.name),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(staffMember.designation ?? 'Staff Member'),
+              const SizedBox(height: 8),
+              Text(staffMember.department),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.push<void>(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (BuildContext context) => StaffTimetableScreen(staffId: staffId),
+                  ),
+                );
+              },
+              child: const Text('View Full Timetable'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
