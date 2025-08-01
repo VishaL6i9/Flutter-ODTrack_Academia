@@ -26,7 +26,7 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
   ];
 
   final List<StaffMember> _demoStaff = [
-    StaffMember(
+    const StaffMember(
       id: '1',
       name: 'Dr. Rajesh Kumar',
       email: 'rajesh.kumar@college.edu',
@@ -36,7 +36,7 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
       phone: '+91 9876543210',
       designation: 'Professor',
     ),
-    StaffMember(
+    const StaffMember(
       id: '2',
       name: 'Prof. Priya Sharma',
       email: 'priya.sharma@college.edu',
@@ -46,7 +46,7 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
       phone: '+91 9876543211',
       designation: 'Associate Professor',
     ),
-    StaffMember(
+    const StaffMember(
       id: '3',
       name: 'Dr. Amit Patel',
       email: 'amit.patel@college.edu',
@@ -56,7 +56,7 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
       phone: '+91 9876543212',
       designation: 'Assistant Professor',
     ),
-    StaffMember(
+    const StaffMember(
       id: '4',
       name: 'Prof. Sunita Reddy',
       email: 'sunita.reddy@college.edu',
@@ -66,7 +66,7 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
       phone: '+91 9876543213',
       designation: 'Professor',
     ),
-    StaffMember(
+    const StaffMember(
       id: '5',
       name: 'Dr. Vikram Singh',
       email: 'vikram.singh@college.edu',
@@ -111,7 +111,7 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
 
   Widget _buildSearchAndFilter() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
           TextField(
@@ -119,7 +119,7 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
               hintText: 'Search staff by name, subject, or department',
               prefixIcon: const Icon(Icons.search),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8.0),
               ),
             ),
             onChanged: (value) {
@@ -128,7 +128,7 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
               });
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 12.0),
           Row(
             children: [
               const Text('Department: ', style: TextStyle(fontWeight: FontWeight.w500)),
@@ -164,11 +164,11 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.search_off, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
+            Icon(Icons.search_off, size: 64.0, color: Colors.grey),
+            SizedBox(height: 16.0),
             Text(
               'No staff members found',
-              style: TextStyle(fontSize: 18, color: Colors.grey),
+              style: TextStyle(fontSize: 18.0, color: Colors.grey),
             ),
           ],
         ),
@@ -176,7 +176,7 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16.0),
       itemCount: filteredStaff.length,
       itemBuilder: (context, index) {
         final staff = filteredStaff[index];
@@ -187,16 +187,16 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
 
   Widget _buildStaffCard(StaffMember staff) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 12.0),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 CircleAvatar(
-                  radius: 24,
+                  radius: 24.0,
                   backgroundColor: Theme.of(context).colorScheme.primary,
                   child: Text(
                     staff.name.split(' ').map((n) => n[0]).take(2).join(),
@@ -206,7 +206,7 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 12.0),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,7 +214,7 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
                       Text(
                         staff.name,
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 16.0,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -222,7 +222,7 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
                         Text(
                           staff.designation!,
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 14.0,
                             color: Colors.grey[600],
                           ),
                         ),
@@ -231,7 +231,7 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 12.0),
             _buildInfoRow(MdiIcons.domain, 'Department', staff.department),
             _buildInfoRow(MdiIcons.bookOpenPageVariant, 'Subject', staff.subject),
             _buildInfoRow(MdiIcons.schoolOutline, 'Years', staff.years.join(', ')),
@@ -246,12 +246,12 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: Colors.grey[600]),
-          const SizedBox(width: 8),
+          Icon(icon, size: 16.0, color: Colors.grey[600]),
+          const SizedBox(width: 8.0),
           Text(
             '$label: ',
             style: const TextStyle(fontWeight: FontWeight.w500),
