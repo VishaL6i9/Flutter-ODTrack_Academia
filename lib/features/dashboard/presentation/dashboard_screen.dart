@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:odtrack_academia/core/constants/app_constants.dart';
 import 'package:odtrack_academia/providers/auth_provider.dart';
+import 'package:odtrack_academia/features/timetable/presentation/staff_timetable_screen.dart';
 
 import 'package:odtrack_academia/providers/od_request_provider.dart';
 
@@ -165,8 +166,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               onTap: () => context.push(AppConstants.staffInboxRoute),
             ),
             _ActionCard(
-              title: 'View Selected Timetable',
-              subtitle: 'Check the schedule for selected year/section',
+              title: 'My Timetable',
+              subtitle: 'View your weekly schedule',
+              icon: MdiIcons.calendarAccount,
+              color: Colors.green,
+              onTap: () {
+                final staffId = ref.read(authProvider).user?.id;
+                if (staffId != null) {
+                  // It's better to have a dedicated route for this
+                  // For now, we'll push the screen directly.
+                  Navigator.push<void>(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (BuildContext context) => StaffTimetableScreen(staffId: staffId),
+                    ),
+                  );
+                }
+              },
+            ),
+            _ActionCard(
+              title: 'View Class Timetable',
+              subtitle: 'Check the schedule for any class',
               icon: MdiIcons.timetable,
               color: Colors.purple,
               onTap: () {

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:odtrack_academia/features/staff_directory/data/staff_data.dart';
+import 'package:odtrack_academia/features/timetable/presentation/staff_timetable_screen.dart';
 import 'package:odtrack_academia/models/staff_member.dart';
 
 class StaffDirectoryScreen extends ConsumerStatefulWidget {
@@ -14,72 +16,14 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
   String _searchQuery = '';
   String _selectedDepartment = 'All';
 
-  final List<String> _departments = [
-    'All',
-    'Computer Science',
-    'Electronics',
-    'Mechanical',
-    'Civil',
-    'Mathematics',
-    'Physics',
-    'Chemistry',
-  ];
-
-  final List<StaffMember> _demoStaff = [
-    const StaffMember(
-      id: '1',
-      name: 'Dr. Rajesh Kumar',
-      email: 'rajesh.kumar@college.edu',
-      department: 'Computer Science',
-      subject: 'Data Structures',
-      years: ['2nd Year', '3rd Year'],
-      phone: '+91 9876543210',
-      designation: 'Professor',
-    ),
-    const StaffMember(
-      id: '2',
-      name: 'Prof. Priya Sharma',
-      email: 'priya.sharma@college.edu',
-      department: 'Computer Science',
-      subject: 'Database Management',
-      years: ['3rd Year', '4th Year'],
-      phone: '+91 9876543211',
-      designation: 'Associate Professor',
-    ),
-    const StaffMember(
-      id: '3',
-      name: 'Dr. Amit Patel',
-      email: 'amit.patel@college.edu',
-      department: 'Electronics',
-      subject: 'Digital Electronics',
-      years: ['2nd Year'],
-      phone: '+91 9876543212',
-      designation: 'Assistant Professor',
-    ),
-    const StaffMember(
-      id: '4',
-      name: 'Prof. Sunita Reddy',
-      email: 'sunita.reddy@college.edu',
-      department: 'Mathematics',
-      subject: 'Calculus',
-      years: ['1st Year', '2nd Year'],
-      phone: '+91 9876543213',
-      designation: 'Professor',
-    ),
-    const StaffMember(
-      id: '5',
-      name: 'Dr. Vikram Singh',
-      email: 'vikram.singh@college.edu',
-      department: 'Physics',
-      subject: 'Quantum Physics',
-      years: ['3rd Year', '4th Year'],
-      phone: '+91 9876543214',
-      designation: 'Associate Professor',
-    ),
-  ];
+  List<String> get _departments {
+    final departments = StaffData.allStaff.map((staff) => staff.department).toSet().toList();
+    departments.insert(0, 'All');
+    return departments;
+  }
 
   List<StaffMember> get _filteredStaff {
-    return _demoStaff.where((staff) {
+    return StaffData.allStaff.where((staff) {
       final matchesSearch = staff.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           staff.subject.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           staff.department.toLowerCase().contains(_searchQuery.toLowerCase());
@@ -188,57 +132,67 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
   Widget _buildStaffCard(StaffMember staff) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 24.0,
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  child: Text(
-                    staff.name.split(' ').map((n) => n[0]).take(2).join(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+      child: InkWell(
+        onTap: () {
+          Navigator.push<void>(
+            context,
+            MaterialPageRoute<void>(
+              builder: (BuildContext context) => StaffTimetableScreen(staffId: staff.id),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 24.0,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    child: Text(
+                      staff.name.split(' ').map((n) => n[0]).take(2).join(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12.0),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        staff.name,
-                        style: const TextStyle(
-                          fontSize: 16.0,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (staff.designation != null)
+                  const SizedBox(width: 12.0),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          staff.designation!,
-                          style: TextStyle(
-                            fontSize: 14.0,
-                            color: Colors.grey[600],
+                          staff.name,
+                          style: const TextStyle(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                    ],
+                        if (staff.designation != null)
+                          Text(
+                            staff.designation!,
+                            style: TextStyle(
+                              fontSize: 14.0,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12.0),
-            _buildInfoRow(MdiIcons.domain, 'Department', staff.department),
-            _buildInfoRow(MdiIcons.bookOpenPageVariant, 'Subject', staff.subject),
-            _buildInfoRow(MdiIcons.schoolOutline, 'Years', staff.years.join(', ')),
-            _buildInfoRow(MdiIcons.email, 'Email', staff.email),
-            if (staff.phone != null)
-              _buildInfoRow(MdiIcons.phone, 'Phone', staff.phone!),
-          ],
+                ],
+              ),
+              const SizedBox(height: 12.0),
+              _buildInfoRow(MdiIcons.domain, 'Department', staff.department),
+              _buildInfoRow(MdiIcons.bookOpenPageVariant, 'Subject', staff.subject),
+              _buildInfoRow(MdiIcons.schoolOutline, 'Years', staff.years.join(', ')),
+              _buildInfoRow(MdiIcons.email, 'Email', staff.email),
+              if (staff.phone != null)
+                _buildInfoRow(MdiIcons.phone, 'Phone', staff.phone!),
+            ],
+          ),
         ),
       ),
     );
