@@ -155,21 +155,27 @@ class _StaffTimetableScreenState extends ConsumerState<StaffTimetableScreen> {
       );
     }
 
+    // Extract subject from classInfo (format: "Year\nSection\n(Subject)")
+    final lines = classInfo.split('\n');
+    final subject = lines.length >= 3 ? lines[2].replaceAll(RegExp(r'[()]'), '') : 'Unknown';
+    final color = TimetableData.getSubjectColor(subject);
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: theme.primaryColor.withAlpha(25),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Center(
         child: Text(
           classInfo,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: theme.primaryColor,
+            color: color,
             fontWeight: FontWeight.bold,
-            fontSize: 13,
+            fontSize: 11,
           ),
         ),
       ),
