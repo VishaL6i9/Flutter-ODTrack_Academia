@@ -56,7 +56,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // Demo login - simulate API call
       await Future<void>.delayed(const Duration(seconds: 1));
 
-      // Demo student data
+      // Demo student data - assign section based on register number
+      final sectionSuffix = (registerNumber.hashCode % 2 == 0) ? 'A' : 'B';
       final user = User(
         id: 'student_$registerNumber',
         name: 'Demo Student',
@@ -64,6 +65,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         role: AppConstants.studentRole,
         registerNumber: registerNumber,
         year: '3rd Year',
+        section: 'Computer Science - Section $sectionSuffix',
         department: 'Computer Science',
         phone: '+91 9876543210',
       );
@@ -95,6 +97,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         email: email,
         role: AppConstants.staffRole,
         department: 'Computer Science',
+        section: null, // Staff don't have sections
         phone: '+91 9876543210',
       );
 

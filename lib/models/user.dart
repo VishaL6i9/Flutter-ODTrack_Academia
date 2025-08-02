@@ -28,6 +28,9 @@ class User {
   final String? year; // For students
   
   @HiveField(7)
+  final String? section; // For students (e.g., "Computer Science - Section A")
+  
+  @HiveField(8)
   final String? phone;
 
   const User({
@@ -38,6 +41,7 @@ class User {
     this.registerNumber,
     this.department,
     this.year,
+    this.section,
     this.phone,
   });
 
