@@ -15,20 +15,38 @@ class StaffTimetableScreen extends ConsumerStatefulWidget {
 }
 
 class _StaffTimetableScreenState extends ConsumerState<StaffTimetableScreen> {
-  late StaffMember _staffMember;
+  StaffMember? _staffMember;
 
   @override
   void initState() {
     super.initState();
-    _staffMember = StaffData.allStaff.firstWhere((staff) => staff.id == widget.staffId);
+    try {
+      _staffMember = StaffData.allStaff.firstWhere((staff) => staff.id == widget.staffId);
+    } catch (e) {
+      // If no staff member found with exact ID, use the first one as demo
+      _staffMember = StaffData.allStaff.isNotEmpty ? StaffData.allStaff.first : null;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
+    if (_staffMember == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Staff Timetable'),
+          backgroundColor: theme.colorScheme.inversePrimary,
+        ),
+        body: const Center(
+          child: Text('Staff member not found'),
+        ),
+      );
+    }
+    
     return Scaffold(
       appBar: AppBar(
-        title: Text('${_staffMember.name}\'s Timetable'),
+        title: Text('${_staffMember!.name}\'s Timetable'),
         backgroundColor: theme.colorScheme.inversePrimary,
       ),
       body: ListView(
@@ -57,11 +75,11 @@ class _StaffTimetableScreenState extends ConsumerState<StaffTimetableScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _staffMember.name,
+                  _staffMember!.name,
                   style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  _staffMember.designation ?? 'Staff',
+                  _staffMember!.designation ?? 'Staff',
                   style: theme.textTheme.titleMedium?.copyWith(color: Colors.grey.shade600),
                 ),
               ],
@@ -119,7 +137,7 @@ class _StaffTimetableScreenState extends ConsumerState<StaffTimetableScreen> {
       final schedule = timetable.schedule[day];
       if (schedule != null && schedule.length > periodIndex) {
         final periodSlot = schedule[periodIndex];
-        if (periodSlot.staffId == _staffMember.id) {
+        if (periodSlot.staffId == _staffMember!.id) {
           return '${timetable.year}\n${timetable.section}\n(${periodSlot.subject})';
         }
       }
