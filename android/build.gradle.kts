@@ -29,11 +29,11 @@ subprojects {
     }
 }
 
-val customBuildDir = layout.projectDirectory.dir("..").dir("build-output")
+val customBuildDir = file("C:/GradleBuilds/ODTrack")
 rootProject.layout.buildDirectory.set(customBuildDir)
 
 subprojects {
-    project.layout.buildDirectory.set(customBuildDir.dir(project.name))
+    project.layout.buildDirectory.set(customBuildDir.resolve(project.name))
 }
 
 subprojects {
