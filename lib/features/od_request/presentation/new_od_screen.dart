@@ -46,28 +46,174 @@ class _NewOdScreenState extends ConsumerState<NewOdScreen> {
       return;
     }
 
-    final day = TimetableData.days[_selectedDate!.weekday - 1];
+    // Check if the selected date is a weekday (Monday-Friday)
+    final weekday = _selectedDate!.weekday;
+    if (weekday > 5) { // Saturday (6) or Sunday (7)
+      setState(() => _designatedStaff = null);
+      _showWeekendToast();
+      return;
+    }
+
+    final day = TimetableData.days[weekday - 1];
     final user = ref.read(authProvider).user!;
-    // This is a placeholder for getting the student's timetable.
-    // In a real app, you'd look up the student's specific section.
+    
+    // Find the student's exact timetable by matching both year and section
+    // All students in the same year and section will have the same timetable
     final studentTimetable = TimetableData.allTimetables.firstWhere(
-      (t) => t.year == user.year,
-      orElse: () => TimetableData.allTimetables.first,
+      (t) => t.year == user.year && t.section == user.section,
+      orElse: () => TimetableData.allTimetables.firstWhere(
+        (t) => t.year == user.year,
+        orElse: () => TimetableData.allTimetables.first,
+      ),
     );
 
     final schedule = studentTimetable.schedule[day];
     if (schedule != null && schedule.length >= _selectedPeriod!) {
       final slot = schedule[_selectedPeriod! - 1];
       if (slot.staffId != null) {
-        setState(() {
-          _designatedStaff = StaffData.allStaff.firstWhere((s) => s.id == slot.staffId);
-        });
+        try {
+          final staff = StaffData.allStaff.firstWhere((s) => s.id == slot.staffId);
+          setState(() {
+            _designatedStaff = staff;
+          });
+          
+          // Show toast with staff information
+          _showStaffToast(staff, slot.subject);
+        } catch (e) {
+          setState(() => _designatedStaff = null);
+          _showNoStaffToast(slot.subject);
+        }
       } else {
         setState(() => _designatedStaff = null);
+        _showNoStaffToast(slot.subject);
       }
     } else {
       setState(() => _designatedStaff = null);
+      _showNoStaffToast('Free');
     }
+  }
+
+  void _showStaffToast(StaffMember staff, String subject) {
+    final day = TimetableData.days[_selectedDate!.weekday - 1];
+    final periodTime = TimetableData.periods[_selectedPeriod! - 1];
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  MdiIcons.accountTie,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    staff.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '$day, $periodTime - $subject',
+              style: const TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  void _showNoStaffToast(String subject) {
+    final day = TimetableData.days[_selectedDate!.weekday - 1];
+    final periodTime = TimetableData.periods[_selectedPeriod! - 1];
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  subject == 'Free' ? MdiIcons.clockOutline : MdiIcons.accountOff,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    subject == 'Free' ? 'Free Period' : 'No Staff Assigned',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '$day, $periodTime${subject != 'Free' ? ' - $subject' : ''}',
+              style: const TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+        backgroundColor: subject == 'Free' ? Colors.blue : Colors.orange,
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  void _showWeekendToast() {
+    final weekdayNames = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    final dayName = weekdayNames[_selectedDate!.weekday];
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  MdiIcons.calendarRemove,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Weekend Selected',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '$dayName - No classes scheduled',
+              style: const TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
   }
 
   @override
@@ -208,7 +354,9 @@ class _NewOdScreenState extends ConsumerState<NewOdScreen> {
                     Navigator.push<void>(
                       context,
                       MaterialPageRoute<void>(
-                        builder: (BuildContext context) => const StaffDirectoryScreen(), // Simplified navigation
+                        builder: (BuildContext context) => StaffDirectoryScreen(
+                          preFilterStaffId: _designatedStaff!.id,
+                        ),
                       ),
                     );
                   },
@@ -286,9 +434,13 @@ class _NewOdScreenState extends ConsumerState<NewOdScreen> {
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now().add(const Duration(days: 1)),
+      initialDate: _getNextWeekday(DateTime.now()),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 30)),
+      selectableDayPredicate: (DateTime date) {
+        // Only allow weekdays (Monday = 1, Friday = 5)
+        return date.weekday >= 1 && date.weekday <= 5;
+      },
     );
     if (picked != null && picked != _selectedDate) {
       setState(() {
@@ -296,6 +448,15 @@ class _NewOdScreenState extends ConsumerState<NewOdScreen> {
         _updateDesignatedStaff();
       });
     }
+  }
+
+  DateTime _getNextWeekday(DateTime date) {
+    DateTime nextDay = date.add(const Duration(days: 1));
+    // If it's a weekend, find the next Monday
+    while (nextDay.weekday > 5) {
+      nextDay = nextDay.add(const Duration(days: 1));
+    }
+    return nextDay;
   }
 
   Future<void> _submitRequest() async {

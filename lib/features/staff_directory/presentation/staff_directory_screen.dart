@@ -6,7 +6,9 @@ import 'package:odtrack_academia/features/timetable/presentation/staff_timetable
 import 'package:odtrack_academia/models/staff_member.dart';
 
 class StaffDirectoryScreen extends ConsumerStatefulWidget {
-  const StaffDirectoryScreen({super.key});
+  final String? preFilterStaffId; // Optional parameter to pre-filter to specific staff
+  
+  const StaffDirectoryScreen({super.key, this.preFilterStaffId});
 
   @override
   ConsumerState<StaffDirectoryScreen> createState() => _StaffDirectoryScreenState();
@@ -15,6 +17,8 @@ class StaffDirectoryScreen extends ConsumerStatefulWidget {
 class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
   String _searchQuery = '';
   String _selectedDepartment = 'All';
+  bool _isPreFiltered = false;
+  late TextEditingController _searchController;
 
   List<String> get _departments {
     final departments = StaffData.allStaff.map((staff) => staff.department).toSet().toList();
@@ -22,7 +26,39 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
     return departments;
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+    
+    // If pre-filtering to a specific staff member, set up the search
+    if (widget.preFilterStaffId != null) {
+      try {
+        final staff = StaffData.allStaff.firstWhere(
+          (s) => s.id == widget.preFilterStaffId,
+        );
+        _searchQuery = staff.name;
+        _searchController.text = staff.name;
+        _selectedDepartment = staff.department;
+        _isPreFiltered = true;
+      } catch (e) {
+        _isPreFiltered = false;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   List<StaffMember> get _filteredStaff {
+    // If pre-filtered, show only the specific staff member initially
+    if (_isPreFiltered && widget.preFilterStaffId != null) {
+      return StaffData.allStaff.where((staff) => staff.id == widget.preFilterStaffId).toList();
+    }
+    
     return StaffData.allStaff.where((staff) {
       final matchesSearch = staff.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           staff.subject.toLowerCase().contains(_searchQuery.toLowerCase()) ||
@@ -41,6 +77,22 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
       appBar: AppBar(
         title: const Text('Staff Directory'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: _isPreFiltered ? [
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _isPreFiltered = false;
+                _searchQuery = '';
+                _searchController.clear();
+                _selectedDepartment = 'All';
+              });
+            },
+            child: const Text(
+              'View All',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ] : null,
       ),
       body: Column(
         children: [
@@ -59,6 +111,7 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
       child: Column(
         children: [
           TextField(
+            controller: _searchController,
             decoration: InputDecoration(
               hintText: 'Search staff by name, subject, or department',
               prefixIcon: const Icon(Icons.search),
@@ -69,6 +122,10 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
             onChanged: (value) {
               setState(() {
                 _searchQuery = value;
+                // If user modifies search, disable pre-filtering
+                if (widget.preFilterStaffId != null && _isPreFiltered) {
+                  _isPreFiltered = false;
+                }
               });
             },
           ),
@@ -89,6 +146,10 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
                   onChanged: (value) {
                     setState(() {
                       _selectedDepartment = value!;
+                      // If user modifies department filter, disable pre-filtering
+                      if (widget.preFilterStaffId != null && _isPreFiltered) {
+                        _isPreFiltered = false;
+                      }
                     });
                   },
                 ),
