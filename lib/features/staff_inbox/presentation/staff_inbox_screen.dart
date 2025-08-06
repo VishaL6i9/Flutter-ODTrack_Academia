@@ -301,21 +301,138 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
   }
 
   void _handleApprove(ODRequest request) {
-    // Demo implementation - in real app, this would call API
+    _showApprovalDialog(request);
+  }
+
+  void _handleReject(ODRequest request) {
+    _showRejectionDialog(request);
+  }
+
+  void _showApprovalDialog(ODRequest request) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Approve OD Request'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Student: ${request.studentName}'),
+              Text('Register: ${request.registerNumber}'),
+              Text('Date: ${request.date.day}/${request.date.month}/${request.date.year}'),
+              Text('Periods: ${request.periods.map((p) => 'P$p').join(', ')}'),
+              const SizedBox(height: 16),
+              const Text('Are you sure you want to approve this request?'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _processApproval(request);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Approve'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showRejectionDialog(ODRequest request) {
+    final reasonController = TextEditingController();
+    
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Reject OD Request'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Student: ${request.studentName}'),
+              Text('Register: ${request.registerNumber}'),
+              const SizedBox(height: 16),
+              const Text('Reason for rejection:'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: reasonController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  hintText: 'Enter reason for rejection...',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (reasonController.text.trim().isNotEmpty) {
+                  Navigator.of(context).pop();
+                  _processRejection(request, reasonController.text.trim());
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Reject'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _processApproval(ODRequest request) {
+    // Update request status
+    ref.read(odRequestProvider.notifier).updateRequestStatus(request.id, 'approved');
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Request by ${request.studentName} approved'),
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white),
+            const SizedBox(width: 8),
+            Text('Request by ${request.studentName} approved'),
+          ],
+        ),
         backgroundColor: Colors.green,
+        duration: const Duration(seconds: 3),
       ),
     );
   }
 
-  void _handleReject(ODRequest request) {
-    // Demo implementation - in real app, this would show rejection reason dialog
+  void _processRejection(ODRequest request, String reason) {
+    // Update request status with rejection reason
+    ref.read(odRequestProvider.notifier).updateRequestStatus(request.id, 'rejected', reason: reason);
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Request by ${request.studentName} rejected'),
+        content: Row(
+          children: [
+            const Icon(Icons.cancel, color: Colors.white),
+            const SizedBox(width: 8),
+            Text('Request by ${request.studentName} rejected'),
+          ],
+        ),
         backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
       ),
     );
   }

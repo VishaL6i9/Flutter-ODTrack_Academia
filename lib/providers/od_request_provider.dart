@@ -50,6 +50,32 @@ class ODRequestNotifier extends StateNotifier<List<ODRequest>> {
     state = [request, ...state];
   }
 
+  Future<void> updateRequestStatus(String requestId, String newStatus, {String? reason}) async {
+    // Simulate API call
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    
+    state = state.map((request) {
+      if (request.id == requestId) {
+        return ODRequest(
+          id: request.id,
+          studentId: request.studentId,
+          studentName: request.studentName,
+          registerNumber: request.registerNumber,
+          date: request.date,
+          periods: request.periods,
+          reason: request.reason,
+          status: newStatus,
+          staffId: request.staffId,
+          createdAt: request.createdAt,
+          approvedAt: newStatus == 'approved' ? DateTime.now() : request.approvedAt,
+          approvedBy: newStatus == 'approved' ? 'Demo Staff' : request.approvedBy,
+          rejectionReason: newStatus == 'rejected' ? reason : request.rejectionReason,
+        );
+      }
+      return request;
+    }).toList();
+  }
+
   List<ODRequest> getRequestsByStatus(String status) {
     return state.where((request) => request.status == status).toList();
   }
