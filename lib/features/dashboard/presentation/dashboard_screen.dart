@@ -5,6 +5,7 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import 'package:odtrack_academia/core/constants/app_constants.dart';
 import 'package:odtrack_academia/providers/auth_provider.dart';
 import 'package:odtrack_academia/features/timetable/presentation/staff_timetable_screen.dart';
+import 'package:odtrack_academia/features/staff_profile/presentation/staff_profile_screen.dart';
 
 import 'package:odtrack_academia/providers/od_request_provider.dart';
 
@@ -39,6 +40,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
             ),
             itemBuilder: (context) => [
+              if (user.isStaff)
+                PopupMenuItem<String>(
+                  child: const Row(
+                    children: [
+                      Icon(Icons.person),
+                      SizedBox(width: 8),
+                      Text('My Profile'),
+                    ],
+                  ),
+                  onTap: () {
+                    Navigator.push<void>(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (context) => const StaffProfileScreen(),
+                      ),
+                    );
+                  },
+                ),
               PopupMenuItem<String>(
                 child: const Row(
                   children: [
