@@ -1,5 +1,4 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'export_models.dart';
 
 part 'bulk_operation_models.g.dart';
 

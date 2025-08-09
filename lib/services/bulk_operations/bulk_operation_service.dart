@@ -1,5 +1,6 @@
 import 'dart:async';
 import '../../models/bulk_operation_models.dart';
+import '../../models/export_models.dart';
 
 /// Abstract interface for bulk operations service
 /// Handles bulk approval, rejection, and export operations

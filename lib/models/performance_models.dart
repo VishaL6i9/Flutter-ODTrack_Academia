@@ -1,5 +1,4 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'analytics_models.dart';
 
 part 'performance_models.g.dart';
 
