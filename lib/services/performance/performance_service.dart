@@ -1,6 +1,6 @@
 import 'dart:async';
-import '../../models/performance_models.dart';
-import '../../models/analytics_models.dart';
+import 'package:odtrack_academia/models/performance_models.dart';
+import 'package:odtrack_academia/models/analytics_models.dart';
 
 /// Abstract interface for performance monitoring service
 /// Handles app performance tracking and optimization

@@ -97,7 +97,6 @@ class NotificationRouter {
   /// Route for bulk operation completion notifications
   static String _routeForBulkOperation(NotificationMessage notification) {
     final operationType = notification.data['operation_type'] as String?;
-    final resultSummary = notification.data['result_summary'] as String?;
     
     // Route to staff inbox with bulk operation results
     if (operationType != null) {

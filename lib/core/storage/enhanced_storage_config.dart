@@ -1,11 +1,11 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import '../../models/notification_message.dart';
-import '../../models/sync_models.dart';
-import '../../models/analytics_models.dart';
-import '../../models/export_models.dart';
-import '../../models/calendar_models.dart';
-import '../../models/bulk_operation_models.dart';
-import '../../models/performance_models.dart';
+import 'package:odtrack_academia/models/notification_message.dart';
+import 'package:odtrack_academia/models/sync_models.dart';
+import 'package:odtrack_academia/models/analytics_models.dart';
+import 'package:odtrack_academia/models/export_models.dart';
+import 'package:odtrack_academia/models/calendar_models.dart';
+import 'package:odtrack_academia/models/bulk_operation_models.dart';
+import 'package:odtrack_academia/models/performance_models.dart';
 
 /// Enhanced storage configuration for M5 features
 class EnhancedStorageConfig {
@@ -98,7 +98,7 @@ class EnhancedStorageConfig {
     ];
     
     for (final boxName in boxes) {
-      final box = Hive.box(boxName);
+      final box = Hive.box<dynamic>(boxName);
       await box.clear();
     }
   }

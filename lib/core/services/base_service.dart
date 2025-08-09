@@ -1,5 +1,6 @@
 import 'dart:async';
-import '../errors/base_error.dart';
+import 'package:flutter/foundation.dart';
+import 'package:odtrack_academia/core/errors/base_error.dart';
 
 /// Base interface for all M5 enhanced services
 /// Provides common functionality and error handling patterns
@@ -90,7 +91,7 @@ abstract class BaseServiceImpl implements BaseService {
       await onDispose();
     } catch (error) {
       // Log error but don't rethrow during disposal
-      print('Error during service disposal: $error');
+      debugPrint('Error during service disposal: $error');
     } finally {
       // Always mark as not initialized and close the controller
       _isInitialized = false;
@@ -115,7 +116,7 @@ abstract class BaseServiceImpl implements BaseService {
   @override
   Future<void> handleError(BaseError error) async {
     // Default error handling - can be overridden by subclasses
-    print('Service ${serviceName} error: ${error.toString()}');
+    debugPrint('Service $serviceName error: $error');
     
     if (error.severity == ErrorSeverity.critical) {
       _healthStatusController.add(ServiceHealthStatus.unhealthy);
@@ -152,7 +153,7 @@ abstract class BaseServiceImpl implements BaseService {
   /// Helper method to check if service is ready for operations
   void ensureInitialized() {
     if (!_isInitialized) {
-      throw StateError('Service ${serviceName} is not initialized');
+      throw StateError('Service $serviceName is not initialized');
     }
   }
 }

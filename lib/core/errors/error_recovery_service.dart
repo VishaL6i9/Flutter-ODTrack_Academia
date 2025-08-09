@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
-import 'base_error.dart';
+import 'package:flutter/foundation.dart';
+import 'package:odtrack_academia/core/errors/base_error.dart';
 
 /// Service for handling error recovery and retry mechanisms
 /// Provides intelligent retry logic with exponential backoff
@@ -23,7 +24,7 @@ class ErrorRecoveryService {
         await _logError(error);
         if (error.statusCode != null && error.statusCode! >= 500) {
           // Server error - retry might help
-          await Future.delayed(const Duration(seconds: 5));
+          await Future<void>.delayed(const Duration(seconds: 5));
         }
         break;
       default:
@@ -99,7 +100,7 @@ class ErrorRecoveryService {
         }
         
         // Wait before retry with exponential backoff
-        await Future.delayed(currentDelay);
+        await Future<void>.delayed(currentDelay);
         
         // Calculate next delay with jitter to avoid thundering herd
         final jitter = Random().nextDouble() * 0.1; // 10% jitter
@@ -137,7 +138,7 @@ class ErrorRecoveryService {
           rethrow;
         }
         
-        await Future.delayed(delay);
+        await Future<void>.delayed(delay);
       }
     }
     
@@ -180,19 +181,19 @@ class ErrorRecoveryService {
   /// Private helper methods
   Future<void> _logError(BaseError error) async {
     // In a real implementation, this would log to a logging service
-    print('Error logged: ${error.toString()}');
+    debugPrint('Error logged: ${error.toString()}');
     // TODO: Implement actual logging to file or remote service
   }
 
   Future<void> _attemptCacheCleanup() async {
     // In a real implementation, this would clean up cache
-    print('Attempting cache cleanup...');
+    debugPrint('Attempting cache cleanup...');
     // TODO: Implement actual cache cleanup logic
   }
 
   Future<void> _attemptDataRecovery(String? key) async {
     // In a real implementation, this would attempt data recovery
-    print('Attempting data recovery for key: $key');
+    debugPrint('Attempting data recovery for key: $key');
     // TODO: Implement actual data recovery logic
   }
 }

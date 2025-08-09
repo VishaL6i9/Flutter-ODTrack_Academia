@@ -1,11 +1,11 @@
-import '../../services/notification/notification_service.dart';
-import '../../services/notification/firebase_notification_service.dart';
-import '../../services/sync/sync_service.dart';
-import '../../services/analytics/analytics_service.dart';
-import '../../services/export/export_service.dart';
-import '../../services/calendar/calendar_service.dart';
-import '../../services/bulk_operations/bulk_operation_service.dart';
-import '../../services/performance/performance_service.dart';
+import 'package:odtrack_academia/services/notification/notification_service.dart';
+import 'package:odtrack_academia/services/notification/firebase_notification_service.dart';
+import 'package:odtrack_academia/services/sync/sync_service.dart';
+import 'package:odtrack_academia/services/analytics/analytics_service.dart';
+import 'package:odtrack_academia/services/export/export_service.dart';
+import 'package:odtrack_academia/services/calendar/calendar_service.dart';
+import 'package:odtrack_academia/services/bulk_operations/bulk_operation_service.dart';
+import 'package:odtrack_academia/services/performance/performance_service.dart';
 
 /// Service registry for M5 enhanced features
 /// Provides centralized access to all services

@@ -1,5 +1,5 @@
 import 'dart:async';
-import '../../models/sync_models.dart';
+import 'package:odtrack_academia/models/sync_models.dart';
 
 /// Abstract interface for offline synchronization service
 /// Handles data sync between local storage and server

@@ -1,6 +1,6 @@
 import 'dart:async';
-import '../../models/calendar_models.dart';
-import '../../models/od_request.dart';
+import 'package:odtrack_academia/models/calendar_models.dart';
+import 'package:odtrack_academia/models/od_request.dart';
 
 /// Abstract interface for calendar integration service
 /// Handles device calendar synchronization for OD requests

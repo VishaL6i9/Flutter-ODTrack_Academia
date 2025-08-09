@@ -1,5 +1,5 @@
 import 'dart:async';
-import '../../models/notification_message.dart';
+import 'package:odtrack_academia/models/notification_message.dart';
 
 /// Abstract interface for push notification service
 /// Handles Firebase Cloud Messaging and local notifications

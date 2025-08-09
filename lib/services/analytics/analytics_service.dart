@@ -1,5 +1,5 @@
 import 'dart:async';
-import '../../models/analytics_models.dart';
+import 'package:odtrack_academia/models/analytics_models.dart';
 
 /// Abstract interface for analytics service
 /// Handles data aggregation and analytics computation

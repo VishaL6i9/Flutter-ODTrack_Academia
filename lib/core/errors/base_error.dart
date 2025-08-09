@@ -108,26 +108,18 @@ class NetworkError extends BaseError {
   final String? endpoint;
 
   NetworkError({
-    required String code,
-    required String message,
-    String? userMessage,
-    Map<String, dynamic>? context,
-    DateTime? timestamp,
-    bool isRetryable = true,
-    ErrorSeverity severity = ErrorSeverity.medium,
-    String? stackTrace,
+    required super.code,
+    required super.message,
+    super.userMessage,
+    super.context,
+    super.timestamp,
+    super.isRetryable = true,
+    super.severity = ErrorSeverity.medium,
+    super.stackTrace,
     this.statusCode,
     this.endpoint,
   }) : super(
           category: ErrorCategory.network,
-          code: code,
-          message: message,
-          userMessage: userMessage,
-          context: context,
-          timestamp: timestamp,
-          isRetryable: isRetryable,
-          severity: severity,
-          stackTrace: stackTrace,
         );
 
   factory NetworkError.connectionTimeout({String? endpoint}) {
@@ -170,26 +162,18 @@ class StorageError extends BaseError {
   final String? key;
 
   StorageError({
-    required String code,
-    required String message,
-    String? userMessage,
-    Map<String, dynamic>? context,
-    DateTime? timestamp,
-    bool isRetryable = false,
-    ErrorSeverity severity = ErrorSeverity.medium,
-    String? stackTrace,
+    required super.code,
+    required super.message,
+    super.userMessage,
+    super.context,
+    super.timestamp,
+    super.isRetryable = false,
+    super.severity = ErrorSeverity.medium,
+    super.stackTrace,
     this.operation,
     this.key,
   }) : super(
           category: ErrorCategory.storage,
-          code: code,
-          message: message,
-          userMessage: userMessage,
-          context: context,
-          timestamp: timestamp,
-          isRetryable: isRetryable,
-          severity: severity,
-          stackTrace: stackTrace,
         );
 
   factory StorageError.insufficientSpace() {
@@ -217,25 +201,17 @@ class PermissionError extends BaseError {
   final String permission;
 
   PermissionError({
-    required String code,
-    required String message,
+    required super.code,
+    required super.message,
     required this.permission,
-    String? userMessage,
-    Map<String, dynamic>? context,
-    DateTime? timestamp,
-    bool isRetryable = true,
-    ErrorSeverity severity = ErrorSeverity.medium,
-    String? stackTrace,
+    super.userMessage,
+    super.context,
+    super.timestamp,
+    super.isRetryable = true,
+    super.severity = ErrorSeverity.medium,
+    super.stackTrace,
   }) : super(
           category: ErrorCategory.permission,
-          code: code,
-          message: message,
-          userMessage: userMessage,
-          context: context,
-          timestamp: timestamp,
-          isRetryable: isRetryable,
-          severity: severity,
-          stackTrace: stackTrace,
         );
 
   factory PermissionError.denied(String permission) {
@@ -267,26 +243,18 @@ class SyncError extends BaseError {
   final String? itemType;
 
   SyncError({
-    required String code,
-    required String message,
-    String? userMessage,
-    Map<String, dynamic>? context,
-    DateTime? timestamp,
-    bool isRetryable = true,
-    ErrorSeverity severity = ErrorSeverity.medium,
-    String? stackTrace,
+    required super.code,
+    required super.message,
+    super.userMessage,
+    super.context,
+    super.timestamp,
+    super.isRetryable = true,
+    super.severity = ErrorSeverity.medium,
+    super.stackTrace,
     this.itemId,
     this.itemType,
   }) : super(
           category: ErrorCategory.sync,
-          code: code,
-          message: message,
-          userMessage: userMessage,
-          context: context,
-          timestamp: timestamp,
-          isRetryable: isRetryable,
-          severity: severity,
-          stackTrace: stackTrace,
         );
 
   factory SyncError.conflictDetected(String itemId, String itemType) {
@@ -318,26 +286,18 @@ class ValidationError extends BaseError {
   final dynamic value;
 
   ValidationError({
-    required String code,
-    required String message,
+    required super.code,
+    required super.message,
     required this.field,
     this.value,
-    String? userMessage,
-    Map<String, dynamic>? context,
-    DateTime? timestamp,
-    bool isRetryable = false,
-    ErrorSeverity severity = ErrorSeverity.low,
-    String? stackTrace,
+    super.userMessage,
+    super.context,
+    super.timestamp,
+    super.isRetryable = false,
+    super.severity = ErrorSeverity.low,
+    super.stackTrace,
   }) : super(
           category: ErrorCategory.validation,
-          code: code,
-          message: message,
-          userMessage: userMessage,
-          context: context,
-          timestamp: timestamp,
-          isRetryable: isRetryable,
-          severity: severity,
-          stackTrace: stackTrace,
         );
 
   factory ValidationError.required(String field) {
