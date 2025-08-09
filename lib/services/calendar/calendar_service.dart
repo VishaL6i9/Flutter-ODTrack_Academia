@@ -1,0 +1,43 @@
+import 'dart:async';
+import '../../models/calendar_models.dart';
+import '../../models/od_request.dart';
+
+/// Abstract interface for calendar integration service
+/// Handles device calendar synchronization for OD requests
+abstract class CalendarService {
+  /// Initialize the calendar service
+  Future<void> initialize();
+  
+  /// Request calendar permissions
+  Future<bool> requestCalendarPermission();
+  
+  /// Check if calendar permission is granted
+  Future<bool> hasCalendarPermission();
+  
+  /// Get available calendars on device
+  Future<List<Calendar>> getAvailableCalendars();
+  
+  /// Add OD event to device calendar
+  Future<void> addODEventToCalendar(ODRequest request, String calendarId);
+  
+  /// Update existing OD event in calendar
+  Future<void> updateODEventInCalendar(ODRequest request);
+  
+  /// Remove OD event from calendar
+  Future<void> removeODEventFromCalendar(String eventId);
+  
+  /// Sync all approved OD events to calendar
+  Future<void> syncAllODEventsToCalendar();
+  
+  /// Clean up OD events from calendar
+  Future<void> cleanupODEventsFromCalendar();
+  
+  /// Get calendar sync settings
+  Future<CalendarSyncSettings> getSyncSettings();
+  
+  /// Update calendar sync settings
+  Future<void> updateSyncSettings(CalendarSyncSettings settings);
+  
+  /// Check if auto-sync is enabled
+  Future<bool> isAutoSyncEnabled();
+}

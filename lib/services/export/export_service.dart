@@ -1,0 +1,56 @@
+import 'dart:async';
+import 'dart:typed_data';
+import '../../models/export_models.dart';
+import '../../models/od_request.dart';
+import '../../models/analytics_models.dart';
+
+/// Abstract interface for PDF export service
+/// Handles PDF generation and document export functionality
+abstract class ExportService {
+  /// Initialize the export service
+  Future<void> initialize();
+  
+  /// Export student OD request report
+  Future<ExportResult> exportStudentReport(
+    String studentId,
+    DateRange dateRange,
+    ExportOptions options,
+  );
+  
+  /// Export staff analytics report
+  Future<ExportResult> exportStaffReport(
+    String staffId,
+    DateRange dateRange,
+    ExportOptions options,
+  );
+  
+  /// Export analytics report with charts
+  Future<ExportResult> exportAnalyticsReport(
+    AnalyticsData data,
+    ExportOptions options,
+  );
+  
+  /// Export bulk OD requests
+  Future<ExportResult> exportBulkRequests(
+    List<ODRequest> requests,
+    ExportOptions options,
+  );
+  
+  /// Stream of export progress updates
+  Stream<ExportProgress> get exportProgressStream;
+  
+  /// Cancel ongoing export operation
+  Future<void> cancelExport(String exportId);
+  
+  /// Get export history
+  Future<List<ExportResult>> getExportHistory();
+  
+  /// Share exported file
+  Future<void> shareExportedFile(String filePath);
+  
+  /// Open exported file
+  Future<void> openExportedFile(String filePath);
+  
+  /// Delete exported file
+  Future<void> deleteExportedFile(String filePath);
+}
