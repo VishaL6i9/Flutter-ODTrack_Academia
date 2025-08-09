@@ -1,4 +1,5 @@
 import '../../services/notification/notification_service.dart';
+import '../../services/notification/firebase_notification_service.dart';
 import '../../services/sync/sync_service.dart';
 import '../../services/analytics/analytics_service.dart';
 import '../../services/export/export_service.dart';
@@ -134,9 +135,8 @@ class ServiceRegistry {
   
   // Private initialization methods
   Future<void> _initializeNotificationService() async {
-    // Implementation will be added in later tasks
-    // _notificationService = FirebaseNotificationService();
-    // await _notificationService!.initialize();
+    _notificationService = FirebaseNotificationService();
+    await _notificationService!.initialize();
   }
   
   Future<void> _initializeSyncService() async {
