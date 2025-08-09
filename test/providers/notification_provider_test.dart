@@ -52,7 +52,7 @@ void main() {
 
       test('should initialize notification service and update state', () async {
         // Wait for initialization to complete
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
 
         // Assert
         verify(mockNotificationService.initialize()).called(1);
@@ -74,7 +74,7 @@ void main() {
         final provider = NotificationProvider(mockNotificationService, mockRouter);
         
         // Wait for initialization to complete
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
 
         // Assert
         expect(provider.state.isLoading, isFalse);
@@ -112,7 +112,7 @@ void main() {
         final provider = NotificationProvider(mockNotificationService, mockRouter);
         
         // Wait for initialization to complete
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
 
         // Assert
         expect(provider.state.notifications, hasLength(2));
@@ -125,7 +125,7 @@ void main() {
     group('Incoming Notifications', () {
       test('should handle incoming notifications and update state', () async {
         // Wait for initialization
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
         
         // Arrange
         final newNotification = NotificationMessage(
@@ -140,7 +140,7 @@ void main() {
 
         // Act
         messageController.add(newNotification);
-        await Future.delayed(const Duration(milliseconds: 50));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
 
         // Assert
         expect(notificationProvider.state.notifications, hasLength(1));
@@ -150,7 +150,7 @@ void main() {
 
       test('should add new notifications to the beginning of the list', () async {
         // Wait for initialization
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
         
         // Arrange
         final notification1 = NotificationMessage(
@@ -173,9 +173,9 @@ void main() {
 
         // Act
         messageController.add(notification1);
-        await Future.delayed(const Duration(milliseconds: 50));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
         messageController.add(notification2);
-        await Future.delayed(const Duration(milliseconds: 50));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
 
         // Assert
         expect(notificationProvider.state.notifications, hasLength(2));
@@ -187,7 +187,7 @@ void main() {
     group('Mark as Read', () {
       test('should mark single notification as read', () async {
         // Wait for initialization
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
         
         // Arrange
         final notification = NotificationMessage(
@@ -201,7 +201,7 @@ void main() {
         );
         
         messageController.add(notification);
-        await Future.delayed(const Duration(milliseconds: 50));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
 
         // Act
         await notificationProvider.markAsRead('test_1');
@@ -215,7 +215,7 @@ void main() {
 
       test('should mark all notifications as read', () async {
         // Wait for initialization
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
         
         // Arrange
         final notifications = [
@@ -241,7 +241,7 @@ void main() {
         
         for (final notification in notifications) {
           messageController.add(notification);
-          await Future.delayed(const Duration(milliseconds: 25));
+          await Future<void>.delayed(const Duration(milliseconds: 25));
         }
 
         // Act
@@ -259,7 +259,7 @@ void main() {
     group('Clear Notifications', () {
       test('should clear all notifications', () async {
         // Wait for initialization
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
         
         // Arrange
         when(mockNotificationService.clearAllNotifications())
@@ -275,7 +275,7 @@ void main() {
         );
         
         messageController.add(notification);
-        await Future.delayed(const Duration(milliseconds: 50));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
 
         // Act
         await notificationProvider.clearAllNotifications();
@@ -290,7 +290,7 @@ void main() {
     group('Topic Management', () {
       test('should subscribe to topic', () async {
         // Wait for initialization
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
         
         // Arrange
         const topic = 'test_topic';
@@ -306,7 +306,7 @@ void main() {
 
       test('should unsubscribe from topic', () async {
         // Wait for initialization
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
         
         // Arrange
         const topic = 'test_topic';
@@ -324,7 +324,7 @@ void main() {
     group('Permission Management', () {
       test('should request permissions and update state', () async {
         // Wait for initialization
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
         
         // Arrange
         when(mockNotificationService.requestPermissions())
@@ -340,7 +340,7 @@ void main() {
 
       test('should check if notifications are enabled', () async {
         // Wait for initialization
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
         
         // Act
         final result = await notificationProvider.areNotificationsEnabled();
@@ -354,7 +354,7 @@ void main() {
     group('Filtering and Queries', () {
       test('should get notifications by type', () async {
         // Wait for initialization
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
         
         // Arrange
         final notifications = [
@@ -386,7 +386,7 @@ void main() {
         
         for (final notification in notifications) {
           messageController.add(notification);
-          await Future.delayed(const Duration(milliseconds: 25));
+          await Future<void>.delayed(const Duration(milliseconds: 25));
         }
 
         // Act
@@ -403,7 +403,7 @@ void main() {
 
       test('should get unread notifications', () async {
         // Wait for initialization
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
         
         // Arrange
         final notifications = [
@@ -429,7 +429,7 @@ void main() {
         
         for (final notification in notifications) {
           messageController.add(notification);
-          await Future.delayed(const Duration(milliseconds: 25));
+          await Future<void>.delayed(const Duration(milliseconds: 25));
         }
 
         // Act
@@ -442,7 +442,7 @@ void main() {
 
       test('should get recent notifications', () async {
         // Wait for initialization
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
         
         // Arrange
         final now = DateTime.now();
@@ -470,7 +470,7 @@ void main() {
         
         for (final notification in notifications) {
           messageController.add(notification);
-          await Future.delayed(const Duration(milliseconds: 25));
+          await Future<void>.delayed(const Duration(milliseconds: 25));
         }
 
         // Act
@@ -485,7 +485,7 @@ void main() {
     group('Error Handling', () {
       test('should handle notification service errors', () async {
         // Wait for initialization
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
         
         // Arrange
         when(mockNotificationService.subscribeToTopic(any))
@@ -500,7 +500,7 @@ void main() {
 
       test('should clear error state', () async {
         // Wait for initialization
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
         
         // Arrange
         when(mockNotificationService.subscribeToTopic(any))

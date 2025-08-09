@@ -367,7 +367,7 @@ void main() {
 
   group('ServiceDependency', () {
     test('should create dependency with service type', () {
-      final dependency = ServiceDependency(
+      const dependency = ServiceDependency(
         serviceType: MockService,
       );
       
@@ -376,7 +376,7 @@ void main() {
     });
 
     test('should create dependency with dependencies', () {
-      final dependency = ServiceDependency(
+      const dependency = ServiceDependency(
         serviceType: MockService,
         dependencies: [String, int],
       );

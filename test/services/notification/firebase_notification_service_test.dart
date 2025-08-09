@@ -12,7 +12,7 @@ import 'firebase_notification_service_test.mocks.dart';
 @GenerateMocks([
   FirebaseMessaging,
   FlutterLocalNotificationsPlugin,
-  Box,
+  Box<dynamic>,
   NotificationSettings,
 ])
 void main() {
@@ -20,13 +20,13 @@ void main() {
     late FirebaseNotificationService notificationService;
     late MockFirebaseMessaging mockFirebaseMessaging;
     late MockFlutterLocalNotificationsPlugin mockLocalNotifications;
-    late MockBox mockNotificationBox;
+    late MockBox<dynamic> mockNotificationBox;
     late MockNotificationSettings mockNotificationSettings;
 
     setUp(() {
       mockFirebaseMessaging = MockFirebaseMessaging();
       mockLocalNotifications = MockFlutterLocalNotificationsPlugin();
-      mockNotificationBox = MockBox();
+      mockNotificationBox = MockBox<dynamic>();
       mockNotificationSettings = MockNotificationSettings();
       
       notificationService = FirebaseNotificationService();
