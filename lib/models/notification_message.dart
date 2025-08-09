@@ -40,6 +40,11 @@ class NotificationMessage {
   final bool isRead;
   final String? imageUrl;
   final NotificationPriority priority;
+  final String? groupId;
+  final String? actionUrl;
+  @JsonKey(toJson: _actionsToJson, fromJson: _actionsFromJson)
+  final List<NotificationAction>? actions;
+  final DateTime? expiresAt;
 
   const NotificationMessage({
     required this.id,
@@ -51,6 +56,10 @@ class NotificationMessage {
     this.isRead = false,
     this.imageUrl,
     this.priority = NotificationPriority.normal,
+    this.groupId,
+    this.actionUrl,
+    this.actions,
+    this.expiresAt,
   });
 
   factory NotificationMessage.fromJson(Map<String, dynamic> json) =>
@@ -68,6 +77,10 @@ class NotificationMessage {
     bool? isRead,
     String? imageUrl,
     NotificationPriority? priority,
+    String? groupId,
+    String? actionUrl,
+    List<NotificationAction>? actions,
+    DateTime? expiresAt,
   }) {
     return NotificationMessage(
       id: id ?? this.id,
@@ -79,6 +92,66 @@ class NotificationMessage {
       isRead: isRead ?? this.isRead,
       imageUrl: imageUrl ?? this.imageUrl,
       priority: priority ?? this.priority,
+      groupId: groupId ?? this.groupId,
+      actionUrl: actionUrl ?? this.actionUrl,
+      actions: actions ?? this.actions,
+      expiresAt: expiresAt ?? this.expiresAt,
     );
   }
+
+  /// Check if notification has expired
+  bool get isExpired => expiresAt != null && DateTime.now().isAfter(expiresAt!);
+
+  /// Check if notification is actionable
+  bool get hasActions => actions != null && actions!.isNotEmpty;
+
+  /// Get display time for notification (relative time)
+  String get displayTime {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+    
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d ago';
+    } else {
+      return '${timestamp.day}/${timestamp.month}/${timestamp.year}';
+    }
+  }
+}
+
+/// Model for notification actions
+@JsonSerializable()
+class NotificationAction {
+  final String id;
+  final String title;
+  final String? icon;
+  final bool destructive;
+  final Map<String, dynamic>? data;
+
+  const NotificationAction({
+    required this.id,
+    required this.title,
+    this.icon,
+    this.destructive = false,
+    this.data,
+  });
+
+  factory NotificationAction.fromJson(Map<String, dynamic> json) =>
+      _$NotificationActionFromJson(json);
+
+  Map<String, dynamic> toJson() => _$NotificationActionToJson(this);
+}
+
+// Helper functions for JSON serialization of actions list
+List<Map<String, dynamic>>? _actionsToJson(List<NotificationAction>? actions) {
+  return actions?.map((action) => action.toJson()).toList();
+}
+
+List<NotificationAction>? _actionsFromJson(List<dynamic>? json) {
+  return json?.map((item) => NotificationAction.fromJson(item as Map<String, dynamic>)).toList();
 }
