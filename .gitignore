@@ -49,3 +49,4 @@ app.*.map.json
 /lib/core/errors/*.g.dart
 test/providers/*.mocks.dart
 test/services/*.mocks.dart
+test/*.hive
