@@ -17,20 +17,27 @@ class NotificationRouter {
   ) async {
     try {
       final route = _determineRoute(notification);
+      final queryParams = extractQueryParams(notification);
       
       if (route != null) {
+        // Build route with query parameters
+        final fullRoute = buildRouteWithParams(route, queryParams);
+        
         // Navigate to the determined route
-        router.go(route);
+        router.go(fullRoute);
         
         if (kDebugMode) {
-          print('Routed to: $route from notification: ${notification.id}');
+          print('Routed to: $fullRoute from notification: ${notification.id}');
+          print('Notification type: ${notification.type}');
+          print('Query params: $queryParams');
         }
       } else {
         // Default to dashboard if no specific route determined
-        router.go(_dashboardRoute);
+        final dashboardRoute = buildRouteWithParams(_dashboardRoute, queryParams);
+        router.go(dashboardRoute);
         
         if (kDebugMode) {
-          print('No specific route found, defaulting to dashboard');
+          print('No specific route found, defaulting to dashboard with params: $queryParams');
         }
       }
     } catch (e) {
@@ -39,7 +46,13 @@ class NotificationRouter {
       }
       
       // Fallback to dashboard on error
-      router.go(_dashboardRoute);
+      try {
+        router.go(_dashboardRoute);
+      } catch (fallbackError) {
+        if (kDebugMode) {
+          print('Error in fallback routing: $fallbackError');
+        }
+      }
     }
   }
   
