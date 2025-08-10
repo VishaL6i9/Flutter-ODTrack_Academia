@@ -34,17 +34,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _loadUserFromStorage();
   }
 
-  final Box<dynamic> _userBox = Hive.box(AppConstants.userBox);
+  final LazyBox<dynamic> _userBox = Hive.lazyBox(AppConstants.userBox);
 
-  void _loadUserFromStorage() {
-    final userData = _userBox.get(AppConstants.userDataKey);
+  Future<void> _loadUserFromStorage() async {
+    final userData = await _userBox.get(AppConstants.userDataKey);
     if (userData != null) {
       try {
         final user = User.fromJson(userData as Map<String, dynamic>);
         state = state.copyWith(user: user);
       } catch (e) {
         // Clear invalid data
-        _userBox.delete(AppConstants.userDataKey);
+        await _userBox.delete(AppConstants.userDataKey);
       }
     }
   }
@@ -116,7 +116,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> logout() async {
     await _userBox.clear();
-    state = const AuthState();
   }
 }
 

@@ -16,8 +16,8 @@ void main() async {
   await EnhancedStorageConfig.initialize();
   
   // Initialize existing app boxes
-  await Hive.openBox<dynamic>(AppConstants.userBox);
-  await Hive.openBox<dynamic>(AppConstants.cacheBox);
+  await Hive.openLazyBox<dynamic>(AppConstants.userBox);
+  await Hive.openLazyBox<dynamic>(AppConstants.cacheBox);
   
   // Initialize M5 services
   await ServiceRegistry.instance.initializeServices();
