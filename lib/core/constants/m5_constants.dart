@@ -4,14 +4,7 @@ class M5Constants {
   static const String firebaseProjectId = 'odtrack-academia';
   static const String firebaseAppId = 'com.odtrack.academia';
   
-  // Notification Topics
-  static const String odStatusChangeTopic = 'od_status_change';
-  static const String newODRequestTopic = 'new_od_request';
-  static const String systemUpdatesTopic = 'system_updates';
-  static const String bulkOperationsTopic = 'bulk_operations';
-  
   // Storage Keys
-  static const String notificationSettingsKey = 'notification_settings';
   static const String syncSettingsKey = 'sync_settings';
   static const String analyticsSettingsKey = 'analytics_settings';
   static const String exportSettingsKey = 'export_settings';
@@ -59,17 +52,15 @@ class M5Constants {
   // UI Configuration
   static const Duration animationDuration = Duration(milliseconds: 300);
   static const Duration skeletonAnimationDuration = Duration(milliseconds: 1200);
-  static const int maxNotificationBadgeCount = 99;
   
   // Error Messages
   static const String networkErrorMessage = 'Network connection error. Please check your internet connection.';
   static const String syncErrorMessage = 'Sync failed. Your changes will be saved and synced when connection is restored.';
   static const String exportErrorMessage = 'Export failed. Please try again.';
   static const String calendarPermissionErrorMessage = 'Calendar permission is required for this feature.';
-  static const String notificationPermissionErrorMessage = 'Notification permission is required for this feature.';
   
   // Feature Flags (for gradual rollout)
-  static const bool enablePushNotifications = true;
+  static const bool enablePushNotifications = false;
   static const bool enableOfflineSync = true;
   static const bool enableAdvancedAnalytics = true;
   static const bool enableBulkOperations = true;
