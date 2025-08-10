@@ -41,35 +41,38 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
   Widget build(BuildContext context) {
     final user = ref.watch(authProvider).user!;
     
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Profile'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        actions: [
-          if (_isEditing)
-            TextButton(
-              onPressed: _saveProfile,
-              child: const Text('Save', style: TextStyle(color: Colors.white)),
-            )
-          else
-            IconButton(
-              onPressed: () => setState(() => _isEditing = true),
-              icon: const Icon(Icons.edit),
+    return Theme(
+      data: ThemeData.light(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('My Profile'),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          actions: [
+            if (_isEditing)
+              TextButton(
+                onPressed: _saveProfile,
+                child: const Text('Save', style: TextStyle(color: Colors.white)),
+              )
+            else
+              IconButton(
+                onPressed: () => setState(() => _isEditing = true),
+                icon: const Icon(Icons.edit),
+              ),
+          ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                _buildProfileHeader(user),
+                const SizedBox(height: 32),
+                _buildProfileForm(),
+                const SizedBox(height: 32),
+                _buildActionButtons(),
+              ],
             ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              _buildProfileHeader(user),
-              const SizedBox(height: 32),
-              _buildProfileForm(),
-              const SizedBox(height: 32),
-              _buildActionButtons(),
-            ],
           ),
         ),
       ),
