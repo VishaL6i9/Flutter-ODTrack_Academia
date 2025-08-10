@@ -35,11 +35,11 @@ void main() {
 
       // Act & Assert - Test OD status change routing
       await NotificationRouter.routeFromNotification(mockRouter, odStatusNotification);
-      verify(mockRouter.go('/od-request/456')).called(1);
+      verify(mockRouter.go('/od-request/456?from_notification=true&notification_id=route_test_1')).called(1);
 
       // Act & Assert - Test new OD request routing
       await NotificationRouter.routeFromNotification(mockRouter, newRequestNotification);
-      verify(mockRouter.go('/staff/inbox?highlight=789')).called(1);
+      verify(mockRouter.go('/staff/inbox?highlight=789?from_notification=true&notification_id=route_test_2')).called(1);
     });
 
     test('should handle notification grouping correctly', () {
