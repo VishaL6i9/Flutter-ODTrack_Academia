@@ -1,5 +1,4 @@
-import 'package:odtrack_academia/services/notification/notification_service.dart';
-import 'package:odtrack_academia/services/notification/firebase_notification_service.dart';
+
 import 'package:odtrack_academia/services/sync/sync_service.dart';
 import 'package:odtrack_academia/services/analytics/analytics_service.dart';
 import 'package:odtrack_academia/services/export/export_service.dart';
@@ -16,7 +15,6 @@ class ServiceRegistry {
   ServiceRegistry._();
   
   // Service instances
-  NotificationService? _notificationService;
   SyncService? _syncService;
   AnalyticsService? _analyticsService;
   ExportService? _exportService;
@@ -29,21 +27,13 @@ class ServiceRegistry {
     // Services will be initialized in dependency order
     await _initializePerformanceService();
     await _initializeSyncService();
-    await _initializeNotificationService();
     await _initializeAnalyticsService();
     await _initializeExportService();
     await _initializeCalendarService();
     await _initializeBulkOperationService();
   }
   
-  /// Get notification service instance
-  NotificationService get notificationService {
-    if (_notificationService == null) {
-      throw StateError('NotificationService not initialized. Call initializeServices() first.');
-    }
-    return _notificationService!;
-  }
-  
+
   /// Get sync service instance
   SyncService get syncService {
     if (_syncService == null) {
@@ -93,10 +83,6 @@ class ServiceRegistry {
   }
   
   /// Register custom service implementations (for testing or custom implementations)
-  void registerNotificationService(NotificationService service) {
-    _notificationService = service;
-  }
-  
   void registerSyncService(SyncService service) {
     _syncService = service;
   }
@@ -128,17 +114,11 @@ class ServiceRegistry {
     _calendarService = null;
     _exportService = null;
     _analyticsService = null;
-    _notificationService = null;
     _syncService = null;
     _performanceService = null;
   }
   
   // Private initialization methods
-  Future<void> _initializeNotificationService() async {
-    _notificationService = FirebaseNotificationService();
-    await _notificationService!.initialize();
-  }
-  
   Future<void> _initializeSyncService() async {
     // Implementation will be added in later tasks
     // _syncService = HiveSyncService();
