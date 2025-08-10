@@ -9,6 +9,7 @@ import 'package:odtrack_academia/core/services/service_registry.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
   
 
   // Initialize enhanced storage for M5 features

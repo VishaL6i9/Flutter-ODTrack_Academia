@@ -19,8 +19,6 @@ class EnhancedStorageConfig {
   
   /// Initialize enhanced storage with new adapters and boxes
   static Future<void> initialize() async {
-    await Hive.initFlutter();
-    
     // Register type adapters for M5 models
     _registerTypeAdapters();
     
@@ -58,19 +56,24 @@ class EnhancedStorageConfig {
   /// Open all required Hive boxes
   static Future<void> _openBoxes() async {
     await Future.wait([
-      Hive.openBox<Map<String, dynamic>>(syncQueueBox),
-      Hive.openBox<Map<String, dynamic>>(analyticsBox),
-      Hive.openBox<ExportResult>(exportHistoryBox),
-      Hive.openBox<CalendarEvent>(calendarEventsBox),
-      Hive.openBox<BulkOperationResult>(bulkOperationsBox),
-      Hive.openBox<PerformanceMetrics>(performanceMetricsBox),
-      Hive.openBox<Map<String, dynamic>>(cacheMetadataBox),
+      Hive.openLazyBox<Map<String, dynamic>>(syncQueueBox),
+      Hive.openLazyBox<Map<String, dynamic>>(analyticsBox),
+      Hive.openLazyBox<ExportResult>(exportHistoryBox),
+      Hive.openLazyBox<CalendarEvent>(calendarEventsBox),
+      Hive.openLazyBox<BulkOperationResult>(bulkOperationsBox),
+      Hive.openLazyBox<PerformanceMetrics>(performanceMetricsBox),
+      Hive.openBox<Map<String, dynamic>>(cacheMetadataBox), // Keep this as openBox if it's critical for immediate use
     ]);
   }
   
   /// Get a specific box by name
   static Box<T> getBox<T>(String boxName) {
     return Hive.box<T>(boxName);
+  }
+  
+  /// Get a specific lazy box by name
+  static LazyBox<T> getLazyBox<T>(String boxName) {
+    return Hive.lazyBox<T>(boxName);
   }
   
   /// Close all boxes (for cleanup)
