@@ -47,3 +47,4 @@ app.*.map.json
 /build-output/*
 /lib/models/*.g.dart
 /lib/core/errors/*.g.dart
+test/providers/*.mocks.dart
