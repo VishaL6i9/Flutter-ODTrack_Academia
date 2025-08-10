@@ -33,7 +33,7 @@ void main() {
         await NotificationRouter.routeFromNotification(mockRouter, notification);
 
         // Assert
-        verify(mockRouter.go('/custom-route')).called(1);
+        verify(mockRouter.go('/custom-route?from_notification=true&notification_id=test_id')).called(1);
       });
 
       test('should route to OD request details for status change notifications', () async {
@@ -51,7 +51,7 @@ void main() {
         await NotificationRouter.routeFromNotification(mockRouter, notification);
 
         // Assert
-        verify(mockRouter.go('/od-request/123')).called(1);
+        verify(mockRouter.go('/od-request/123?from_notification=true&notification_id=test_id')).called(1);
       });
 
       test('should route to staff inbox for new OD request notifications', () async {
@@ -69,7 +69,7 @@ void main() {
         await NotificationRouter.routeFromNotification(mockRouter, notification);
 
         // Assert
-        verify(mockRouter.go('/staff/inbox?highlight=456')).called(1);
+        verify(mockRouter.go('/staff/inbox?highlight=456?from_notification=true&notification_id=test_id')).called(1);
       });
 
       test('should route to staff inbox for bulk operation notifications', () async {
@@ -87,7 +87,7 @@ void main() {
         await NotificationRouter.routeFromNotification(mockRouter, notification);
 
         // Assert
-        verify(mockRouter.go('/staff/inbox?bulk_result=approval')).called(1);
+        verify(mockRouter.go('/staff/inbox?bulk_result=approval?from_notification=true&notification_id=test_id&operation=approval')).called(1);
       });
 
       test('should route to dashboard for system update notifications', () async {
@@ -105,7 +105,7 @@ void main() {
         await NotificationRouter.routeFromNotification(mockRouter, notification);
 
         // Assert
-        verify(mockRouter.go('/dashboard')).called(1);
+        verify(mockRouter.go('/dashboard?from_notification=true&notification_id=test_id')).called(1);
       });
 
       test('should route to dashboard as fallback when no specific route found', () async {
@@ -123,7 +123,7 @@ void main() {
         await NotificationRouter.routeFromNotification(mockRouter, notification);
 
         // Assert
-        verify(mockRouter.go('/dashboard')).called(1);
+        verify(mockRouter.go('/dashboard?from_notification=true&notification_id=test_id')).called(1);
       });
     });
 
@@ -143,7 +143,7 @@ void main() {
         await NotificationRouter.routeFromNotification(mockRouter, notification);
 
         // Assert
-        verify(mockRouter.go('/staff/inbox')).called(1);
+        verify(mockRouter.go('/staff/inbox?from_notification=true&notification_id=test_id&reminder=pending_approval')).called(1);
       });
 
       test('should route to OD request for upcoming OD reminders', () async {
@@ -164,7 +164,7 @@ void main() {
         await NotificationRouter.routeFromNotification(mockRouter, notification);
 
         // Assert
-        verify(mockRouter.go('/od-request/789')).called(1);
+        verify(mockRouter.go('/od-request/789?from_notification=true&notification_id=test_id&reminder=upcoming_od')).called(1);
       });
 
       test('should route to profile for profile incomplete reminders', () async {
@@ -182,7 +182,7 @@ void main() {
         await NotificationRouter.routeFromNotification(mockRouter, notification);
 
         // Assert
-        verify(mockRouter.go('/profile')).called(1);
+        verify(mockRouter.go('/profile?from_notification=true&notification_id=test_id&reminder=profile_incomplete')).called(1);
       });
 
       test('should route to analytics for analytics available reminders', () async {
@@ -200,7 +200,7 @@ void main() {
         await NotificationRouter.routeFromNotification(mockRouter, notification);
 
         // Assert
-        verify(mockRouter.go('/analytics')).called(1);
+        verify(mockRouter.go('/analytics?from_notification=true&notification_id=test_id&reminder=analytics_available')).called(1);
       });
     });
 
@@ -417,7 +417,7 @@ void main() {
           timestamp: DateTime.now(),
         );
 
-        when(mockRouter.go('/od-requests')).thenThrow(Exception('Routing error'));
+        when(mockRouter.go('/od-requests?from_notification=true&notification_id=test_id')).thenThrow(Exception('Routing error'));
         when(mockRouter.go('/dashboard')).thenReturn(null);
 
         // Act
