@@ -36,4 +36,10 @@ abstract class SyncService {
   
   /// Cancel ongoing sync operation
   Future<void> cancelSync();
+  
+  /// Check if the service is initialized
+  bool get isInitialized;
+  
+  /// Check if the service is healthy
+  Future<bool> isHealthy();
 }
