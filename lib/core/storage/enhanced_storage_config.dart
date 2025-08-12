@@ -28,44 +28,24 @@ class EnhancedStorageConfig {
   
   /// Register Hive type adapters for M5 models
   static void _registerTypeAdapters() {
-    // Register adapters for enums
-    Hive.registerAdapter(SyncStatusAdapter());
-    Hive.registerAdapter(ExportFormatAdapter());
-    Hive.registerAdapter(BulkOperationTypeAdapter());
-    Hive.registerAdapter(PerformanceAlertTypeAdapter());
-    Hive.registerAdapter(AnalyticsTypeAdapter());
-    Hive.registerAdapter(ChartTypeAdapter());
-    Hive.registerAdapter(TrendDirectionAdapter());
-    
-    // Register adapters for models
-    Hive.registerAdapter(SyncResultAdapter());
-    Hive.registerAdapter(SyncConflictAdapter());
-    Hive.registerAdapter(ConflictResolutionAdapter());
-    Hive.registerAdapter(SyncQueueItemAdapter());
-    Hive.registerAdapter(CacheMetadataAdapter());
-    Hive.registerAdapter(SyncStatisticsAdapter());
-    Hive.registerAdapter(AnalyticsDataAdapter());
-    Hive.registerAdapter(ExportResultAdapter());
-    Hive.registerAdapter(ExportProgressAdapter());
-    Hive.registerAdapter(CalendarAdapter());
-    Hive.registerAdapter(CalendarEventAdapter());
-    Hive.registerAdapter(CalendarSyncSettingsAdapter());
-    Hive.registerAdapter(BulkOperationResultAdapter());
-    Hive.registerAdapter(BulkOperationProgressAdapter());
-    Hive.registerAdapter(PerformanceMetricsAdapter());
-    Hive.registerAdapter(PerformanceAlertAdapter());
+    // Register adapters for enums - only register if not already registered
+    if (!Hive.isAdapterRegistered(102)) {
+      Hive.registerAdapter(SyncStatusAdapter());
+    }
+    // Skip other adapters that throw UnimplementedError for now
+    // They will be implemented when the build_runner generates proper adapters
   }
   
   /// Open all required Hive boxes
   static Future<void> _openBoxes() async {
     await Future.wait([
-      Hive.openLazyBox<SyncQueueItem>(syncQueueBox),
+      Hive.openLazyBox<Map<String, dynamic>>(syncQueueBox), // Temporarily use Map until adapters are ready
       Hive.openLazyBox<Map<String, dynamic>>(analyticsBox),
-      Hive.openLazyBox<ExportResult>(exportHistoryBox),
-      Hive.openLazyBox<CalendarEvent>(calendarEventsBox),
-      Hive.openLazyBox<BulkOperationResult>(bulkOperationsBox),
-      Hive.openLazyBox<PerformanceMetrics>(performanceMetricsBox),
-      Hive.openBox<Map<String, dynamic>>(cacheMetadataBox), // Keep this as openBox if it's critical for immediate use
+      Hive.openLazyBox<Map<String, dynamic>>(exportHistoryBox), // Temporarily use Map
+      Hive.openLazyBox<Map<String, dynamic>>(calendarEventsBox), // Temporarily use Map
+      Hive.openLazyBox<Map<String, dynamic>>(bulkOperationsBox), // Temporarily use Map
+      Hive.openLazyBox<Map<String, dynamic>>(performanceMetricsBox), // Temporarily use Map
+      Hive.openBox<Map<String, dynamic>>(cacheMetadataBox), // Temporarily use Map for consistency
     ]);
   }
   
