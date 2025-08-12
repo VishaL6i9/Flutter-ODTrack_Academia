@@ -40,7 +40,7 @@ void main() {
 
       // Setup storage manager mocks
       when(mockStorageManager.initialize()).thenAnswer((_) async {});
-      when(mockStorageManager.getStorageStats()).thenReturn({
+      when(mockStorageManager.getStorageStats()).thenAnswer((_) async => {
         'totalBoxes': 4,
         'syncQueue': {'total': 0, 'pending': 0, 'failed': 0},
         'cache': {'totalItems': 0},
@@ -48,12 +48,12 @@ void main() {
       });
 
       // Setup queue manager mocks
-      when(mockQueueManager.getQueueHealth()).thenReturn({
+      when(mockQueueManager.getQueueHealth()).thenAnswer((_) async => {
         'isHealthy': true,
         'stats': {'total': 0, 'pending': 0, 'failed': 0},
       });
       when(mockQueueManager.getNextSyncBatch(batchSize: anyNamed('batchSize')))
-          .thenReturn([]);
+          .thenAnswer((_) async => []);
       when(mockQueueManager.cleanupOldItems()).thenAnswer((_) async => 0);
 
       syncService = HiveSyncService(
@@ -122,7 +122,7 @@ void main() {
 
       test('should return unhealthy when queue is overwhelmed', () async {
         await syncService.initialize();
-        when(mockQueueManager.getQueueHealth()).thenReturn({
+        when(mockQueueManager.getQueueHealth()).thenAnswer((_) async => {
           'isHealthy': false,
           'stats': {'total': 1000, 'pending': 500, 'failed': 100},
         });
@@ -141,7 +141,7 @@ void main() {
       test('should sync all data successfully', () async {
         // Setup successful sync scenario
         when(mockQueueManager.getNextSyncBatch(batchSize: anyNamed('batchSize')))
-            .thenReturn([]);
+            .thenAnswer((_) async => []);
 
         final result = await syncService.syncAll();
 
@@ -187,7 +187,7 @@ void main() {
         );
 
         when(mockQueueManager.getNextSyncBatch(batchSize: anyNamed('batchSize')))
-            .thenReturn([mockQueueItem]);
+            .thenAnswer((_) async => [mockQueueItem]);
         when(mockQueueManager.markAsInProgress(any)).thenAnswer((_) async {});
         when(mockQueueManager.markAsCompleted(any)).thenAnswer((_) async {});
 
@@ -210,7 +210,7 @@ void main() {
         );
 
         when(mockQueueManager.getNextSyncBatch(batchSize: anyNamed('batchSize')))
-            .thenReturn([mockQueueItem]);
+            .thenAnswer((_) async => [mockQueueItem]);
         when(mockQueueManager.markAsInProgress(any)).thenAnswer((_) async {});
         when(mockQueueManager.markAsFailed(any, any)).thenAnswer((_) async {});
 
@@ -300,7 +300,7 @@ void main() {
           itemType: 'od_request',
           localData: {'version': 1, 'status': 'pending'},
           serverData: {'version': 2, 'status': 'approved'},
-          localTimestamp: DateTime.now().subtract(Duration(hours: 1)),
+          localTimestamp: DateTime.now().subtract(const Duration(hours: 1)),
           serverTimestamp: DateTime.now(),
         );
 
@@ -337,7 +337,7 @@ void main() {
           localData: {'version': 2, 'status': 'approved'},
           serverData: {'version': 1, 'status': 'pending'},
           localTimestamp: DateTime.now(),
-          serverTimestamp: DateTime.now().subtract(Duration(hours: 1)),
+          serverTimestamp: DateTime.now().subtract(const Duration(hours: 1)),
         );
 
         when(mockStorageManager.removeResolvedConflict(any))
@@ -363,7 +363,7 @@ void main() {
           itemType: 'od_request',
           localData: {'version': 1},
           serverData: {'version': 2},
-          localTimestamp: DateTime.now().subtract(Duration(hours: 1)),
+          localTimestamp: DateTime.now().subtract(const Duration(hours: 1)),
           serverTimestamp: DateTime.now(),
         );
 
@@ -423,13 +423,13 @@ void main() {
         await syncService.initialize();
       });
 
-      test('should provide comprehensive sync statistics', () {
-        when(mockQueueManager.getQueueHealth()).thenReturn({
+      test('should provide comprehensive sync statistics', () async {
+        when(mockQueueManager.getQueueHealth()).thenAnswer((_) async => {
           'isHealthy': true,
           'stats': {'total': 10, 'pending': 2, 'failed': 1},
         });
 
-        final stats = syncService.getSyncStatistics();
+        final stats = await syncService.getSyncStatistics();
 
         expect(stats['isConnected'], isTrue);
         expect(stats['isSyncing'], isFalse);
@@ -445,7 +445,7 @@ void main() {
             itemType: 'od_request',
             localData: {'version': 1},
             serverData: {'version': 2},
-            localTimestamp: DateTime.now().subtract(Duration(hours: 1)),
+            localTimestamp: DateTime.now().subtract(const Duration(hours: 1)),
             serverTimestamp: DateTime.now(),
           ),
         ];
@@ -465,7 +465,7 @@ void main() {
             itemType: 'od_request',
             localData: {'version': 1},
             serverData: {'version': 2},
-            localTimestamp: DateTime.now().subtract(Duration(hours: 1)),
+            localTimestamp: DateTime.now().subtract(const Duration(hours: 1)),
             serverTimestamp: DateTime.now(),
           ),
         ];

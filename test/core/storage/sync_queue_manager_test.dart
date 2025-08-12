@@ -63,7 +63,7 @@ void main() {
         expect(queueId, isNotNull);
         expect(queueId, isNotEmpty);
 
-        final pendingItems = storageManager.getPendingSyncItems();
+        final pendingItems = await storageManager.getPendingSyncItems();
         expect(pendingItems.length, equals(1));
         expect(pendingItems.first.itemId, equals('test_item_1'));
         expect(pendingItems.first.data['priority'], equals(5));
@@ -84,7 +84,7 @@ void main() {
 
         expect(queueId, isNotNull);
 
-        final pendingItems = storageManager.getPendingSyncItems();
+        final pendingItems = await storageManager.getPendingSyncItems();
         expect(pendingItems.length, equals(1));
         expect(pendingItems.first.itemType, equals('od_request'));
         expect(pendingItems.first.data['priority'], equals(10)); // High priority for create
@@ -105,7 +105,7 @@ void main() {
 
         expect(queueId, isNotNull);
 
-        final pendingItems = storageManager.getPendingSyncItems();
+        final pendingItems = await storageManager.getPendingSyncItems();
         expect(pendingItems.length, equals(1));
         expect(pendingItems.first.itemType, equals('user_data'));
         expect(pendingItems.first.data['priority'], equals(3));
@@ -140,7 +140,7 @@ void main() {
           priority: 5,
         );
 
-        final batch = queueManager.getNextSyncBatch(batchSize: 2);
+        final batch = await queueManager.getNextSyncBatch(batchSize: 2);
         expect(batch.length, equals(2));
         
         // Should be ordered by priority (high to low)
@@ -159,7 +159,7 @@ void main() {
           );
         }
 
-        final batch = queueManager.getNextSyncBatch(batchSize: 5);
+        final batch = await queueManager.getNextSyncBatch(batchSize: 5);
         expect(batch.length, equals(5));
       });
 
@@ -175,7 +175,7 @@ void main() {
         await queueManager.markAsFailed(queueId, 'Test error');
 
         // Should not include the failed item in immediate batch
-        final batch = queueManager.getNextSyncBatch();
+        final batch = await queueManager.getNextSyncBatch();
         expect(batch.length, equals(0));
       });
     });
@@ -191,7 +191,7 @@ void main() {
 
         await queueManager.markAsInProgress(queueId);
 
-        final stats = storageManager.getSyncQueueStats();
+        final stats = await storageManager.getSyncQueueStats();
         expect(stats['in_progress'], equals(1));
         expect(stats['pending'], equals(0));
       });
@@ -206,7 +206,7 @@ void main() {
 
         await queueManager.markAsCompleted(queueId);
 
-        final stats = storageManager.getSyncQueueStats();
+        final stats = await storageManager.getSyncQueueStats();
         expect(stats['completed'], equals(1));
         expect(stats['pending'], equals(0));
       });
@@ -221,11 +221,11 @@ void main() {
 
         await queueManager.markAsFailed(queueId, 'Network error');
 
-        final stats = storageManager.getSyncQueueStats();
+        final stats = await storageManager.getSyncQueueStats();
         expect(stats['failed'], equals(1));
         expect(stats['pending'], equals(0));
 
-        final pendingItems = storageManager.getPendingSyncItems();
+        final pendingItems = await storageManager.getPendingSyncItems();
         expect(pendingItems.length, equals(1));
         expect(pendingItems.first.errorMessage, equals('Network error'));
         expect(pendingItems.first.retryCount, equals(1));
@@ -241,7 +241,7 @@ void main() {
 
         await queueManager.markAsConflicted(queueId, 'Data conflict detected');
 
-        final stats = storageManager.getSyncQueueStats();
+        final stats = await storageManager.getSyncQueueStats();
         expect(stats['conflict'], equals(1));
         expect(stats['pending'], equals(0));
       });
@@ -259,7 +259,7 @@ void main() {
         // Mark as failed once
         await queueManager.markAsFailed(queueId, 'First failure');
         
-        final pendingItems = storageManager.getPendingSyncItems();
+        final pendingItems = await storageManager.getPendingSyncItems();
         final failedItem = pendingItems.first;
         
         expect(queueManager.shouldRetryItem(failedItem), isFalse); // In cooldown
@@ -279,7 +279,7 @@ void main() {
           await queueManager.markAsFailed(queueId, 'Failure $i');
         }
 
-        final failedItems = queueManager.getFailedItems();
+        final failedItems = await queueManager.getFailedItems();
         expect(failedItems.length, equals(1));
         expect(failedItems.first.retryCount, greaterThanOrEqualTo(3));
       });
@@ -300,7 +300,7 @@ void main() {
         final removedCount = await queueManager.removeFailedItems();
         expect(removedCount, equals(1));
 
-        final stats = storageManager.getSyncQueueStats();
+        final stats = await storageManager.getSyncQueueStats();
         expect(stats['failed'], equals(0));
         expect(stats['completed'], equals(1));
       });
@@ -318,7 +318,7 @@ void main() {
         final resetCount = await queueManager.resetFailedItems();
         expect(resetCount, equals(1));
 
-        final stats = storageManager.getSyncQueueStats();
+        final stats = await storageManager.getSyncQueueStats();
         expect(stats['pending'], equals(1));
         expect(stats['failed'], equals(0));
       });
@@ -339,7 +339,7 @@ void main() {
           userData: {'name': 'User 1'},
         );
 
-        final health = queueManager.getQueueHealth();
+        final health = await queueManager.getQueueHealth();
         expect(health.containsKey('stats'), isTrue);
         expect(health.containsKey('isHealthy'), isTrue);
         expect(health.containsKey('itemsByType'), isTrue);
@@ -367,7 +367,7 @@ void main() {
           userData: {'name': 'Update User'},
         );
 
-        final analysis = queueManager.analyzeQueue();
+        final analysis = await queueManager.analyzeQueue();
         expect(analysis.containsKey('operationBreakdown'), isTrue);
         expect(analysis.containsKey('typeBreakdown'), isTrue);
         expect(analysis.containsKey('priorityBreakdown'), isTrue);

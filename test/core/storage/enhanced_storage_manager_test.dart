@@ -59,7 +59,7 @@ void main() {
         );
 
         await storageManager.addToSyncQueue(item);
-        final pendingItems = storageManager.getPendingSyncItems();
+        final pendingItems = await storageManager.getPendingSyncItems();
 
         expect(pendingItems.length, equals(1));
         expect(pendingItems.first.id, equals('test_1'));
@@ -79,7 +79,7 @@ void main() {
         await storageManager.addToSyncQueue(item);
         await storageManager.updateSyncQueueItem('test_2', SyncStatus.completed);
 
-        final pendingItems = storageManager.getPendingSyncItems();
+        final pendingItems = await storageManager.getPendingSyncItems();
         expect(pendingItems.length, equals(0));
       });
 
@@ -109,7 +109,7 @@ void main() {
           await storageManager.addToSyncQueue(item);
         }
 
-        final stats = storageManager.getSyncQueueStats();
+        final stats = await storageManager.getSyncQueueStats();
         expect(stats['total'], equals(2));
         expect(stats['pending'], equals(1));
         expect(stats['failed'], equals(1));
@@ -142,7 +142,7 @@ void main() {
         }
 
         await storageManager.removeCompletedSyncItems();
-        final stats = storageManager.getSyncQueueStats();
+        final stats = await storageManager.getSyncQueueStats();
         expect(stats['total'], equals(1));
         expect(stats['pending'], equals(1));
       });
@@ -196,7 +196,7 @@ void main() {
         final testData = {'stats_test': true};
         await storageManager.cacheData('stats_key', testData);
 
-        final stats = storageManager.getCacheStats();
+        final stats = await storageManager.getCacheStats();
         expect(stats['totalItems'], greaterThan(0));
         expect(stats['totalSizeBytes'], greaterThan(0));
         expect(stats.containsKey('totalSizeMB'), isTrue);
@@ -297,7 +297,7 @@ void main() {
 
         await storageManager.cacheData('stats_cache', {'cached': 'data'});
 
-        final stats = storageManager.getStorageStats();
+        final stats = await storageManager.getStorageStats();
         expect(stats.containsKey('syncQueue'), isTrue);
         expect(stats.containsKey('cache'), isTrue);
         expect(stats.containsKey('conflicts'), isTrue);
@@ -327,7 +327,7 @@ void main() {
         ));
 
         // Verify data exists
-        expect(storageManager.getPendingSyncItems().length, greaterThan(0));
+        expect((await storageManager.getPendingSyncItems()).length, greaterThan(0));
         expect(storageManager.isCached('clear_cache'), isTrue);
         expect(storageManager.getUnresolvedConflicts().length, greaterThan(0));
 
@@ -335,7 +335,7 @@ void main() {
         await storageManager.clearAllData();
 
         // Verify data is cleared
-        expect(storageManager.getPendingSyncItems().length, equals(0));
+        expect((await storageManager.getPendingSyncItems()).length, equals(0));
         expect(storageManager.isCached('clear_cache'), isFalse);
         expect(storageManager.getUnresolvedConflicts().length, equals(0));
       });

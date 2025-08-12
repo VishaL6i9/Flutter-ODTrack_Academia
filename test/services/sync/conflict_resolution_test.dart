@@ -188,7 +188,7 @@ void main() {
 
     group('Resolution Strategy Validation', () {
       test('should validate use_server resolution', () {
-        final resolution = ConflictResolution(
+        const resolution = ConflictResolution(
           conflictId: 'test_item',
           resolution: 'use_server',
           mergedData: {
@@ -204,7 +204,7 @@ void main() {
       });
 
       test('should validate use_local resolution', () {
-        final resolution = ConflictResolution(
+        const resolution = ConflictResolution(
           conflictId: 'test_item',
           resolution: 'use_local',
           mergedData: {
@@ -396,7 +396,7 @@ void main() {
             ...largeData,
             'serverField': 'server_value',
           },
-          localTimestamp: DateTime.now().subtract(Duration(minutes: 1)),
+          localTimestamp: DateTime.now().subtract(const Duration(hours: 1)),
           serverTimestamp: DateTime.now(),
         );
 

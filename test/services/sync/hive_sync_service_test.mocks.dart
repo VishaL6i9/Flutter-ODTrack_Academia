@@ -69,13 +69,15 @@ class MockEnhancedStorageManager extends _i1.Mock
       ) as _i3.Future<void>);
 
   @override
-  List<_i4.SyncQueueItem> getPendingSyncItems() => (super.noSuchMethod(
+  _i3.Future<List<_i4.SyncQueueItem>> getPendingSyncItems() =>
+      (super.noSuchMethod(
         Invocation.method(
           #getPendingSyncItems,
           [],
         ),
-        returnValue: <_i4.SyncQueueItem>[],
-      ) as List<_i4.SyncQueueItem>);
+        returnValue:
+            _i3.Future<List<_i4.SyncQueueItem>>.value(<_i4.SyncQueueItem>[]),
+      ) as _i3.Future<List<_i4.SyncQueueItem>>);
 
   @override
   _i3.Future<void> updateSyncQueueItem(
@@ -107,13 +109,13 @@ class MockEnhancedStorageManager extends _i1.Mock
       ) as _i3.Future<void>);
 
   @override
-  Map<String, int> getSyncQueueStats() => (super.noSuchMethod(
+  _i3.Future<Map<String, int>> getSyncQueueStats() => (super.noSuchMethod(
         Invocation.method(
           #getSyncQueueStats,
           [],
         ),
-        returnValue: <String, int>{},
-      ) as Map<String, int>);
+        returnValue: _i3.Future<Map<String, int>>.value(<String, int>{}),
+      ) as _i3.Future<Map<String, int>>);
 
   @override
   _i3.Future<void> cacheData(
@@ -173,13 +175,14 @@ class MockEnhancedStorageManager extends _i1.Mock
       ) as _i3.Future<int>);
 
   @override
-  Map<String, dynamic> getCacheStats() => (super.noSuchMethod(
+  _i3.Future<Map<String, dynamic>> getCacheStats() => (super.noSuchMethod(
         Invocation.method(
           #getCacheStats,
           [],
         ),
-        returnValue: <String, dynamic>{},
-      ) as Map<String, dynamic>);
+        returnValue:
+            _i3.Future<Map<String, dynamic>>.value(<String, dynamic>{}),
+      ) as _i3.Future<Map<String, dynamic>>);
 
   @override
   _i3.Future<void> storeSyncConflict(_i4.SyncConflict? conflict) =>
@@ -233,13 +236,14 @@ class MockEnhancedStorageManager extends _i1.Mock
       ) as _i3.Future<void>);
 
   @override
-  Map<String, dynamic> getStorageStats() => (super.noSuchMethod(
+  _i3.Future<Map<String, dynamic>> getStorageStats() => (super.noSuchMethod(
         Invocation.method(
           #getStorageStats,
           [],
         ),
-        returnValue: <String, dynamic>{},
-      ) as Map<String, dynamic>);
+        returnValue:
+            _i3.Future<Map<String, dynamic>>.value(<String, dynamic>{}),
+      ) as _i3.Future<Map<String, dynamic>>);
 
   @override
   _i3.Future<void> optimizeStorage() => (super.noSuchMethod(
@@ -357,15 +361,16 @@ class MockSyncQueueManager extends _i1.Mock implements _i5.SyncQueueManager {
       ) as _i3.Future<String>);
 
   @override
-  List<_i4.SyncQueueItem> getNextSyncBatch({int? batchSize = 10}) =>
+  _i3.Future<List<_i4.SyncQueueItem>> getNextSyncBatch({int? batchSize = 10}) =>
       (super.noSuchMethod(
         Invocation.method(
           #getNextSyncBatch,
           [],
           {#batchSize: batchSize},
         ),
-        returnValue: <_i4.SyncQueueItem>[],
-      ) as List<_i4.SyncQueueItem>);
+        returnValue:
+            _i3.Future<List<_i4.SyncQueueItem>>.value(<_i4.SyncQueueItem>[]),
+      ) as _i3.Future<List<_i4.SyncQueueItem>>);
 
   @override
   _i3.Future<void> markAsInProgress(String? queueId) => (super.noSuchMethod(
@@ -431,13 +436,14 @@ class MockSyncQueueManager extends _i1.Mock implements _i5.SyncQueueManager {
       ) as bool);
 
   @override
-  List<_i4.SyncQueueItem> getFailedItems() => (super.noSuchMethod(
+  _i3.Future<List<_i4.SyncQueueItem>> getFailedItems() => (super.noSuchMethod(
         Invocation.method(
           #getFailedItems,
           [],
         ),
-        returnValue: <_i4.SyncQueueItem>[],
-      ) as List<_i4.SyncQueueItem>);
+        returnValue:
+            _i3.Future<List<_i4.SyncQueueItem>>.value(<_i4.SyncQueueItem>[]),
+      ) as _i3.Future<List<_i4.SyncQueueItem>>);
 
   @override
   _i3.Future<int> removeFailedItems() => (super.noSuchMethod(
@@ -449,13 +455,14 @@ class MockSyncQueueManager extends _i1.Mock implements _i5.SyncQueueManager {
       ) as _i3.Future<int>);
 
   @override
-  Map<String, dynamic> getQueueHealth() => (super.noSuchMethod(
+  _i3.Future<Map<String, dynamic>> getQueueHealth() => (super.noSuchMethod(
         Invocation.method(
           #getQueueHealth,
           [],
         ),
-        returnValue: <String, dynamic>{},
-      ) as Map<String, dynamic>);
+        returnValue:
+            _i3.Future<Map<String, dynamic>>.value(<String, dynamic>{}),
+      ) as _i3.Future<Map<String, dynamic>>);
 
   @override
   _i3.Future<int> cleanupOldItems(
@@ -470,13 +477,14 @@ class MockSyncQueueManager extends _i1.Mock implements _i5.SyncQueueManager {
       ) as _i3.Future<int>);
 
   @override
-  Map<String, dynamic> analyzeQueue() => (super.noSuchMethod(
+  _i3.Future<Map<String, dynamic>> analyzeQueue() => (super.noSuchMethod(
         Invocation.method(
           #analyzeQueue,
           [],
         ),
-        returnValue: <String, dynamic>{},
-      ) as Map<String, dynamic>);
+        returnValue:
+            _i3.Future<Map<String, dynamic>>.value(<String, dynamic>{}),
+      ) as _i3.Future<Map<String, dynamic>>);
 
   @override
   _i3.Future<int> resetFailedItems() => (super.noSuchMethod(

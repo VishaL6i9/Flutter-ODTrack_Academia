@@ -30,13 +30,13 @@ void main() {
 
       // Setup basic mocks
       when(mockStorageManager.initialize()).thenAnswer((_) async {});
-      when(mockStorageManager.getStorageStats()).thenReturn({
+      when(mockStorageManager.getStorageStats()).thenAnswer((_) async => {
         'totalBoxes': 4,
         'syncQueue': {'total': 0, 'pending': 0, 'failed': 0},
         'cache': {'totalItems': 0},
         'conflicts': 0,
       });
-      when(mockQueueManager.getQueueHealth()).thenReturn({
+      when(mockQueueManager.getQueueHealth()).thenAnswer((_) async => {
         'isHealthy': true,
         'stats': {'total': 0, 'pending': 0, 'failed': 0},
       });
@@ -77,7 +77,7 @@ void main() {
         studentId: 'student_123',
         studentName: 'John Doe',
         registerNumber: 'REG001',
-        date: DateTime.now().add(Duration(days: 1)),
+        date: DateTime.now().add(const Duration(days: 1)),
         periods: [1, 2],
         reason: 'Medical appointment',
         status: 'pending',
@@ -123,7 +123,7 @@ void main() {
           'status': 'approved',
           'version': 2,
         },
-        localTimestamp: DateTime.now().subtract(Duration(hours: 1)),
+        localTimestamp: DateTime.now().subtract(const Duration(hours: 1)),
         serverTimestamp: DateTime.now(),
       );
 
@@ -137,7 +137,7 @@ void main() {
     test('should provide comprehensive sync statistics', () async {
       await syncService.initialize();
 
-      final stats = syncService.getSyncStatistics();
+      final stats = await syncService.getSyncStatistics();
       
       expect(stats, containsPair('isConnected', isA<bool>()));
       expect(stats, containsPair('isSyncing', isA<bool>()));

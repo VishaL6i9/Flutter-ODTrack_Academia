@@ -154,13 +154,13 @@ void main() {
           'title': 'Sync Test 2',
         });
 
-        final batch = service.getNextSyncBatch(batchSize: 5);
+        final batch = await service.getNextSyncBatch(batchSize: 5);
         expect(batch.length, equals(2));
 
         // Mark first item as completed
         await service.markSyncCompleted(batch.first.id);
 
-        final newBatch = service.getNextSyncBatch();
+        final newBatch = await service.getNextSyncBatch();
         expect(newBatch.length, equals(1));
       });
 
@@ -170,12 +170,12 @@ void main() {
           'title': 'Fail Test',
         });
 
-        final batch = service.getNextSyncBatch();
+        final batch = await service.getNextSyncBatch();
         expect(batch.length, equals(1));
 
         await service.markSyncFailed(batch.first.id, 'Network error');
 
-        final health = service.getSyncQueueHealth();
+        final health = await service.getSyncQueueHealth();
         expect(health['stats']['failed'], equals(1));
       });
     });
@@ -210,7 +210,7 @@ void main() {
         await service.updateUserProfile('perf_user', {'name': 'Performance User'});
         await service.cacheAnalytics('perf_analytics', {'count': 10});
 
-        final metrics = service.getCachePerformanceMetrics();
+        final metrics = await service.getCachePerformanceMetrics();
         expect(metrics.containsKey('totalItems'), isTrue);
         expect(metrics.containsKey('hitRate'), isTrue);
         expect(metrics['totalItems'], greaterThan(0));
@@ -219,7 +219,7 @@ void main() {
       test('should provide cache health score', () async {
         await service.updateUserProfile('health_user', {'name': 'Health User'});
         
-        final healthScore = service.getCacheHealthScore();
+        final healthScore = await service.getCacheHealthScore();
         expect(healthScore, greaterThanOrEqualTo(0));
         expect(healthScore, lessThanOrEqualTo(100));
       });
@@ -227,7 +227,7 @@ void main() {
       test('should provide storage statistics', () async {
         await service.createODRequest({'id': 'stats_od', 'title': 'Stats OD'});
         
-        final stats = service.getStorageStatistics();
+        final stats = await service.getStorageStatistics();
         expect(stats.containsKey('syncQueue'), isTrue);
         expect(stats.containsKey('cache'), isTrue);
         expect(stats.containsKey('totalBoxes'), isTrue);
@@ -236,7 +236,7 @@ void main() {
       test('should analyze sync queue', () async {
         await service.createODRequest({'id': 'analyze_od', 'title': 'Analyze OD'});
         
-        final analysis = service.analyzeSyncQueue();
+        final analysis = await service.analyzeSyncQueue();
         expect(analysis.containsKey('totalItems'), isTrue);
         expect(analysis.containsKey('operationBreakdown'), isTrue);
         expect(analysis.containsKey('typeBreakdown'), isTrue);

@@ -198,7 +198,7 @@ void main() {
         await cacheManager.cacheODRequest('od_1', {'title': 'OD 1'});
         await cacheManager.cacheAnalytics('stats_1', {'count': 10});
 
-        final metrics = cacheManager.getCachePerformanceMetrics();
+        final metrics = await cacheManager.getCachePerformanceMetrics();
         
         expect(metrics.containsKey('totalItems'), isTrue);
         expect(metrics.containsKey('hitRate'), isTrue);
@@ -213,7 +213,7 @@ void main() {
         await cacheManager.cacheUserProfile('user_health', {'name': 'Health Test'});
         await cacheManager.cacheODRequest('od_health', {'title': 'Health OD'});
 
-        final healthScore = cacheManager.getCacheHealthScore();
+        final healthScore = await cacheManager.getCacheHealthScore();
         
         expect(healthScore, greaterThanOrEqualTo(0));
         expect(healthScore, lessThanOrEqualTo(100));
