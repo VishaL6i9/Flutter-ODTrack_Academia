@@ -116,6 +116,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> logout() async {
     await _userBox.clear();
+    state = const AuthState(); // Reset the state to logged out
   }
 }
 
