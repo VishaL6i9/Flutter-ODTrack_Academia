@@ -1,5 +1,8 @@
 
+import 'package:odtrack_academia/core/storage/enhanced_storage_manager.dart';
+import 'package:odtrack_academia/core/storage/sync_queue_manager.dart';
 import 'package:odtrack_academia/services/sync/sync_service.dart';
+import 'package:odtrack_academia/services/sync/hive_sync_service.dart';
 import 'package:odtrack_academia/services/analytics/analytics_service.dart';
 import 'package:odtrack_academia/services/export/export_service.dart';
 import 'package:odtrack_academia/services/calendar/calendar_service.dart';
@@ -120,9 +123,15 @@ class ServiceRegistry {
   
   // Private initialization methods
   Future<void> _initializeSyncService() async {
-    // Implementation will be added in later tasks
-    // _syncService = HiveSyncService();
-    // await _syncService!.initialize();
+    if (_syncService == null) {
+      final storageManager = EnhancedStorageManager();
+      final queueManager = SyncQueueManager(storageManager);
+      _syncService = HiveSyncService(
+        storageManager: storageManager,
+        queueManager: queueManager,
+      );
+      await _syncService!.initialize();
+    }
   }
   
   Future<void> _initializeAnalyticsService() async {
