@@ -28,10 +28,8 @@ class EnhancedStorageManager {
   Future<void> _openBoxes() async {
     final futures = <Future<void>>[];
     
+    // Note: cache_metadata_box and sync_queue_box are already opened by EnhancedStorageConfig.initialize()
     // Only open boxes that aren't already open
-    if (!Hive.isBoxOpen(_cacheMetadataBox)) {
-      futures.add(Hive.openBox<Map<String, dynamic>>(_cacheMetadataBox));
-    }
     if (!Hive.isBoxOpen(_conflictResolutionBox)) {
       futures.add(Hive.openBox<SyncConflict>(_conflictResolutionBox));
     }
@@ -124,7 +122,7 @@ class EnhancedStorageManager {
   /// Store data in cache with metadata
   Future<void> cacheData(String key, Map<String, dynamic> data, {Duration? ttl}) async {
     final cacheBox = Hive.box<String>(_cacheDataBox);
-    final metadataBox = Hive.box<Map<String, dynamic>>(_cacheMetadataBox);
+    final metadataBox = Hive.box<CacheMetadata>(_cacheMetadataBox);
     
     final jsonData = jsonEncode(data);
     final sizeBytes = utf8.encode(jsonData).length;
@@ -133,14 +131,13 @@ class EnhancedStorageManager {
     // Check if we need to cleanup before adding new data
     await _ensureCacheCapacity(sizeBytes);
     
-    final metadata = {
-      'key': key,
-      'createdAt': DateTime.now().toIso8601String(),
-      'lastAccessedAt': DateTime.now().toIso8601String(),
-      'expiresAt': expiresAt.toIso8601String(),
-      'accessCount': 1,
-      'sizeBytes': sizeBytes,
-    };
+    final metadata = CacheMetadata(
+      key: key,
+      createdAt: DateTime.now(),
+      lastAccessedAt: DateTime.now(),
+      expiresAt: expiresAt,
+      sizeBytes: sizeBytes,
+    );
     
     await Future.wait([
       cacheBox.put(key, jsonData),
@@ -151,28 +148,25 @@ class EnhancedStorageManager {
   /// Retrieve data from cache
   Future<Map<String, dynamic>?> getCachedData(String key) async {
     final cacheBox = Hive.box<String>(_cacheDataBox);
-    final metadataBox = Hive.box<Map<String, dynamic>>(_cacheMetadataBox);
+    final metadataBox = Hive.box<CacheMetadata>(_cacheMetadataBox);
     
     final metadata = metadataBox.get(key);
     if (metadata == null) return null;
     
     // Check if expired
-    final expiresAtStr = metadata['expiresAt'] as String?;
-    if (expiresAtStr != null) {
-      final expiresAt = DateTime.parse(expiresAtStr);
-      if (DateTime.now().isAfter(expiresAt)) {
-        await _removeCacheItem(key);
-        return null;
-      }
+    if (metadata.isExpired) {
+      await _removeCacheItem(key);
+      return null;
     }
     
     final jsonData = cacheBox.get(key);
     if (jsonData == null) return null;
     
     // Update access metadata
-    final updatedMetadata = Map<String, dynamic>.from(metadata);
-    updatedMetadata['lastAccessedAt'] = DateTime.now().toIso8601String();
-    updatedMetadata['accessCount'] = (metadata['accessCount'] as int? ?? 0) + 1;
+    final updatedMetadata = metadata.copyWith(
+      lastAccessedAt: DateTime.now(),
+      accessCount: metadata.accessCount + 1,
+    );
     await metadataBox.put(key, updatedMetadata);
     
     try {
@@ -186,16 +180,9 @@ class EnhancedStorageManager {
   
   /// Check if data exists in cache and is not expired
   bool isCached(String key) {
-    final metadataBox = Hive.box<Map<String, dynamic>>(_cacheMetadataBox);
+    final metadataBox = Hive.box<CacheMetadata>(_cacheMetadataBox);
     final metadata = metadataBox.get(key);
-    if (metadata == null) return false;
-    
-    final expiresAtStr = metadata['expiresAt'] as String?;
-    if (expiresAtStr != null) {
-      final expiresAt = DateTime.parse(expiresAtStr);
-      return DateTime.now().isBefore(expiresAt);
-    }
-    return true;
+    return metadata != null && !metadata.isExpired;
   }
   
   /// Remove specific cache item
@@ -206,7 +193,7 @@ class EnhancedStorageManager {
   /// Internal method to remove cache item
   Future<void> _removeCacheItem(String key) async {
     final cacheBox = Hive.box<String>(_cacheDataBox);
-    final metadataBox = Hive.box<Map<String, dynamic>>(_cacheMetadataBox);
+    final metadataBox = Hive.box<CacheMetadata>(_cacheMetadataBox);
     
     await Future.wait([
       cacheBox.delete(key),
@@ -216,17 +203,12 @@ class EnhancedStorageManager {
   
   /// Clean up expired cache items
   Future<int> cleanupExpiredCache() async {
-    final metadataBox = Hive.box<Map<String, dynamic>>(_cacheMetadataBox);
+    final metadataBox = Hive.box<CacheMetadata>(_cacheMetadataBox);
     final expiredKeys = <String>[];
     
     for (final entry in metadataBox.toMap().entries) {
-      final metadata = entry.value;
-      final expiresAtStr = metadata['expiresAt'] as String?;
-      if (expiresAtStr != null) {
-        final expiresAt = DateTime.parse(expiresAtStr);
-        if (DateTime.now().isAfter(expiresAt)) {
-          expiredKeys.add(entry.key as String);
-        }
+      if (entry.value.isExpired) {
+        expiredKeys.add(entry.key as String);
       }
     }
     
@@ -239,11 +221,11 @@ class EnhancedStorageManager {
   
   /// Ensure cache doesn't exceed capacity limits
   Future<void> _ensureCacheCapacity(int newItemSize) async {
-    final metadataBox = Hive.box<Map<String, dynamic>>(_cacheMetadataBox);
+    final metadataBox = Hive.box<CacheMetadata>(_cacheMetadataBox);
     final currentItems = metadataBox.values.toList();
     
     // Calculate current cache size
-    final currentSize = currentItems.fold<int>(0, (sum, metadata) => sum + (metadata['sizeBytes'] as int? ?? 0));
+    final currentSize = currentItems.fold<int>(0, (sum, metadata) => sum + metadata.sizeBytes);
     
     // Check if we need to free up space
     if (currentItems.length >= _maxCacheItems || 
@@ -254,65 +236,35 @@ class EnhancedStorageManager {
   
   /// Perform priority-based cache cleanup
   Future<void> _performPriorityBasedCleanup(int requiredSpace) async {
-    final metadataBox = Hive.box<Map<String, dynamic>>(_cacheMetadataBox);
-    final items = metadataBox.toMap().entries.toList();
+    final metadataBox = Hive.box<CacheMetadata>(_cacheMetadataBox);
+    final items = metadataBox.values.toList();
     
-    // Sort by age (oldest first)
+    // Sort by priority (lowest first) and age (oldest first)
     items.sort((a, b) {
-      final aCreatedStr = a.value['createdAt'] as String? ?? '';
-      final bCreatedStr = b.value['createdAt'] as String? ?? '';
-      if (aCreatedStr.isEmpty || bCreatedStr.isEmpty) return 0;
-      final aCreated = DateTime.parse(aCreatedStr);
-      final bCreated = DateTime.parse(bCreatedStr);
-      return aCreated.compareTo(bCreated);
+      final priorityComparison = a.priority.compareTo(b.priority);
+      if (priorityComparison != 0) return priorityComparison;
+      return a.createdAt.compareTo(b.createdAt);
     });
     
     int freedSpace = 0;
     int itemsRemoved = 0;
     
-    for (final entry in items) {
+    for (final metadata in items) {
       if (freedSpace >= requiredSpace && itemsRemoved >= 10) break;
       
-      await _removeCacheItem(entry.key as String);
-      freedSpace += entry.value['sizeBytes'] as int? ?? 0;
+      await _removeCacheItem(metadata.key);
+      freedSpace += metadata.sizeBytes;
       itemsRemoved++;
     }
   }
   
   /// Get cache statistics
   Future<Map<String, dynamic>> getCacheStats() async {
-    final metadataBox = Hive.box<Map<String, dynamic>>(_cacheMetadataBox);
+    final metadataBox = Hive.box<CacheMetadata>(_cacheMetadataBox);
     final items = metadataBox.values.toList();
     
-    final totalSize = items.fold<int>(0, (sum, metadata) => sum + (metadata['sizeBytes'] as int? ?? 0));
-    int expiredCount = 0;
-    
-    for (final metadata in items) {
-      final expiresAtStr = metadata['expiresAt'] as String?;
-      if (expiresAtStr != null) {
-        final expiresAt = DateTime.parse(expiresAtStr);
-        if (DateTime.now().isAfter(expiresAt)) {
-          expiredCount++;
-        }
-      }
-    }
-    
-    String? oldestItem;
-    String? newestItem;
-    
-    if (items.isNotEmpty) {
-      final createdDates = items
-          .map((m) => m['createdAt'] as String?)
-          .where((dateStr) => dateStr != null)
-          .map((dateStr) => DateTime.parse(dateStr!))
-          .toList();
-      
-      if (createdDates.isNotEmpty) {
-        createdDates.sort();
-        oldestItem = createdDates.first.toIso8601String();
-        newestItem = createdDates.last.toIso8601String();
-      }
-    }
+    final totalSize = items.fold<int>(0, (sum, metadata) => sum + metadata.sizeBytes);
+    final expiredCount = items.where((metadata) => metadata.isExpired).length;
     
     return {
       'totalItems': items.length,
@@ -320,8 +272,12 @@ class EnhancedStorageManager {
       'totalSizeMB': (totalSize / (1024 * 1024)).toStringAsFixed(2),
       'expiredItems': expiredCount,
       'averageItemSize': items.isNotEmpty ? (totalSize / items.length).round() : 0,
-      'oldestItem': oldestItem,
-      'newestItem': newestItem,
+      'oldestItem': items.isNotEmpty 
+          ? items.map((m) => m.createdAt).reduce((a, b) => a.isBefore(b) ? a : b).toIso8601String()
+          : null,
+      'newestItem': items.isNotEmpty 
+          ? items.map((m) => m.createdAt).reduce((a, b) => a.isAfter(b) ? a : b).toIso8601String()
+          : null,
     };
   }
   
@@ -361,8 +317,8 @@ class EnhancedStorageManager {
         : await Hive.openLazyBox<SyncQueueItem>(_syncQueueBox);
     
     final cacheMetadataBox = Hive.isBoxOpen(_cacheMetadataBox) 
-        ? Hive.box<Map<String, dynamic>>(_cacheMetadataBox)
-        : await Hive.openBox<Map<String, dynamic>>(_cacheMetadataBox);
+        ? Hive.box<CacheMetadata>(_cacheMetadataBox)
+        : await Hive.openBox<CacheMetadata>(_cacheMetadataBox);
     
     final conflictResolutionBox = Hive.isBoxOpen(_conflictResolutionBox) 
         ? Hive.box<SyncConflict>(_conflictResolutionBox)
@@ -402,8 +358,8 @@ class EnhancedStorageManager {
         : await Hive.openLazyBox<SyncQueueItem>(_syncQueueBox);
     
     final cacheMetadataBox = Hive.isBoxOpen(_cacheMetadataBox) 
-        ? Hive.box<Map<String, dynamic>>(_cacheMetadataBox)
-        : await Hive.openBox<Map<String, dynamic>>(_cacheMetadataBox);
+        ? Hive.box<CacheMetadata>(_cacheMetadataBox)
+        : await Hive.openBox<CacheMetadata>(_cacheMetadataBox);
     
     final conflictResolutionBox = Hive.isBoxOpen(_conflictResolutionBox) 
         ? Hive.box<SyncConflict>(_conflictResolutionBox)
