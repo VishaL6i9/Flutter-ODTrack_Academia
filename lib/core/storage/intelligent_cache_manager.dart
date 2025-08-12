@@ -199,8 +199,8 @@ class IntelligentCacheManager {
   }
   
   /// Get cache performance metrics
-  Map<String, dynamic> getCachePerformanceMetrics() {
-    final stats = _storageManager.getCacheStats();
+  Future<Map<String, dynamic>> getCachePerformanceMetrics() async {
+    final stats = await _storageManager.getCacheStats();
     
     // Calculate hit rate (simplified - in practice you'd track this more accurately)
     final totalItems = stats['totalItems'] as int;
@@ -251,7 +251,7 @@ class IntelligentCacheManager {
   
   /// Get cache items by category
   Future<Map<String, List<String>>> getCacheItemsByCategory() async {
-    final stats = _storageManager.getCacheStats();
+    final stats = await _storageManager.getCacheStats();
     final categorizedItems = <String, List<String>>{};
     
     // This is a simplified implementation
@@ -277,8 +277,8 @@ class IntelligentCacheManager {
   }
   
   /// Get cache health score (0-100)
-  int getCacheHealthScore() {
-    final stats = _storageManager.getCacheStats();
+  Future<int> getCacheHealthScore() async {
+    final stats = await _storageManager.getCacheStats();
     final totalItems = stats['totalItems'] as int;
     final expiredItems = stats['expiredItems'] as int;
     final totalSizeMB = double.parse(stats['totalSizeMB'] as String);
@@ -309,7 +309,7 @@ class IntelligentCacheManager {
     // This would typically be called periodically
     await optimizeCache();
     
-    final healthScore = getCacheHealthScore();
+    final healthScore = await getCacheHealthScore();
     if (healthScore < 70) {
       // Perform more aggressive cleanup
       await _storageManager.cleanupExpiredCache();

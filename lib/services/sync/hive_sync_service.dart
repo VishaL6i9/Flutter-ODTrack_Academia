@@ -70,15 +70,15 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
   Future<bool> performHealthCheck() async {
     try {
       // Check storage health
-      final storageStats = _storageManager.getStorageStats();
-      final queueHealth = _queueManager.getQueueHealth();
+      final storageStats = await _storageManager.getStorageStats();
+      final queueHealth = await _queueManager.getQueueHealth();
       
       // Service is healthy if:
       // 1. Storage is accessible
       // 2. Queue is not overwhelmed
       // 3. No critical errors in recent sync attempts
-      return storageStats['totalBoxes'] == 4 && 
-             queueHealth['isHealthy'] == true;
+      return (storageStats['totalBoxes'] as int? ?? 0) == 4 && 
+             (queueHealth['isHealthy'] as bool? ?? false);
     } catch (e) {
       return false;
     }
@@ -218,7 +218,7 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
 
     try {
       // Get OD request items from sync queue
-      final queueItems = _queueManager.getNextSyncBatch(batchSize: 20)
+      final queueItems = (await _queueManager.getNextSyncBatch(batchSize: 20))
           .where((item) => item.itemType == 'od_request')
           .toList();
 
@@ -270,7 +270,7 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
 
     try {
       // Get user data items from sync queue
-      final queueItems = _queueManager.getNextSyncBatch(batchSize: 10)
+      final queueItems = (await _queueManager.getNextSyncBatch(batchSize: 10))
           .where((item) => item.itemType == 'user_data')
           .toList();
 
@@ -579,9 +579,9 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
   }
 
   /// Get sync statistics for monitoring
-  Map<String, dynamic> getSyncStatistics() {
-    final queueHealth = _queueManager.getQueueHealth();
-    final storageStats = _storageManager.getStorageStats();
+  Future<Map<String, dynamic>> getSyncStatistics() async {
+    final queueHealth = await _queueManager.getQueueHealth();
+    final storageStats = await _storageManager.getStorageStats();
     
     return {
       'isConnected': _isConnected,

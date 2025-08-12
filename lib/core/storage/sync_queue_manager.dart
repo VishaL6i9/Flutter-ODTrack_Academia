@@ -79,8 +79,8 @@ class SyncQueueManager {
   }
   
   /// Get next batch of items to sync
-  List<SyncQueueItem> getNextSyncBatch({int batchSize = 10}) {
-    final pendingItems = _storageManager.getPendingSyncItems();
+  Future<List<SyncQueueItem>> getNextSyncBatch({int batchSize = 10}) async {
+    final pendingItems = await _storageManager.getPendingSyncItems();
     
     // Filter out items that are in retry cooldown
     final availableItems = pendingItems.where((item) {
@@ -137,7 +137,7 @@ class SyncQueueManager {
   /// Check if item should be retried
   bool shouldRetryItem(SyncQueueItem item) {
     if (item.status != SyncStatus.failed) return false;
-    if (item.retryCount >= _maxRetries) return false;
+    if ((item.retryCount) >= _maxRetries) return false;
     
     if (item.lastRetryAt != null) {
       final cooldownDuration = _calculateRetryDelay(item.retryCount);
@@ -156,16 +156,16 @@ class SyncQueueManager {
   }
   
   /// Get items that have exceeded max retries
-  List<SyncQueueItem> getFailedItems() {
-    final allItems = _storageManager.getPendingSyncItems();
+  Future<List<SyncQueueItem>> getFailedItems() async {
+    final allItems = await _storageManager.getPendingSyncItems();
     return allItems.where((item) => 
-      item.status == SyncStatus.failed && item.retryCount >= _maxRetries
+      item.status == SyncStatus.failed && (item.retryCount) >= _maxRetries
     ).toList();
   }
   
   /// Remove items that have exceeded max retries
   Future<int> removeFailedItems() async {
-    final failedItems = getFailedItems();
+    final failedItems = await getFailedItems();
     for (final item in failedItems) {
       await _storageManager.updateSyncQueueItem(item.id, SyncStatus.completed);
     }
@@ -173,17 +173,16 @@ class SyncQueueManager {
   }
   
   /// Get sync queue health metrics
-  Map<String, dynamic> getQueueHealth() {
-    final stats = _storageManager.getSyncQueueStats();
-    final pendingItems = _storageManager.getPendingSyncItems();
+  Future<Map<String, dynamic>> getQueueHealth() async {
+    final stats = await _storageManager.getSyncQueueStats();
+    final pendingItems = await _storageManager.getPendingSyncItems();
     
     final oldestPending = pendingItems.isNotEmpty 
         ? pendingItems.map((item) => item.queuedAt).reduce((a, b) => a.isBefore(b) ? a : b)
         : null;
     
-    final avgRetryCount = pendingItems.isNotEmpty
-        ? pendingItems.map((item) => item.retryCount).reduce((a, b) => a + b) / pendingItems.length
-        : 0.0;
+    final totalRetries = pendingItems.map((item) => item.retryCount).fold(0, (a, b) => a + b);
+    final avgRetryCount = pendingItems.isNotEmpty ? totalRetries / pendingItems.length : 0.0;
     
     final itemsByType = <String, int>{};
     for (final item in pendingItems) {
@@ -197,7 +196,7 @@ class SyncQueueManager {
           : null,
       'averageRetryCount': avgRetryCount.toStringAsFixed(2),
       'itemsByType': itemsByType,
-      'isHealthy': stats['failed']! < 10 && stats['pending']! < 100,
+      'isHealthy': (stats['failed'] ?? 0) < 10 && (stats['pending'] ?? 0) < 100,
     };
   }
   
@@ -212,9 +211,9 @@ class SyncQueueManager {
   }
   
   /// Get detailed queue analysis
-  Map<String, dynamic> analyzeQueue() {
-    final pendingItems = _storageManager.getPendingSyncItems();
-    final stats = _storageManager.getSyncQueueStats();
+  Future<Map<String, dynamic>> analyzeQueue() async {
+    final pendingItems = await _storageManager.getPendingSyncItems();
+    final stats = await _storageManager.getSyncQueueStats();
     
     final operationCounts = <String, int>{};
     final typeCounts = <String, int>{};
@@ -229,23 +228,26 @@ class SyncQueueManager {
       priorityCounts[priorityRange] = (priorityCounts[priorityRange] ?? 0) + 1;
     }
     
+    final total = stats['total'] ?? 0;
+    final completed = stats['completed'] ?? 0;
+    
     return {
-      'totalItems': stats['total'],
+      'totalItems': total,
       'pendingItems': stats['pending'],
       'failedItems': stats['failed'],
       'operationBreakdown': operationCounts,
       'typeBreakdown': typeCounts,
       'priorityBreakdown': priorityCounts,
-      'queueEfficiency': stats['total']! > 0 
-          ? '${((stats['completed']! / stats['total']!) * 100).toStringAsFixed(1)}%'
+      'queueEfficiency': total > 0 
+          ? '${((completed / total) * 100).toStringAsFixed(1)}%'
           : '0%',
     };
   }
   
   /// Reset retry count for failed items (manual intervention)
   Future<int> resetFailedItems() async {
-    final failedItems = _storageManager.getPendingSyncItems()
-        .where((item) => item.status == SyncStatus.failed)
+    final failedItems = (await _storageManager.getPendingSyncItems())
+        .where((SyncQueueItem item) => item.status == SyncStatus.failed)
         .toList();
     
     for (final item in failedItems) {

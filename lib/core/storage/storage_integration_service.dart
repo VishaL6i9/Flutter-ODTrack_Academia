@@ -84,8 +84,8 @@ class StorageIntegrationService {
   }
   
   /// Get next batch of items to sync
-  List<SyncQueueItem> getNextSyncBatch({int batchSize = 10}) {
-    _ensureInitializedSync();
+  Future<List<SyncQueueItem>> getNextSyncBatch({int batchSize = 10}) async {
+    await _ensureInitialized();
     return _syncQueueManager.getNextSyncBatch(batchSize: batchSize);
   }
   
@@ -120,20 +120,20 @@ class StorageIntegrationService {
   }
   
   /// Get sync queue health
-  Map<String, dynamic> getSyncQueueHealth() {
-    _ensureInitializedSync();
+  Future<Map<String, dynamic>> getSyncQueueHealth() async {
+    await _ensureInitialized();
     return _syncQueueManager.getQueueHealth();
   }
   
   /// Get cache performance metrics
-  Map<String, dynamic> getCachePerformanceMetrics() {
-    _ensureInitializedSync();
+  Future<Map<String, dynamic>> getCachePerformanceMetrics() async {
+    await _ensureInitialized();
     return _cacheManager.getCachePerformanceMetrics();
   }
   
   /// Get cache health score
-  int getCacheHealthScore() {
-    _ensureInitializedSync();
+  Future<int> getCacheHealthScore() async {
+    await _ensureInitialized();
     return _cacheManager.getCacheHealthScore();
   }
   
@@ -150,14 +150,14 @@ class StorageIntegrationService {
   }
   
   /// Get overall storage statistics
-  Map<String, dynamic> getStorageStatistics() {
-    _ensureInitializedSync();
-    return _storageManager.getStorageStats();
+  Future<Map<String, dynamic>> getStorageStatistics() async {
+    await _ensureInitialized();
+    return await _storageManager.getStorageStats();
   }
   
   /// Analyze sync queue
-  Map<String, dynamic> analyzeSyncQueue() {
-    _ensureInitializedSync();
+  Future<Map<String, dynamic>> analyzeSyncQueue() async {
+    await _ensureInitialized();
     return _syncQueueManager.analyzeQueue();
   }
   
