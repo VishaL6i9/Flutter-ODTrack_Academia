@@ -59,7 +59,7 @@ class EnhancedStorageConfig {
   /// Open all required Hive boxes
   static Future<void> _openBoxes() async {
     await Future.wait([
-      Hive.openLazyBox<Map<String, dynamic>>(syncQueueBox),
+      Hive.openLazyBox<SyncQueueItem>(syncQueueBox),
       Hive.openLazyBox<Map<String, dynamic>>(analyticsBox),
       Hive.openLazyBox<ExportResult>(exportHistoryBox),
       Hive.openLazyBox<CalendarEvent>(calendarEventsBox),
