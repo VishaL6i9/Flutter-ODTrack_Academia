@@ -27,7 +27,6 @@ class EnhancedStorageManager {
   /// Open all required Hive boxes
   Future<void> _openBoxes() async {
     await Future.wait([
-      Hive.openBox<SyncQueueItem>(_syncQueueBox),
       Hive.openBox<CacheMetadata>(_cacheMetadataBox),
       Hive.openBox<SyncConflict>(_conflictResolutionBox),
       Hive.openBox<String>(_cacheDataBox), // Store JSON strings for flexibility
@@ -49,23 +48,25 @@ class EnhancedStorageManager {
   
   /// Add item to sync queue
   Future<void> addToSyncQueue(SyncQueueItem item) async {
-    final box = Hive.box<SyncQueueItem>(_syncQueueBox);
+    final box = Hive.lazyBox<SyncQueueItem>(_syncQueueBox);
     await box.put(item.id, item);
   }
   
   /// Get all pending sync queue items
-  List<SyncQueueItem> getPendingSyncItems() {
-    final box = Hive.box<SyncQueueItem>(_syncQueueBox);
-    return box.values
-        .where((item) => item.status == SyncStatus.pending || item.status == SyncStatus.failed)
+  Future<List<SyncQueueItem>> getPendingSyncItems() async {
+    final box = Hive.lazyBox<SyncQueueItem>(_syncQueueBox);
+    final items = await Future.wait(box.keys.map((k) => box.get(k)));
+    return items
+        .where((item) => item != null && (item.status == SyncStatus.pending || item.status == SyncStatus.failed))
+        .cast<SyncQueueItem>()
         .toList()
       ..sort((a, b) => a.queuedAt.compareTo(b.queuedAt));
   }
   
   /// Update sync queue item status
   Future<void> updateSyncQueueItem(String id, SyncStatus status, {String? errorMessage}) async {
-    final box = Hive.box<SyncQueueItem>(_syncQueueBox);
-    final item = box.get(id);
+    final box = Hive.lazyBox<SyncQueueItem>(_syncQueueBox);
+    final item = await box.get(id);
     if (item != null) {
       final updatedItem = item.copyWith(
         status: status,
@@ -79,10 +80,11 @@ class EnhancedStorageManager {
   
   /// Remove completed sync queue items
   Future<void> removeCompletedSyncItems() async {
-    final box = Hive.box<SyncQueueItem>(_syncQueueBox);
-    final completedKeys = box.values
-        .where((item) => item.status == SyncStatus.completed)
-        .map((item) => item.id)
+    final box = Hive.lazyBox<SyncQueueItem>(_syncQueueBox);
+    final items = await Future.wait(box.keys.map((k) => box.get(k)));
+    final completedKeys = items
+        .where((item) => item != null && item.status == SyncStatus.completed)
+        .map((item) => item!.id)
         .toList();
     
     for (final key in completedKeys) {
@@ -91,17 +93,18 @@ class EnhancedStorageManager {
   }
   
   /// Get sync queue statistics
-  Map<String, int> getSyncQueueStats() {
-    final box = Hive.box<SyncQueueItem>(_syncQueueBox);
-    final items = box.values.toList();
+  Future<Map<String, int>> getSyncQueueStats() async {
+    final box = Hive.lazyBox<SyncQueueItem>(_syncQueueBox);
+    final items = await Future.wait(box.keys.map((k) => box.get(k)));
+    final validItems = items.where((i) => i != null).cast<SyncQueueItem>().toList();
     
     return {
-      'total': items.length,
-      'pending': items.where((item) => item.status == SyncStatus.pending).length,
-      'in_progress': items.where((item) => item.status == SyncStatus.inProgress).length,
-      'completed': items.where((item) => item.status == SyncStatus.completed).length,
-      'failed': items.where((item) => item.status == SyncStatus.failed).length,
-      'conflict': items.where((item) => item.status == SyncStatus.conflict).length,
+      'total': validItems.length,
+      'pending': validItems.where((item) => item.status == SyncStatus.pending).length,
+      'in_progress': validItems.where((item) => item.status == SyncStatus.inProgress).length,
+      'completed': validItems.where((item) => item.status == SyncStatus.completed).length,
+      'failed': validItems.where((item) => item.status == SyncStatus.failed).length,
+      'conflict': validItems.where((item) => item.status == SyncStatus.conflict).length,
     };
   }
   
@@ -247,7 +250,7 @@ class EnhancedStorageManager {
   }
   
   /// Get cache statistics
-  Map<String, dynamic> getCacheStats() {
+  Future<Map<String, dynamic>> getCacheStats() async {
     final metadataBox = Hive.box<CacheMetadata>(_cacheMetadataBox);
     final items = metadataBox.values.toList();
     
@@ -261,10 +264,10 @@ class EnhancedStorageManager {
       'expiredItems': expiredCount,
       'averageItemSize': items.isNotEmpty ? (totalSize / items.length).round() : 0,
       'oldestItem': items.isNotEmpty 
-          ? items.map((m) => m.createdAt).reduce((a, b) => a.isBefore(b) ? a : b)
+          ? items.map((m) => m.createdAt).reduce((a, b) => a.isBefore(b) ? a : b).toIso8601String()
           : null,
       'newestItem': items.isNotEmpty 
-          ? items.map((m) => m.createdAt).reduce((a, b) => a.isAfter(b) ? a : b)
+          ? items.map((m) => m.createdAt).reduce((a, b) => a.isAfter(b) ? a : b).toIso8601String()
           : null,
     };
   }
@@ -299,18 +302,23 @@ class EnhancedStorageManager {
   
   /// Clear all enhanced storage data
   Future<void> clearAllData() async {
+    final syncQueueBox = await Hive.openLazyBox<SyncQueueItem>(_syncQueueBox);
+    final cacheMetadataBox = await Hive.openBox<CacheMetadata>(_cacheMetadataBox);
+    final conflictResolutionBox = await Hive.openBox<SyncConflict>(_conflictResolutionBox);
+    final cacheDataBox = await Hive.openBox<String>(_cacheDataBox);
+
     await Future.wait([
-      Hive.box<SyncQueueItem>(_syncQueueBox).clear(),
-      Hive.box<CacheMetadata>(_cacheMetadataBox).clear(),
-      Hive.box<SyncConflict>(_conflictResolutionBox).clear(),
-      Hive.box<String>(_cacheDataBox).clear(),
+      syncQueueBox.clear(),
+      cacheMetadataBox.clear(),
+      conflictResolutionBox.clear(),
+      cacheDataBox.clear(),
     ]);
   }
   
   /// Get overall storage statistics
-  Map<String, dynamic> getStorageStats() {
-    final syncStats = getSyncQueueStats();
-    final cacheStats = getCacheStats();
+  Future<Map<String, dynamic>> getStorageStats() async {
+    final syncStats = await getSyncQueueStats();
+    final cacheStats = await getCacheStats();
     final conflictBox = Hive.box<SyncConflict>(_conflictResolutionBox);
     
     return {
@@ -323,11 +331,16 @@ class EnhancedStorageManager {
   
   /// Optimize storage by compacting boxes
   Future<void> optimizeStorage() async {
+    final syncQueueBox = await Hive.openLazyBox<SyncQueueItem>(_syncQueueBox);
+    final cacheMetadataBox = await Hive.openBox<CacheMetadata>(_cacheMetadataBox);
+    final conflictResolutionBox = await Hive.openBox<SyncConflict>(_conflictResolutionBox);
+    final cacheDataBox = await Hive.openBox<String>(_cacheDataBox);
+
     await Future.wait([
-      Hive.box<SyncQueueItem>(_syncQueueBox).compact(),
-      Hive.box<CacheMetadata>(_cacheMetadataBox).compact(),
-      Hive.box<SyncConflict>(_conflictResolutionBox).compact(),
-      Hive.box<String>(_cacheDataBox).compact(),
+      syncQueueBox.compact(),
+      cacheMetadataBox.compact(),
+      conflictResolutionBox.compact(),
+      cacheDataBox.compact(),
     ]);
   }
 }
