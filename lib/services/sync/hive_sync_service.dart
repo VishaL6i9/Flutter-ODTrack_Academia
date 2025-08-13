@@ -10,6 +10,8 @@ import 'package:odtrack_academia/models/od_request.dart';
 import 'package:odtrack_academia/models/sync_models.dart';
 import 'package:odtrack_academia/models/user.dart';
 import 'package:odtrack_academia/services/sync/sync_service.dart';
+import 'package:odtrack_academia/services/sync/background_sync_worker.dart';
+import 'package:odtrack_academia/services/sync/offline_operation_queue.dart';
 
 /// Concrete implementation of SyncService using Hive storage
 /// Handles offline synchronization with automatic conflict resolution
@@ -17,6 +19,10 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
   final EnhancedStorageManager _storageManager;
   final SyncQueueManager _queueManager;
   final Connectivity _connectivity;
+  
+  // Enhanced sync components
+  late final BackgroundSyncWorker _backgroundWorker;
+  late final OfflineOperationQueue _offlineQueue;
   
   // Sync state management
   bool _isSyncing = false;
@@ -38,7 +44,16 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
     Connectivity? connectivity,
   }) : _storageManager = storageManager,
        _queueManager = queueManager,
-       _connectivity = connectivity ?? Connectivity();
+       _connectivity = connectivity ?? Connectivity() {
+    // Initialize enhanced sync components
+    _backgroundWorker = BackgroundSyncWorker(
+      syncService: this,
+      connectivity: _connectivity,
+    );
+    _offlineQueue = OfflineOperationQueue(
+      queueManager: _queueManager,
+    );
+  }
 
   @override
   String get serviceName => 'HiveSyncService';
@@ -56,6 +71,33 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
   Future<void> onInitialize() async {
     await _storageManager.initialize();
     await _initializeConnectivityMonitoring();
+    
+    // Start background sync worker
+    await _backgroundWorker.start();
+    
+    // Listen to background worker events
+    _backgroundWorker.eventStream.listen((event) {
+      debugPrint('HiveSyncService: Background worker event - ${event.type}');
+      
+      // Update sync status based on background worker events
+      switch (event.type) {
+        case 'sync_started':
+          _syncStatusController.add(SyncStatus.inProgress);
+          break;
+        case 'sync_completed':
+          _syncStatusController.add(SyncStatus.completed);
+          break;
+        case 'sync_failed':
+          _syncStatusController.add(SyncStatus.failed);
+          break;
+      }
+    });
+    
+    // Listen to offline queue events
+    _offlineQueue.eventStream.listen((event) {
+      debugPrint('HiveSyncService: Offline queue event - ${event.type}');
+    });
+    
     _startAutoSync();
   }
 
@@ -63,6 +105,8 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
   Future<void> onDispose() async {
     _autoSyncTimer?.cancel();
     await _connectivitySubscription?.cancel();
+    await _backgroundWorker.dispose();
+    await _offlineQueue.dispose();
     await _syncStatusController.close();
   }
 
@@ -229,9 +273,11 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
           final success = await _syncODRequestItem(queueItem);
           if (success) {
             await _queueManager.markAsCompleted(queueItem.id);
+            _offlineQueue.markOperationCompleted(queueItem.id, true);
             synced++;
           } else {
             await _queueManager.markAsFailed(queueItem.id, 'Sync operation failed');
+            _offlineQueue.markOperationCompleted(queueItem.id, false);
             failed++;
           }
         } catch (error) {
@@ -281,9 +327,11 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
           final success = await _syncUserDataItem(queueItem);
           if (success) {
             await _queueManager.markAsCompleted(queueItem.id);
+            _offlineQueue.markOperationCompleted(queueItem.id, true);
             synced++;
           } else {
             await _queueManager.markAsFailed(queueItem.id, 'Sync operation failed');
+            _offlineQueue.markOperationCompleted(queueItem.id, false);
             failed++;
           }
         } catch (error) {
@@ -605,5 +653,65 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
     
     final resolutions = await resolveConflicts(conflicts);
     return resolutions.length;
+  }
+
+  /// Get offline operation queue for managing offline operations
+  OfflineOperationQueue get offlineQueue => _offlineQueue;
+
+  /// Get background sync worker for monitoring sync status
+  BackgroundSyncWorker get backgroundWorker => _backgroundWorker;
+
+  /// Queue OD request for offline sync
+  Future<String> queueODRequestOffline(ODRequest request, String operation) async {
+    switch (operation) {
+      case 'create':
+        return await _offlineQueue.queueCreateODRequest(request);
+      case 'update':
+        return await _offlineQueue.queueUpdateODRequest(request);
+      case 'delete':
+        return await _offlineQueue.queueDeleteODRequest(request.id);
+      default:
+        throw ArgumentError('Unsupported operation: $operation');
+    }
+  }
+
+  /// Queue user data for offline sync
+  Future<String> queueUserDataOffline(User user) async {
+    return await _offlineQueue.queueUpdateUserData(user);
+  }
+
+  /// Queue bulk operations for offline sync
+  Future<String> queueBulkOperationOffline(
+    List<String> requestIds, 
+    String reason, 
+    String action
+  ) async {
+    switch (action) {
+      case 'approve':
+        return await _offlineQueue.queueBulkApproval(requestIds, reason);
+      case 'reject':
+        return await _offlineQueue.queueBulkRejection(requestIds, reason);
+      default:
+        throw ArgumentError('Unsupported bulk action: $action');
+    }
+  }
+
+  /// Force immediate sync through background worker
+  Future<SyncResult> forceImmediateSync() async {
+    return await _backgroundWorker.forceSync();
+  }
+
+  /// Get comprehensive sync and queue statistics
+  Future<Map<String, dynamic>> getComprehensiveStatistics() async {
+    final syncStats = await getSyncStatistics();
+    final queueStats = _offlineQueue.getStatistics();
+    final workerStats = _backgroundWorker.getStatistics();
+    
+    return {
+      'sync': syncStats,
+      'offlineQueue': queueStats,
+      'backgroundWorker': workerStats,
+      'timestamp': DateTime.now().toIso8601String(),
+    };
   }
 }
