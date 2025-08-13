@@ -28,8 +28,13 @@ class EnhancedStorageManager {
   Future<void> _openBoxes() async {
     final futures = <Future<void>>[];
     
-    // Note: cache_metadata_box and sync_queue_box are already opened by EnhancedStorageConfig.initialize()
-    // Only open boxes that aren't already open
+    // Open all required boxes
+    if (!Hive.isBoxOpen(_syncQueueBox)) {
+      futures.add(Hive.openLazyBox<SyncQueueItem>(_syncQueueBox));
+    }
+    if (!Hive.isBoxOpen(_cacheMetadataBox)) {
+      futures.add(Hive.openBox<CacheMetadata>(_cacheMetadataBox));
+    }
     if (!Hive.isBoxOpen(_conflictResolutionBox)) {
       futures.add(Hive.openBox<SyncConflict>(_conflictResolutionBox));
     }
@@ -59,6 +64,12 @@ class EnhancedStorageManager {
   Future<void> addToSyncQueue(SyncQueueItem item) async {
     final box = Hive.lazyBox<SyncQueueItem>(_syncQueueBox);
     await box.put(item.id, item);
+  }
+
+  /// Get sync queue item by ID
+  Future<SyncQueueItem?> getSyncQueueItem(String queueId) async {
+    final box = Hive.lazyBox<SyncQueueItem>(_syncQueueBox);
+    return await box.get(queueId);
   }
   
   /// Get all pending sync queue items
