@@ -45,11 +45,10 @@ app.*.map.json
 /android/app/release
 /android/build/*
 /build-output/*
-# Generated Dart files
 **/*.g.dart
-
-# Generated Mockito mocks
 **/*.mocks.dart
-
-# Hive test files
 **/*.hive
+**/generated_plugin_registrant.cc
+**/generated_plugin_registrant.h
+**/generated_plugins.cmake
+macos/Flutter/GeneratedPluginRegistrant.swift
