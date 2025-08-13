@@ -116,13 +116,18 @@ class SyncQueueManager {
     await _storageManager.updateSyncQueueItem(queueId, SyncStatus.completed);
   }
   
-  /// Mark sync item as failed
+  /// Mark sync item as failed with retry logic
   Future<void> markAsFailed(String queueId, String errorMessage) async {
-    await _storageManager.updateSyncQueueItem(
-      queueId, 
-      SyncStatus.failed, 
-      errorMessage: errorMessage,
-    );
+    final item = await _storageManager.getSyncQueueItem(queueId);
+    if (item != null) {
+      final updatedItem = item.copyWith(
+        status: SyncStatus.failed,
+        retryCount: item.retryCount + 1,
+        lastRetryAt: DateTime.now(),
+        errorMessage: errorMessage,
+      );
+      await _storageManager.addToSyncQueue(updatedItem);
+    }
   }
   
   /// Mark sync item as having conflicts
