@@ -45,8 +45,11 @@ app.*.map.json
 /android/app/release
 /android/build/*
 /build-output/*
-/lib/models/*.g.dart
-/lib/core/errors/*.g.dart
-test/providers/*.mocks.dart
-test/services/*.mocks.dart
-test/*.hive
+# Generated Dart files
+**/*.g.dart
+
+# Generated Mockito mocks
+**/*.mocks.dart
+
+# Hive test files
+**/*.hive
