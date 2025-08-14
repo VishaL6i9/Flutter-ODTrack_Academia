@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:odtrack_academia/models/analytics_models.dart';
+import 'package:odtrack_academia/models/export_models.dart';
 import 'package:odtrack_academia/providers/analytics_provider.dart';
+import 'package:odtrack_academia/providers/export_provider.dart';
 import 'package:odtrack_academia/features/analytics/presentation/widgets/charts/bar_chart_widget.dart';
 import 'package:odtrack_academia/features/analytics/presentation/widgets/charts/line_chart_widget.dart';
 import 'package:odtrack_academia/features/analytics/presentation/widgets/charts/pie_chart_widget.dart';
 import 'package:odtrack_academia/features/analytics/presentation/widgets/filters/analytics_filter_widget.dart';
 import 'package:odtrack_academia/features/analytics/presentation/services/chart_data_service.dart';
+import 'package:odtrack_academia/features/analytics/presentation/widgets/export_dialog_widget.dart';
 
 /// Analytics dashboard screen displaying various charts and analytics
 class AnalyticsDashboardScreen extends ConsumerStatefulWidget {
@@ -66,6 +69,11 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
               });
             },
             tooltip: 'Toggle Filters',
+          ),
+          IconButton(
+            icon: const Icon(Icons.file_download),
+            onPressed: _showExportDialog,
+            tooltip: 'Export Analytics',
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -494,5 +502,88 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
   void _refreshAnalytics() {
     ref.read(analyticsProvider.notifier).refreshAnalyticsCache();
     _loadAnalyticsData();
+  }
+
+  void _showExportDialog() {
+    final analyticsData = ref.read(analyticsProvider).analyticsData;
+    if (analyticsData == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No analytics data available to export'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    showDialog<void>(
+      context: context,
+      builder: (context) => ExportDialogWidget(
+        title: 'Export Analytics Report',
+        onExport: (format, options) => _exportAnalytics(format, options),
+        availableFormats: const [ExportFormat.pdf, ExportFormat.csv],
+      ),
+    );
+  }
+
+  Future<void> _exportAnalytics(ExportFormat format, ExportOptions options) async {
+    final analyticsData = ref.read(analyticsProvider).analyticsData;
+    if (analyticsData == null) return;
+
+    try {
+      // Show loading indicator
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 16),
+                Text('Exporting analytics report...'),
+              ],
+            ),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+
+      final result = await ref.read(exportProvider.notifier).exportAnalyticsReport(
+        analyticsData,
+        options,
+      );
+
+      if (mounted && result.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Analytics report exported successfully: ${result.fileName}'),
+            backgroundColor: Colors.green,
+            action: SnackBarAction(
+              label: 'Open',
+              onPressed: () => ref.read(exportProvider.notifier).openExportedFile(result.filePath),
+            ),
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Export failed: ${result.errorMessage ?? 'Unknown error'}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Export failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
