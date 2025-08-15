@@ -807,6 +807,451 @@ class HiveStaffAnalyticsService implements StaffAnalyticsService {
     }
   }
 
+  /// Enhanced time allocation tracking with detailed activity monitoring
+  @override
+  Future<Map<ActivityType, Duration>> calculateDetailedTimeAllocation(
+    String staffId, 
+    DateRange dateRange
+  ) async {
+    _ensureInitialized();
+    
+    final workloadData = await _getWorkloadDataForPeriod(staffId, dateRange);
+    if (workloadData == null) {
+      return {};
+    }
+    
+    final weeksInRange = _getWeeksInRange(dateRange);
+    final totalPeriodsPerWeek = workloadData.periodsPerSubject.values
+        .fold<int>(0, (sum, periods) => sum + periods);
+    
+    // Enhanced time calculation with realistic activity tracking
+    final timeAllocation = <ActivityType, Duration>{};
+    
+    // Teaching time: Direct classroom instruction
+    final teachingMinutes = (totalPeriodsPerWeek * 50 * weeksInRange).toDouble(); // 50 min periods
+    timeAllocation[ActivityType.teaching] = Duration(minutes: teachingMinutes.round());
+    
+    // Preparation time: Lesson planning, material preparation
+    final preparationMinutes = teachingMinutes * 0.6; // 60% of teaching time
+    timeAllocation[ActivityType.preparation] = Duration(minutes: preparationMinutes.round());
+    
+    // Evaluation time: Grading, assessment, feedback
+    final evaluationMinutes = teachingMinutes * 0.4; // 40% of teaching time
+    timeAllocation[ActivityType.evaluation] = Duration(minutes: evaluationMinutes.round());
+    
+    // Administrative time: Reports, meetings, documentation
+    final adminMinutes = (4.0 * 60 * weeksInRange); // 4 hours per week
+    timeAllocation[ActivityType.administrative] = Duration(minutes: adminMinutes.round());
+    
+    // OD Processing time: Based on actual OD requests handled
+    final odProcessingMinutes = await _calculateODProcessingTime(staffId, dateRange);
+    timeAllocation[ActivityType.odProcessing] = Duration(minutes: odProcessingMinutes.round());
+    
+    // Meeting time: Faculty meetings, department meetings
+    final meetingMinutes = (2.5 * 60 * weeksInRange); // 2.5 hours per week
+    timeAllocation[ActivityType.meetings] = Duration(minutes: meetingMinutes.round());
+    
+    // Other activities: Professional development, student counseling
+    final otherMinutes = (1.5 * 60 * weeksInRange); // 1.5 hours per week
+    timeAllocation[ActivityType.other] = Duration(minutes: otherMinutes.round());
+    
+    return timeAllocation;
+  }
+
+  /// Calculate actual time spent on OD processing based on request volume and complexity
+  Future<double> _calculateODProcessingTime(String staffId, DateRange dateRange) async {
+    final odRequests = _odRequestsBox!.values
+        .where((od) => od.staffId == staffId)
+        .where((od) => od.createdAt.isAfter(dateRange.startDate) && 
+                      od.createdAt.isBefore(dateRange.endDate))
+        .toList();
+    
+    if (odRequests.isEmpty) return 0.0;
+    
+    // Calculate time based on request complexity and volume
+    double totalMinutes = 0.0;
+    
+    for (final od in odRequests) {
+      // Base processing time per request
+      double requestMinutes = 15.0; // 15 minutes base time
+      
+      // Add complexity factors
+      if (od.reason.length > 100) requestMinutes += 5.0; // Detailed reasons take longer
+      if (od.attachmentUrl != null) requestMinutes += 10.0; // Document review time
+      if (od.status == 'rejected') requestMinutes += 8.0; // Rejection requires more consideration
+      
+      totalMinutes += requestMinutes;
+    }
+    
+    return totalMinutes;
+  }
+
+  /// Enhanced efficiency metrics with detailed performance indicators
+  @override
+  Future<Map<String, double>> calculateDetailedEfficiencyMetrics(
+    String staffId, 
+    DateRange dateRange
+  ) async {
+    _ensureInitialized();
+    
+    final odRequests = _odRequestsBox!.values
+        .where((od) => od.staffId == staffId)
+        .where((od) => od.createdAt.isAfter(dateRange.startDate) && 
+                      od.createdAt.isBefore(dateRange.endDate))
+        .toList();
+    
+    final metrics = <String, double>{};
+    
+    if (odRequests.isEmpty) {
+      return {
+        'processing_speed': 0.0,
+        'decision_quality': 0.0,
+        'response_consistency': 0.0,
+        'workload_efficiency': 0.0,
+        'student_impact': 0.0,
+      };
+    }
+    
+    // Processing Speed: Average time from submission to decision
+    final processingTimes = <double>[];
+    final responseTimes = <double>[];
+    
+    for (final od in odRequests) {
+      if (od.approvedAt != null) {
+        final processingHours = od.approvedAt!.difference(od.createdAt).inMinutes / 60.0;
+        processingTimes.add(processingHours);
+        responseTimes.add(processingHours);
+      }
+    }
+    
+    final avgProcessingTime = processingTimes.isEmpty 
+        ? 0.0 
+        : processingTimes.reduce((a, b) => a + b) / processingTimes.length;
+    
+    // Processing speed score (inverse of time, normalized)
+    metrics['processing_speed'] = avgProcessingTime > 0 
+        ? (48.0 / avgProcessingTime).clamp(0.0, 10.0) // 48 hours as benchmark
+        : 0.0;
+    
+    // Decision Quality: Based on approval rate and consistency
+    final approvedCount = odRequests.where((od) => od.status == 'approved').length;
+    final approvalRate = approvedCount / odRequests.length;
+    
+    // Quality score considers balanced decision making
+    final balanceScore = 1.0 - (approvalRate - 0.7).abs(); // 70% approval rate as optimal
+    metrics['decision_quality'] = (balanceScore * 10).clamp(0.0, 10.0);
+    
+    // Response Consistency: Standard deviation of response times
+    if (responseTimes.length > 1) {
+      final mean = responseTimes.reduce((a, b) => a + b) / responseTimes.length;
+      final variance = responseTimes
+          .map((time) => pow(time - mean, 2))
+          .reduce((a, b) => a + b) / responseTimes.length;
+      final stdDev = sqrt(variance);
+      
+      // Lower standard deviation = higher consistency
+      metrics['response_consistency'] = (10.0 - (stdDev / 6.0)).clamp(0.0, 10.0);
+    } else {
+      metrics['response_consistency'] = 10.0;
+    }
+    
+    // Workload Efficiency: Requests processed per hour worked
+    final totalHours = await calculateWorkingHours(staffId, dateRange);
+    final requestsPerHour = totalHours > 0 ? odRequests.length / totalHours : 0.0;
+    metrics['workload_efficiency'] = (requestsPerHour * 20).clamp(0.0, 10.0); // Scale to 0-10
+    
+    // Student Impact: Positive outcomes for students (using attachment as urgency indicator)
+    final urgentApproved = odRequests
+        .where((od) => od.attachmentUrl != null && od.status == 'approved')
+        .length;
+    final urgentTotal = odRequests.where((od) => od.attachmentUrl != null).length;
+    
+    final urgentApprovalRate = urgentTotal > 0 ? urgentApproved / urgentTotal : 0.0;
+    metrics['student_impact'] = urgentApprovalRate * 10;
+    
+    return metrics;
+  }
+
+  /// Calculate comparative benchmarks with department and institution
+  @override
+  Future<Map<String, ComparisonMetrics>> calculateComparativeBenchmarks(
+    String staffId, 
+    DateRange dateRange
+  ) async {
+    _ensureInitialized();
+    
+    final staffMember = _staffMembersBox!.get(staffId);
+    if (staffMember == null) {
+      throw Exception('Staff member not found: $staffId');
+    }
+    
+    final staffMetrics = await getEfficiencyMetrics(staffId, dateRange);
+    
+    // Calculate department benchmarks
+    final departmentStaff = _staffMembersBox!.values
+        .where((staff) => staff.department == staffMember.department && staff.id != staffId)
+        .toList();
+    
+    final departmentMetrics = await _calculateAggregateMetrics(departmentStaff, dateRange);
+    
+    // Calculate institution benchmarks (all staff except current)
+    final allStaff = _staffMembersBox!.values
+        .where((staff) => staff.id != staffId)
+        .toList();
+    
+    final institutionMetrics = await _calculateAggregateMetrics(allStaff, dateRange);
+    
+    // Calculate percentile ranks
+    final departmentProcessingTimes = await _getProcessingTimesForStaff(departmentStaff, dateRange);
+    final institutionProcessingTimes = await _getProcessingTimesForStaff(allStaff, dateRange);
+    
+    final departmentPercentile = _calculatePercentileRank(
+      staffMetrics.averageODProcessingTime, 
+      departmentProcessingTimes
+    );
+    
+    final institutionPercentile = _calculatePercentileRank(
+      staffMetrics.averageODProcessingTime, 
+      institutionProcessingTimes
+    );
+    
+    return {
+      'department': ComparisonMetrics(
+        averageProcessingTime: departmentMetrics['avgProcessingTime'] ?? 0.0,
+        averageApprovalRate: departmentMetrics['avgApprovalRate'] ?? 0.0,
+        averageResponseTime: departmentMetrics['avgResponseTime'] ?? 0.0,
+        percentileRank: departmentPercentile,
+      ),
+      'institution': ComparisonMetrics(
+        averageProcessingTime: institutionMetrics['avgProcessingTime'] ?? 0.0,
+        averageApprovalRate: institutionMetrics['avgApprovalRate'] ?? 0.0,
+        averageResponseTime: institutionMetrics['avgResponseTime'] ?? 0.0,
+        percentileRank: institutionPercentile,
+      ),
+    };
+  }
+
+  /// Calculate aggregate metrics for a group of staff members
+  Future<Map<String, double>> _calculateAggregateMetrics(
+    List<StaffMember> staffList, 
+    DateRange dateRange
+  ) async {
+    if (staffList.isEmpty) {
+      return {
+        'avgProcessingTime': 0.0,
+        'avgApprovalRate': 0.0,
+        'avgResponseTime': 0.0,
+      };
+    }
+    
+    double totalProcessingTime = 0.0;
+    double totalApprovalRate = 0.0;
+    double totalResponseTime = 0.0;
+    int validStaffCount = 0;
+    
+    for (final staff in staffList) {
+      try {
+        final metrics = await getEfficiencyMetrics(staff.id, dateRange);
+        if (metrics.totalODsProcessed > 0) {
+          totalProcessingTime += metrics.averageODProcessingTime;
+          totalApprovalRate += metrics.odApprovalRate;
+          totalResponseTime += metrics.odResponseTime;
+          validStaffCount++;
+        }
+      } catch (e) {
+        // Skip staff members with no data
+        continue;
+      }
+    }
+    
+    if (validStaffCount == 0) {
+      return {
+        'avgProcessingTime': 0.0,
+        'avgApprovalRate': 0.0,
+        'avgResponseTime': 0.0,
+      };
+    }
+    
+    return {
+      'avgProcessingTime': totalProcessingTime / validStaffCount,
+      'avgApprovalRate': totalApprovalRate / validStaffCount,
+      'avgResponseTime': totalResponseTime / validStaffCount,
+    };
+  }
+
+  /// Get processing times for a list of staff members
+  Future<List<double>> _getProcessingTimesForStaff(
+    List<StaffMember> staffList, 
+    DateRange dateRange
+  ) async {
+    final processingTimes = <double>[];
+    
+    for (final staff in staffList) {
+      try {
+        final metrics = await getEfficiencyMetrics(staff.id, dateRange);
+        if (metrics.totalODsProcessed > 0) {
+          processingTimes.add(metrics.averageODProcessingTime);
+        }
+      } catch (e) {
+        // Skip staff members with no data
+        continue;
+      }
+    }
+    
+    return processingTimes;
+  }
+
+  /// Calculate percentile rank for a value in a dataset
+  double _calculatePercentileRank(double value, List<double> dataset) {
+    if (dataset.isEmpty) return 0.0;
+    
+    dataset.sort();
+    int countBelow = dataset.where((v) => v < value).length;
+    int countEqual = dataset.where((v) => v == value).length;
+    
+    // Use the standard percentile rank formula
+    return ((countBelow + 0.5 * countEqual) / dataset.length) * 100;
+  }
+
+  /// Enhanced time conflict detection
+  @override
+  Future<List<TimeConflict>> detectTimeConflicts(
+    String staffId, 
+    DateRange dateRange
+  ) async {
+    _ensureInitialized();
+    
+    final conflicts = <TimeConflict>[];
+    final workloadData = await _getWorkloadDataForPeriod(staffId, dateRange);
+    
+    if (workloadData == null) return conflicts;
+    
+    // Check for schedule conflicts in weekly timetable
+    for (final dayEntry in workloadData.weeklySchedule.entries) {
+      final dayPeriods = dayEntry.value;
+      
+      // Group periods by time slot to detect overlaps
+      final timeSlotGroups = <String, List<Period>>{};
+      
+      for (final period in dayPeriods) {
+        final timeKey = '${period.timeSlot.periodNumber}';
+        timeSlotGroups[timeKey] = timeSlotGroups[timeKey] ?? [];
+        timeSlotGroups[timeKey]!.add(period);
+      }
+      
+      // Check for conflicts (multiple periods at same time)
+      for (final entry in timeSlotGroups.entries) {
+        if (entry.value.length > 1) {
+          final conflictId = '${staffId}_${dayEntry.key}_${entry.key}_${DateTime.now().millisecondsSinceEpoch}';
+          
+          conflicts.add(TimeConflict(
+            id: conflictId,
+            description: 'Schedule conflict on ${dayEntry.key} period ${entry.key}',
+            conflictTime: entry.value.first.timeSlot.startTime,
+            conflictingActivities: entry.value.map((p) => '${p.subjectCode} - ${p.className}').toList(),
+            severity: entry.value.length > 2 ? 'high' : 'medium',
+          ));
+        }
+      }
+    }
+    
+    // Check for workload conflicts (excessive hours)
+    final totalHours = await calculateWorkingHours(staffId, dateRange);
+    final weeklyAverage = totalHours / _getWeeksInRange(dateRange);
+    
+    if (weeklyAverage > 50) {
+      conflicts.add(TimeConflict(
+        id: '${staffId}_overload_${DateTime.now().millisecondsSinceEpoch}',
+        description: 'Excessive workload: ${weeklyAverage.toStringAsFixed(1)} hours per week',
+        conflictTime: DateTime.now(),
+        conflictingActivities: ['Teaching', 'Administrative', 'OD Processing'],
+        severity: weeklyAverage > 60 ? 'high' : 'medium',
+      ));
+    }
+    
+    return conflicts;
+  }
+
+  /// Calculate activity efficiency scores
+  @override
+  Future<Map<ActivityType, double>> calculateActivityEfficiencyScores(
+    String staffId, 
+    DateRange dateRange
+  ) async {
+    _ensureInitialized();
+    
+    final activityDistribution = await calculateActivityDistribution(staffId, dateRange);
+    final totalHours = await calculateWorkingHours(staffId, dateRange);
+    
+    final efficiencyScores = <ActivityType, double>{};
+    
+    if (totalHours == 0) return efficiencyScores;
+    
+    // Teaching efficiency: Based on student outcomes and period utilization
+    final teachingHours = activityDistribution[ActivityType.teaching] ?? 0;
+    final teachingPercentage = (teachingHours / totalHours) * 100;
+    
+    // Optimal teaching percentage is 60-70%
+    final teachingEfficiency = teachingPercentage >= 60 && teachingPercentage <= 70 
+        ? 10.0 
+        : 10.0 - (teachingPercentage - 65).abs() * 0.2;
+    
+    efficiencyScores[ActivityType.teaching] = teachingEfficiency.clamp(0.0, 10.0);
+    
+    // OD Processing efficiency: Based on processing speed and quality
+    final odHours = activityDistribution[ActivityType.odProcessing] ?? 0;
+    final odRequests = _odRequestsBox!.values
+        .where((od) => od.staffId == staffId)
+        .where((od) => od.createdAt.isAfter(dateRange.startDate) && 
+                      od.createdAt.isBefore(dateRange.endDate))
+        .length;
+    
+    final odEfficiency = odHours > 0 && odRequests > 0
+        ? (odRequests / odHours).clamp(0.0, 10.0) // Requests per hour
+        : 0.0;
+    
+    efficiencyScores[ActivityType.odProcessing] = odEfficiency;
+    
+    // Administrative efficiency: Based on time allocation balance
+    final adminHours = activityDistribution[ActivityType.administrative] ?? 0;
+    final adminPercentage = (adminHours / totalHours) * 100;
+    
+    // Optimal administrative percentage is 10-20%
+    final adminEfficiency = adminPercentage >= 10 && adminPercentage <= 20
+        ? 10.0
+        : 10.0 - (adminPercentage - 15).abs() * 0.3;
+    
+    efficiencyScores[ActivityType.administrative] = adminEfficiency.clamp(0.0, 10.0);
+    
+    // Preparation efficiency: Based on ratio to teaching time
+    final prepHours = activityDistribution[ActivityType.preparation] ?? 0;
+    final prepRatio = teachingHours > 0 ? prepHours / teachingHours : 0;
+    
+    // Optimal preparation ratio is 0.4-0.8 (40-80% of teaching time)
+    final prepEfficiency = prepRatio >= 0.4 && prepRatio <= 0.8
+        ? 10.0
+        : 10.0 - (prepRatio - 0.6).abs() * 10;
+    
+    efficiencyScores[ActivityType.preparation] = prepEfficiency.clamp(0.0, 10.0);
+    
+    // Evaluation efficiency: Based on ratio to teaching time
+    final evalHours = activityDistribution[ActivityType.evaluation] ?? 0;
+    final evalRatio = teachingHours > 0 ? evalHours / teachingHours : 0;
+    
+    // Optimal evaluation ratio is 0.2-0.5 (20-50% of teaching time)
+    final evalEfficiency = evalRatio >= 0.2 && evalRatio <= 0.5
+        ? 10.0
+        : 10.0 - (evalRatio - 0.35).abs() * 15;
+    
+    efficiencyScores[ActivityType.evaluation] = evalEfficiency.clamp(0.0, 10.0);
+    
+    return efficiencyScores;
+  }
+
+  // Additional helper methods for the enhanced functionality
+
+
+
   Future<StaffWorkloadData?> _getWorkloadDataForPeriod(
     String staffId, 
     DateRange dateRange
