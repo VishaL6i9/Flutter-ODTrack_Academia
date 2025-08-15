@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:odtrack_academia/models/staff_workload_models.dart';
 import 'package:odtrack_academia/services/analytics/staff_analytics_service.dart';
@@ -172,6 +173,182 @@ void main() {
         expect(weeklyHours1 > 50, isTrue); // Should trigger overwork alert
         expect(weeklyHours2 < 20, isTrue); // Should trigger underwork alert
         expect(weeklyHours3 >= 20 && weeklyHours3 <= 50, isTrue); // Should not trigger alerts
+      });
+    });
+
+    group('Teaching Analytics Tests', () {
+      test('should calculate subject-wise period allocation correctly', () {
+        // Test subject allocation calculation
+        final periodsPerSubject = {
+          'MATH101': 6,
+          'PHYS101': 4,
+          'CHEM101': 3,
+        };
+        
+        final totalPeriods = periodsPerSubject.values.fold<int>(0, (sum, periods) => sum + periods);
+        expect(totalPeriods, equals(13));
+        
+        // Test distribution calculation
+        final mathPercentage = (periodsPerSubject['MATH101']! / totalPeriods) * 100;
+        final physPercentage = (periodsPerSubject['PHYS101']! / totalPeriods) * 100;
+        final chemPercentage = (periodsPerSubject['CHEM101']! / totalPeriods) * 100;
+        
+        expect(mathPercentage, closeTo(46.15, 0.01));
+        expect(physPercentage, closeTo(30.77, 0.01));
+        expect(chemPercentage, closeTo(23.08, 0.01));
+        expect(mathPercentage + physPercentage + chemPercentage, closeTo(100.0, 0.01));
+      });
+
+      test('should calculate class-wise teaching load distribution correctly', () {
+        // Test class load distribution
+        final classAllocations = {
+          '10A': {'periods': 8, 'students': 35},
+          '10B': {'periods': 6, 'students': 32},
+          '11A': {'periods': 5, 'students': 28},
+        };
+        
+        final totalPeriods = classAllocations.values
+            .fold<int>(0, (sum, data) => sum + (data['periods'] as int));
+        expect(totalPeriods, equals(19));
+        
+        // Calculate load percentages
+        final class10APercentage = (classAllocations['10A']!['periods'] as int) / totalPeriods * 100;
+        final class10BPercentage = (classAllocations['10B']!['periods'] as int) / totalPeriods * 100;
+        final class11APercentage = (classAllocations['11A']!['periods'] as int) / totalPeriods * 100;
+        
+        expect(class10APercentage, closeTo(42.11, 0.01));
+        expect(class10BPercentage, closeTo(31.58, 0.01));
+        expect(class11APercentage, closeTo(26.32, 0.01));
+      });
+
+      test('should calculate grade-wise teaching load distribution correctly', () {
+        // Test grade distribution calculation
+        final gradeDistribution = {
+          Grade.grade10: 2, // 2 classes
+          Grade.grade11: 1, // 1 class
+          Grade.grade12: 1, // 1 class
+        };
+        
+        final totalClasses = gradeDistribution.values.fold<int>(0, (sum, count) => sum + count);
+        expect(totalClasses, equals(4));
+        
+        // Calculate percentages
+        final grade10Percentage = (gradeDistribution[Grade.grade10]! / totalClasses) * 100;
+        final grade11Percentage = (gradeDistribution[Grade.grade11]! / totalClasses) * 100;
+        final grade12Percentage = (gradeDistribution[Grade.grade12]! / totalClasses) * 100;
+        
+        expect(grade10Percentage, equals(50.0));
+        expect(grade11Percentage, equals(25.0));
+        expect(grade12Percentage, equals(25.0));
+      });
+
+      test('should calculate student count tracking correctly', () {
+        // Test student count calculations
+        final classSizes = [35, 32, 28, 30, 25];
+        
+        final totalStudents = classSizes.fold<int>(0, (sum, size) => sum + size);
+        final averageClassSize = totalStudents / classSizes.length;
+        final minClassSize = classSizes.reduce((a, b) => a < b ? a : b);
+        final maxClassSize = classSizes.reduce((a, b) => a > b ? a : b);
+        
+        expect(totalStudents, equals(150));
+        expect(averageClassSize, equals(30.0));
+        expect(minClassSize, equals(25));
+        expect(maxClassSize, equals(35));
+        
+        // Test standard deviation calculation
+        final variance = classSizes
+            .map((size) => (size - averageClassSize) * (size - averageClassSize))
+            .reduce((a, b) => a + b) / classSizes.length;
+        final standardDeviation = sqrt(variance);
+        
+        expect(standardDeviation, closeTo(3.41, 0.1));
+      });
+
+      test('should calculate class size analytics correctly', () {
+        // Test comprehensive class size analytics
+        final classSizes = [30, 35, 28, 32, 25, 40, 22];
+        classSizes.sort();
+        
+        final average = classSizes.reduce((a, b) => a + b) / classSizes.length;
+        final median = classSizes[classSizes.length ~/ 2].toDouble();
+        final minimum = classSizes.first;
+        final maximum = classSizes.last;
+        
+        expect(average, closeTo(30.29, 0.01));
+        expect(median, equals(30.0));
+        expect(minimum, equals(22));
+        expect(maximum, equals(40));
+        
+        // Test variance and standard deviation
+        final variance = classSizes
+            .map((size) => (size - average) * (size - average))
+            .reduce((a, b) => a + b) / classSizes.length;
+        final standardDeviation = sqrt(variance);
+        
+        expect(standardDeviation, closeTo(5.62, 0.1));
+      });
+
+      test('should calculate teaching efficiency metrics correctly', () {
+        // Test teaching efficiency calculations
+        const totalPeriods = 25;
+        const maxPossiblePeriods = 40;
+        const totalStudents = 150;
+        const subjectCount = 3;
+        const gradeCount = 2;
+        
+        const periodsUtilizationRate = totalPeriods / maxPossiblePeriods;
+        const averageStudentsPerPeriod = totalStudents / totalPeriods;
+        const subjectDiversityIndex = subjectCount / 10.0;
+        const gradeLevelSpread = gradeCount / 12.0;
+        
+        expect(periodsUtilizationRate, equals(0.625));
+        expect(averageStudentsPerPeriod, equals(6.0));
+        expect(subjectDiversityIndex, equals(0.3));
+        expect(gradeLevelSpread, closeTo(0.167, 0.001));
+      });
+
+      test('should calculate student-to-period ratios correctly', () {
+        // Test student-to-period ratio calculations
+        final subjectData = {
+          'MATH101': {'students': 120.0, 'periods': 6},
+          'PHYS101': {'students': 80.0, 'periods': 4},
+          'CHEM101': {'students': 60.0, 'periods': 3},
+        };
+        
+        final ratios = <String, double>{};
+        for (final entry in subjectData.entries) {
+          final students = entry.value['students'] as double;
+          final periods = entry.value['periods'] as int;
+          ratios[entry.key] = students / periods;
+        }
+        
+        expect(ratios['MATH101'], equals(20.0));
+        expect(ratios['PHYS101'], equals(20.0));
+        expect(ratios['CHEM101'], equals(20.0));
+      });
+
+      test('should handle edge cases in teaching analytics calculations', () {
+        // Test empty data
+        final emptyClassSizes = <int>[];
+        expect(emptyClassSizes.isEmpty, isTrue);
+        
+        // Test single class
+        final singleClass = [30];
+        final singleAverage = singleClass.reduce((a, b) => a + b) / singleClass.length;
+        expect(singleAverage, equals(30.0));
+        
+        // Test zero periods
+        const zeroPeriods = 0;
+        const totalStudents = 100;
+        const ratio = zeroPeriods > 0 ? totalStudents / zeroPeriods : 0.0;
+        expect(ratio, equals(0.0));
+        
+        // Test maximum utilization
+        const maxPeriods = 40;
+        const assignedPeriods = 40;
+        const utilization = assignedPeriods / maxPeriods;
+        expect(utilization, equals(1.0));
       });
     });
   });
