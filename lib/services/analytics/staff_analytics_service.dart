@@ -88,6 +88,36 @@ abstract class StaffAnalyticsService {
   
   /// Refresh analytics cache
   Future<void> refreshAnalyticsCache();
+  
+  /// Enhanced time allocation tracking with detailed activity monitoring
+  Future<Map<ActivityType, Duration>> calculateDetailedTimeAllocation(
+    String staffId, 
+    DateRange dateRange
+  );
+  
+  /// Enhanced efficiency metrics with detailed performance indicators
+  Future<Map<String, double>> calculateDetailedEfficiencyMetrics(
+    String staffId, 
+    DateRange dateRange
+  );
+  
+  /// Calculate comparative benchmarks with department and institution
+  Future<Map<String, ComparisonMetrics>> calculateComparativeBenchmarks(
+    String staffId, 
+    DateRange dateRange
+  );
+  
+  /// Enhanced time conflict detection
+  Future<List<TimeConflict>> detectTimeConflicts(
+    String staffId, 
+    DateRange dateRange
+  );
+  
+  /// Calculate activity efficiency scores
+  Future<Map<ActivityType, double>> calculateActivityEfficiencyScores(
+    String staffId, 
+    DateRange dateRange
+  );
 }
 
 /// Teaching analytics model
