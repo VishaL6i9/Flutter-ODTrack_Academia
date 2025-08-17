@@ -6,18 +6,20 @@ import 'package:odtrack_academia/models/od_request.dart';
 import 'package:odtrack_academia/models/user.dart';
 import 'package:odtrack_academia/features/staff_directory/data/staff_data.dart';
 import 'package:odtrack_academia/features/timetable/data/timetable_data.dart' as t_data;
+import 'package:odtrack_academia/core/constants/app_constants.dart';
 
 /// Service to populate sample data for analytics dashboard
 class SampleDataService {
   static const String _staffMembersBoxName = 'staff_members';
   static const String _workloadDataBoxName = 'staff_workload_data';
   static const String _odRequestsBoxName = 'od_requests';
-  static const String _usersBoxName = 'users';
+  static String get _usersBoxName => AppConstants.userBox;
 
   final Random _random = Random();
 
   /// Initialize and populate sample data
   Future<void> initializeSampleData() async {
+    await clearSampleData(); // Clear existing data to ensure fresh population
     await _populateStaffMembers();
     await _populateWorkloadData();
     await _populateODRequests();
@@ -26,7 +28,12 @@ class SampleDataService {
 
   /// Populate sample staff members
   Future<void> _populateStaffMembers() async {
-    final box = await Hive.openBox<StaffMember>(_staffMembersBoxName);
+    Box<StaffMember> box;
+    if (Hive.isBoxOpen(_staffMembersBoxName)) {
+      box = Hive.box<StaffMember>(_staffMembersBoxName);
+    } else {
+      box = await Hive.openBox<StaffMember>(_staffMembersBoxName);
+    }
     
     if (box.isNotEmpty) return; // Data already exists
 
@@ -39,7 +46,12 @@ class SampleDataService {
 
   /// Populate sample workload data
   Future<void> _populateWorkloadData() async {
-    final box = await Hive.openBox<StaffWorkloadData>(_workloadDataBoxName);
+    Box<StaffWorkloadData> box;
+    if (Hive.isBoxOpen(_workloadDataBoxName)) {
+      box = Hive.box<StaffWorkloadData>(_workloadDataBoxName);
+    } else {
+      box = await Hive.openBox<StaffWorkloadData>(_workloadDataBoxName);
+    }
     
     if (box.isNotEmpty) return; // Data already exists
 
@@ -133,7 +145,12 @@ class SampleDataService {
 
   /// Populate sample OD requests
   Future<void> _populateODRequests() async {
-    final box = await Hive.openBox<ODRequest>(_odRequestsBoxName);
+    Box<ODRequest> box;
+    if (Hive.isBoxOpen(_odRequestsBoxName)) {
+      box = Hive.box<ODRequest>(_odRequestsBoxName);
+    } else {
+      box = await Hive.openBox<ODRequest>(_odRequestsBoxName);
+    }
     
     if (box.isNotEmpty) return; // Data already exists
 
@@ -183,7 +200,13 @@ class SampleDataService {
 
   /// Populate sample users
   Future<void> _populateUsers() async {
-    final box = await Hive.openBox<User>(_usersBoxName);
+    // Check if the box is already open, if not open it
+    Box<User> box;
+    if (Hive.isBoxOpen(_usersBoxName)) {
+      box = Hive.box<User>(_usersBoxName);
+    } else {
+      box = await Hive.openBox<User>(_usersBoxName);
+    }
     
     if (box.isNotEmpty) return; // Data already exists
 
@@ -256,16 +279,54 @@ class SampleDataService {
 
   /// Clear all sample data (useful for testing)
   Future<void> clearSampleData() async {
-    final boxes = [
-      _staffMembersBoxName,
-      _workloadDataBoxName,
-      _odRequestsBoxName,
-      _usersBoxName,
+    final boxConfigs = [
+      {'name': _staffMembersBoxName, 'type': 'StaffMember'},
+      {'name': _workloadDataBoxName, 'type': 'StaffWorkloadData'},
+      {'name': _odRequestsBoxName, 'type': 'ODRequest'},
+      {'name': _usersBoxName, 'type': 'User'},
     ];
 
-    for (final boxName in boxes) {
+    for (final config in boxConfigs) {
       try {
-        final box = await Hive.openBox<dynamic>(boxName);
+        final boxName = config['name']!;
+        final boxType = config['type']!;
+        
+        Box<dynamic> box;
+        if (Hive.isBoxOpen(boxName)) {
+          switch (boxType) {
+            case 'StaffMember':
+              box = Hive.box<StaffMember>(boxName);
+              break;
+            case 'StaffWorkloadData':
+              box = Hive.box<StaffWorkloadData>(boxName);
+              break;
+            case 'ODRequest':
+              box = Hive.box<ODRequest>(boxName);
+              break;
+            case 'User':
+              box = Hive.box<User>(boxName);
+              break;
+            default:
+              box = Hive.box(boxName);
+          }
+        } else {
+          switch (boxType) {
+            case 'StaffMember':
+              box = await Hive.openBox<StaffMember>(boxName);
+              break;
+            case 'StaffWorkloadData':
+              box = await Hive.openBox<StaffWorkloadData>(boxName);
+              break;
+            case 'ODRequest':
+              box = await Hive.openBox<ODRequest>(boxName);
+              break;
+            case 'User':
+              box = await Hive.openBox<User>(boxName);
+              break;
+            default:
+              box = await Hive.openBox(boxName);
+          }
+        }
         await box.clear();
       } catch (e) {
         // Box might not exist, ignore
@@ -276,7 +337,12 @@ class SampleDataService {
   /// Check if sample data exists
   Future<bool> hasSampleData() async {
     try {
-      final box = await Hive.openBox<StaffMember>(_staffMembersBoxName);
+      Box<StaffMember> box;
+      if (Hive.isBoxOpen(_staffMembersBoxName)) {
+        box = Hive.box<StaffMember>(_staffMembersBoxName);
+      } else {
+        box = await Hive.openBox<StaffMember>(_staffMembersBoxName);
+      }
       return box.isNotEmpty;
     } catch (e) {
       return false;
