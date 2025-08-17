@@ -72,7 +72,9 @@ class _StaffAnalyticsFilterWidgetState extends State<StaffAnalyticsFilterWidget>
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
+    return Theme(
+      data: ThemeData.light(),
+      child: Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -115,6 +117,7 @@ class _StaffAnalyticsFilterWidgetState extends State<StaffAnalyticsFilterWidget>
             _buildActionButtons(),
           ],
         ),
+      ),
       ),
     );
   }

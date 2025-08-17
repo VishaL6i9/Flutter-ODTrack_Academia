@@ -36,7 +36,9 @@ class EfficiencyMetricsWidget extends ConsumerWidget {
       );
     }
 
-    return SingleChildScrollView(
+    return Theme(
+      data: ThemeData.light(),
+      child: SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,6 +62,7 @@ class EfficiencyMetricsWidget extends ConsumerWidget {
           // Student Satisfaction Score
           _buildStudentSatisfactionScore(efficiencyMetrics),
         ],
+      ),
       ),
     );
   }

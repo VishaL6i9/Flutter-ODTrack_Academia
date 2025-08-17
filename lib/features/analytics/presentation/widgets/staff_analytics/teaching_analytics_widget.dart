@@ -36,7 +36,9 @@ class TeachingAnalyticsWidget extends ConsumerWidget {
       );
     }
 
-    return SingleChildScrollView(
+    return Theme(
+      data: ThemeData.light(),
+      child: SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,6 +66,7 @@ class TeachingAnalyticsWidget extends ConsumerWidget {
           // Detailed Subject Breakdown
           _buildSubjectBreakdown(teachingAnalytics),
         ],
+      ),
       ),
     );
   }

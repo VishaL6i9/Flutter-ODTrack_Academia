@@ -55,7 +55,9 @@ class _ComparativeAnalyticsWidgetState extends ConsumerState<ComparativeAnalytic
       );
     }
 
-    return SingleChildScrollView(
+    return Theme(
+      data: ThemeData.light(),
+      child: SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,6 +81,7 @@ class _ComparativeAnalyticsWidgetState extends ConsumerState<ComparativeAnalytic
           // Detailed Semester Comparison
           _buildDetailedSemesterComparison(comparativeAnalytics),
         ],
+      ),
       ),
     );
   }
