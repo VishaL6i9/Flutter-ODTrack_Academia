@@ -37,19 +37,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _loadUserFromStorage();
   }
 
-  final LazyBox<dynamic> _userBox = Hive.lazyBox(AppConstants.userBox);
+  Box<User> get _userBox => Hive.box<User>(AppConstants.userBox);
   final StaffAnalyticsService _staffAnalyticsService;
 
   Future<void> _loadUserFromStorage() async {
-    final userData = await _userBox.get(AppConstants.userDataKey);
-    if (userData != null) {
-      try {
-        final user = User.fromJson(userData as Map<String, dynamic>);
+    try {
+      // Check if there are any users in the box
+      if (_userBox.isNotEmpty) {
+        // For now, get the first user - in a real app, you'd have a specific key
+        final user = _userBox.values.first;
         state = state.copyWith(user: user);
-      } catch (e) {
-        // Clear invalid data
-        await _userBox.delete(AppConstants.userDataKey);
       }
+    } catch (e) {
+      // Clear invalid data if there's an error
+      await _userBox.clear();
     }
   }
 
@@ -74,9 +75,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         phone: '+91 9876543210',
       );
 
-      // Save to storage
-      await _userBox.put(AppConstants.userDataKey, user.toJson());
-      await _userBox.put(AppConstants.userRoleKey, user.role);
+      // Save to storage - store the user object directly
+      await _userBox.put(user.id, user);
 
       state = state.copyWith(user: user, isLoading: false);
     } catch (e) {
@@ -122,9 +122,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         );
       }
 
-      // Save to storage
-      await _userBox.put(AppConstants.userDataKey, user.toJson());
-      await _userBox.put(AppConstants.userRoleKey, user.role);
+      // Save to storage - store the user object directly
+      await _userBox.put(user.id, user);
 
       state = state.copyWith(user: user, isLoading: false);
     } catch (e) {
