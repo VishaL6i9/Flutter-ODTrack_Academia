@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:odtrack_academia/core/constants/app_constants.dart';
+import 'package:odtrack_academia/features/staff_directory/data/staff_data.dart';
 import 'package:odtrack_academia/models/user.dart';
+import 'package:odtrack_academia/providers/staff_analytics_provider.dart';
+import 'package:odtrack_academia/services/analytics/staff_analytics_service.dart';
 
 class AuthState {
   final User? user;
@@ -30,11 +33,12 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier() : super(const AuthState()) {
+  AuthNotifier(this._staffAnalyticsService) : super(const AuthState()) {
     _loadUserFromStorage();
   }
 
   final LazyBox<dynamic> _userBox = Hive.lazyBox(AppConstants.userBox);
+  final StaffAnalyticsService _staffAnalyticsService;
 
   Future<void> _loadUserFromStorage() async {
     final userData = await _userBox.get(AppConstants.userDataKey);
@@ -89,17 +93,34 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       // Demo login - simulate API call
       await Future<void>.delayed(const Duration(seconds: 1));
+      await _staffAnalyticsService.initialize();
 
-      // Demo staff data
-      final user = User(
-        id: 'staff_${email.split('@')[0]}',
-        name: 'Demo Staff',
-        email: email,
-        role: AppConstants.staffRole,
-        department: 'Computer Science',
-        section: null, // Staff don't have sections
-        phone: '+91 9876543210',
-      );
+      // Find staff by email
+      final staffMember = await _staffAnalyticsService.findStaffByEmail(email);
+
+      User user;
+      if (staffMember != null) {
+        // Use existing staff data
+        user = User(
+          id: staffMember.id,
+          name: staffMember.name,
+          email: staffMember.email,
+          role: AppConstants.staffRole,
+          department: staffMember.department,
+          phone: staffMember.phone,
+        );
+      } else {
+        // Fallback to the first staff member in the hardcoded list
+        final fallbackStaff = StaffData.allStaff.first;
+        user = User(
+          id: fallbackStaff.id,
+          name: fallbackStaff.name,
+          email: email, // Keep the entered email
+          role: AppConstants.staffRole,
+          department: fallbackStaff.department,
+          phone: fallbackStaff.phone,
+        );
+      }
 
       // Save to storage
       await _userBox.put(AppConstants.userDataKey, user.toJson());
@@ -121,5 +142,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
 }
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier();
+  final staffAnalyticsService = ref.watch(staffAnalyticsServiceProvider);
+  return AuthNotifier(staffAnalyticsService);
 });
