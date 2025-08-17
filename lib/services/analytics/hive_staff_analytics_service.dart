@@ -49,8 +49,8 @@ class HiveStaffAnalyticsService implements StaffAnalyticsService {
     DateRange dateRange
   ) async {
     // Debugging: Print staffId and box keys
-    print('Attempting to get staff member with ID: $staffId');
-    print('Staff members box keys: ${_staffMembersBox.keys.toList()}');
+    // print('Attempting to get staff member with ID: $staffId');
+    // print('Staff members box keys: ${_staffMembersBox.keys.toList()}');
 
     final staffMember = _staffMembersBox.get(staffId);
     if (staffMember == null) {
