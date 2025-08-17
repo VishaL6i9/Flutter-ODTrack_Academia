@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:odtrack_academia/models/staff_member.dart';
 import 'package:odtrack_academia/models/staff_workload_models.dart';
 import 'package:odtrack_academia/models/analytics_models.dart';
 
@@ -7,6 +8,15 @@ import 'package:odtrack_academia/models/analytics_models.dart';
 abstract class StaffAnalyticsService {
   /// Initialize the staff analytics service
   Future<void> initialize();
+  
+  /// Check if a staff member exists
+  Future<bool> staffExists(String staffId);
+
+  /// Get the ID of the first available staff member
+  Future<String?> getFirstStaffId();
+  
+  /// Find a staff member by their email
+  Future<StaffMember?> findStaffByEmail(String email);
   
   /// Get workload analytics for a specific staff member
   Future<WorkloadAnalytics> getWorkloadAnalytics(
