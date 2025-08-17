@@ -74,17 +74,11 @@ class _StaffAnalyticsDashboardScreenState extends ConsumerState<StaffAnalyticsDa
 
   Future<void> _initializeAnalytics() async {
     final authState = ref.read(authProvider);
-    final analyticsService = ref.read(staffAnalyticsServiceProvider);
     
     // Prioritize passed staffId, otherwise use the logged-in user's ID.
     String? staffIdToLoad = widget.staffId;
     if (staffIdToLoad == null && authState.user != null) {
       staffIdToLoad = authState.user!.id;
-    }
-
-    // If still no staffId, try to get the first available staff member from the service.
-    if (staffIdToLoad == null || staffIdToLoad.isEmpty) {
-      staffIdToLoad = await analyticsService.getFirstStaffId();
     }
     
     // If we have a valid staff ID, load the analytics data.
