@@ -6,6 +6,7 @@ import 'package:odtrack_academia/core/constants/app_constants.dart';
 
 import 'package:odtrack_academia/core/storage/enhanced_storage_config.dart';
 import 'package:odtrack_academia/core/services/service_registry.dart';
+import 'package:odtrack_academia/services/sample_data_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +22,10 @@ void main() async {
   
   // Initialize M5 services
   await ServiceRegistry.instance.initializeServices();
+  
+  // Initialize sample data for analytics dashboard
+  final sampleDataService = SampleDataService();
+  await sampleDataService.initializeSampleData();
   
   runApp(
     const ProviderScope(
