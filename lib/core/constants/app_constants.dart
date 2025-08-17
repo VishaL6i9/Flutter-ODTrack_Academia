@@ -34,4 +34,5 @@ class AppConstants {
   static const String timetableRoute = '/timetable';
   static const String staffDirectoryRoute = '/staff-directory';
   static const String staffInboxRoute = '/staff-inbox';
+  static const String staffAnalyticsRoute = '/staff-analytics';
 }
