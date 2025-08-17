@@ -38,6 +38,32 @@ class HiveStaffAnalyticsService implements StaffAnalyticsService {
   }
 
   @override
+  Future<bool> staffExists(String staffId) async {
+    _ensureInitialized();
+    return _staffMembersBox!.containsKey(staffId);
+  }
+
+  @override
+  Future<StaffMember?> findStaffByEmail(String email) async {
+    _ensureInitialized();
+    for (final staff in _staffMembersBox!.values) {
+      if (staff.email == email) {
+        return staff;
+      }
+    }
+    return null;
+  }
+
+  @override
+  Future<String?> getFirstStaffId() async {
+    _ensureInitialized();
+    if (_staffMembersBox!.isNotEmpty) {
+      return _staffMembersBox!.keys.first as String?;
+    }
+    return null;
+  }
+
+  @override
   Future<WorkloadAnalytics> getWorkloadAnalytics(
     String staffId, 
     DateRange dateRange
