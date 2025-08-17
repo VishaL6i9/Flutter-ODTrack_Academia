@@ -4,6 +4,10 @@ import 'package:odtrack_academia/models/analytics_models.dart';
 import 'package:odtrack_academia/models/export_models.dart';
 import 'package:odtrack_academia/models/bulk_operation_models.dart';
 import 'package:odtrack_academia/models/performance_models.dart';
+import 'package:odtrack_academia/models/staff_member.dart';
+import 'package:odtrack_academia/models/staff_workload_models.dart';
+import 'package:odtrack_academia/models/od_request.dart';
+import 'package:odtrack_academia/models/user.dart';
 
 /// Enhanced storage configuration for M5 features
 class EnhancedStorageConfig {
@@ -27,6 +31,47 @@ class EnhancedStorageConfig {
   
   /// Register Hive type adapters for M5 models
   static void _registerTypeAdapters() {
+    // Register User adapter
+    if (!Hive.isAdapterRegistered(0)) {
+      Hive.registerAdapter(UserAdapter());
+    }
+
+    // Register ODRequest adapter
+    if (!Hive.isAdapterRegistered(1)) {
+      Hive.registerAdapter(ODRequestAdapter());
+    }
+    
+    // Register StaffMember adapter
+    if (!Hive.isAdapterRegistered(2)) {
+      Hive.registerAdapter(StaffMemberAdapter());
+    }
+
+    // Register workload models
+    if (!Hive.isAdapterRegistered(10)) {
+      Hive.registerAdapter(TimeSlotAdapter());
+    }
+    if (!Hive.isAdapterRegistered(11)) {
+      Hive.registerAdapter(PeriodAdapter());
+    }
+    if (!Hive.isAdapterRegistered(12)) {
+      Hive.registerAdapter(SubjectAllocationAdapter());
+    }
+    if (!Hive.isAdapterRegistered(13)) {
+      Hive.registerAdapter(ClassAssignmentAdapter());
+    }
+    if (!Hive.isAdapterRegistered(14)) {
+      Hive.registerAdapter(ClassAllocationAdapter());
+    }
+    if (!Hive.isAdapterRegistered(15)) {
+      Hive.registerAdapter(WorkloadAlertAdapter());
+    }
+    if (!Hive.isAdapterRegistered(16)) {
+      Hive.registerAdapter(WorkloadAnalyticsAdapter());
+    }
+    if (!Hive.isAdapterRegistered(17)) {
+      Hive.registerAdapter(StaffWorkloadDataAdapter());
+    }
+
     // Register adapters for sync models - only register if not already registered
     if (!Hive.isAdapterRegistered(102)) {
       Hive.registerAdapter(SyncStatusAdapter());
@@ -68,6 +113,26 @@ class EnhancedStorageConfig {
     }
     if (!Hive.isAdapterRegistered(108)) {
       Hive.registerAdapter(TrendDirectionAdapter());
+    }
+
+    // Register workload enum adapters
+    if (!Hive.isAdapterRegistered(109)) {
+      Hive.registerAdapter(ActivityTypeAdapter());
+    }
+    if (!Hive.isAdapterRegistered(110)) {
+      Hive.registerAdapter(GradeAdapter());
+    }
+    if (!Hive.isAdapterRegistered(111)) {
+      Hive.registerAdapter(PeriodTypeAdapter());
+    }
+    if (!Hive.isAdapterRegistered(112)) {
+      Hive.registerAdapter(ClassTypeAdapter());
+    }
+    if (!Hive.isAdapterRegistered(113)) {
+      Hive.registerAdapter(SubjectTypeAdapter());
+    }
+    if (!Hive.isAdapterRegistered(114)) {
+      Hive.registerAdapter(WorkloadTrendAdapter());
     }
   }
   
@@ -207,6 +272,96 @@ class TrendDirectionAdapter extends TypeAdapter<TrendDirection> {
 
   @override
   void write(BinaryWriter writer, TrendDirection obj) {
+    writer.writeByte(obj.index);
+  }
+}
+
+class ActivityTypeAdapter extends TypeAdapter<ActivityType> {
+  @override
+  final int typeId = 109;
+
+  @override
+  ActivityType read(BinaryReader reader) {
+    return ActivityType.values[reader.readByte()];
+  }
+
+  @override
+  void write(BinaryWriter writer, ActivityType obj) {
+    writer.writeByte(obj.index);
+  }
+}
+
+class GradeAdapter extends TypeAdapter<Grade> {
+  @override
+  final int typeId = 110;
+
+  @override
+  Grade read(BinaryReader reader) {
+    return Grade.values[reader.readByte()];
+  }
+
+  @override
+  void write(BinaryWriter writer, Grade obj) {
+    writer.writeByte(obj.index);
+  }
+}
+
+class PeriodTypeAdapter extends TypeAdapter<PeriodType> {
+  @override
+  final int typeId = 111;
+
+  @override
+  PeriodType read(BinaryReader reader) {
+    return PeriodType.values[reader.readByte()];
+  }
+
+  @override
+  void write(BinaryWriter writer, PeriodType obj) {
+    writer.writeByte(obj.index);
+  }
+}
+
+class ClassTypeAdapter extends TypeAdapter<ClassType> {
+  @override
+  final int typeId = 112;
+
+  @override
+  ClassType read(BinaryReader reader) {
+    return ClassType.values[reader.readByte()];
+  }
+
+  @override
+  void write(BinaryWriter writer, ClassType obj) {
+    writer.writeByte(obj.index);
+  }
+}
+
+class SubjectTypeAdapter extends TypeAdapter<SubjectType> {
+  @override
+  final int typeId = 113;
+
+  @override
+  SubjectType read(BinaryReader reader) {
+    return SubjectType.values[reader.readByte()];
+  }
+
+  @override
+  void write(BinaryWriter writer, SubjectType obj) {
+    writer.writeByte(obj.index);
+  }
+}
+
+class WorkloadTrendAdapter extends TypeAdapter<WorkloadTrend> {
+  @override
+  final int typeId = 114;
+
+  @override
+  WorkloadTrend read(BinaryReader reader) {
+    return WorkloadTrend.values[reader.readByte()];
+  }
+
+  @override
+  void write(BinaryWriter writer, WorkloadTrend obj) {
     writer.writeByte(obj.index);
   }
 }
