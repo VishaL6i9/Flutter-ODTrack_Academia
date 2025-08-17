@@ -190,81 +190,84 @@ class _StaffAnalyticsDashboardScreenState extends ConsumerState<StaffAnalyticsDa
     final isLoading = ref.watch(staffAnalyticsLoadingProvider);
     final error = ref.watch(staffAnalyticsErrorProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Staff Analytics Dashboard'),
-        elevation: 0,
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: isLoading ? null : _refreshAnalytics,
-            tooltip: 'Refresh Analytics',
-          ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () => _showFilterDialog(context),
-            tooltip: 'Filter Options',
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          tabs: _tabs.map((tab) => Tab(
-            icon: Icon(_getTabIcon(tab)),
-            text: _getTabTitle(tab),
-          )).toList(),
-        ),
-      ),
-      body: Column(
-        children: [
-          // Analytics Summary Header
-          if (staffAnalyticsState.workloadAnalytics != null)
-            _buildAnalyticsSummaryHeader(staffAnalyticsState.workloadAnalytics!),
-          
-          // Error Display
-          if (error != null)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.error_outline, color: Colors.red.shade600),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      error,
-                      style: TextStyle(color: Colors.red.shade700),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => ref.read(staffAnalyticsProvider.notifier).clearError(),
-                    child: const Text('Dismiss'),
-                  ),
-                ],
-              ),
+    return Theme(
+      data: ThemeData.light(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Staff Analytics Dashboard'),
+          elevation: 0,
+          backgroundColor: AppTheme.primaryColor,
+          foregroundColor: Colors.white,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: isLoading ? null : _refreshAnalytics,
+              tooltip: 'Refresh Analytics',
             ),
-          
-          // Tab Content
-          Expanded(
-            child: isLoading
-                ? const LoadingWidget(message: 'Loading analytics data...')
-                : TabBarView(
-                    controller: _tabController,
-                    children: _tabs.map((tab) => _buildTabContent(tab)).toList(),
-                  ),
+            IconButton(
+              icon: const Icon(Icons.filter_list),
+              onPressed: () => _showFilterDialog(context),
+              tooltip: 'Filter Options',
+            ),
+          ],
+          bottom: TabBar(
+            controller: _tabController,
+            isScrollable: true,
+            indicatorColor: Colors.white,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            tabs: _tabs.map((tab) => Tab(
+              icon: Icon(_getTabIcon(tab)),
+              text: _getTabTitle(tab),
+            )).toList(),
           ),
-        ],
+        ),
+        body: Column(
+          children: [
+            // Analytics Summary Header
+            if (staffAnalyticsState.workloadAnalytics != null)
+              _buildAnalyticsSummaryHeader(staffAnalyticsState.workloadAnalytics!),
+            
+            // Error Display
+            if (error != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.red.shade600),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        error,
+                        style: TextStyle(color: Colors.red.shade700),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => ref.read(staffAnalyticsProvider.notifier).clearError(),
+                      child: const Text('Dismiss'),
+                    ),
+                  ],
+                ),
+              ),
+            
+            // Tab Content
+            Expanded(
+              child: isLoading
+                  ? const LoadingWidget(message: 'Loading analytics data...')
+                  : TabBarView(
+                      controller: _tabController,
+                      children: _tabs.map((tab) => _buildTabContent(tab)).toList(),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
