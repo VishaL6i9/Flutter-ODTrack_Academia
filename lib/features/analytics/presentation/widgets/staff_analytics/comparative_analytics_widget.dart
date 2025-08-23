@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:odtrack_academia/core/theme/app_theme.dart';
-import 'package:odtrack_academia/models/analytics_models.dart';
 import 'package:odtrack_academia/providers/staff_analytics_provider.dart';
 import 'package:odtrack_academia/services/analytics/staff_analytics_service.dart';
 import 'package:odtrack_academia/shared/widgets/loading_widget.dart';
