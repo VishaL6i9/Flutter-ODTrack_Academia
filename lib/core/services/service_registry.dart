@@ -7,6 +7,7 @@ import 'package:odtrack_academia/services/analytics/analytics_service.dart';
 import 'package:odtrack_academia/services/export/export_service.dart';
 import 'package:odtrack_academia/services/calendar/calendar_service.dart';
 import 'package:odtrack_academia/services/bulk_operations/bulk_operation_service.dart';
+import 'package:odtrack_academia/services/bulk_operations/hive_bulk_operation_service.dart';
 import 'package:odtrack_academia/services/performance/performance_service.dart';
 
 /// Service registry for M5 enhanced features
@@ -153,9 +154,10 @@ class ServiceRegistry {
   }
   
   Future<void> _initializeBulkOperationService() async {
-    // Implementation will be added in later tasks
-    // _bulkOperationService = DefaultBulkOperationService();
-    // await _bulkOperationService!.initialize();
+    if (_bulkOperationService == null) {
+      _bulkOperationService = HiveBulkOperationService();
+      await _bulkOperationService!.initialize();
+    }
   }
   
   Future<void> _initializePerformanceService() async {
