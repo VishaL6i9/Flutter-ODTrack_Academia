@@ -16,6 +16,8 @@ class BulkOperationState {
   final BulkOperationProgress? currentProgress;
   final BulkOperationResult? lastResult;
   final String? error;
+  final bool isOperationInProgress;
+  final List<String> failedRequestIds;
 
   const BulkOperationState({
     this.selectedRequestIds = const {},
@@ -23,6 +25,8 @@ class BulkOperationState {
     this.currentProgress,
     this.lastResult,
     this.error,
+    this.isOperationInProgress = false,
+    this.failedRequestIds = const [],
   });
 
   BulkOperationState copyWith({
@@ -31,9 +35,12 @@ class BulkOperationState {
     BulkOperationProgress? currentProgress,
     BulkOperationResult? lastResult,
     String? error,
+    bool? isOperationInProgress,
+    List<String>? failedRequestIds,
     bool clearError = false,
     bool clearProgress = false,
     bool clearLastResult = false,
+    bool clearFailedRequestIds = false,
   }) {
     return BulkOperationState(
       selectedRequestIds: selectedRequestIds ?? this.selectedRequestIds,
@@ -41,6 +48,8 @@ class BulkOperationState {
       currentProgress: clearProgress ? null : (currentProgress ?? this.currentProgress),
       lastResult: clearLastResult ? null : (lastResult ?? this.lastResult),
       error: clearError ? null : (error ?? this.error),
+      isOperationInProgress: isOperationInProgress ?? this.isOperationInProgress,
+      failedRequestIds: clearFailedRequestIds ? [] : (failedRequestIds ?? this.failedRequestIds),
     );
   }
 
@@ -119,21 +128,33 @@ class BulkOperationNotifier extends StateNotifier<BulkOperationState> {
     if (state.selectedRequestIds.isEmpty) return;
 
     try {
-      state = state.copyWith(clearError: true);
+      state = state.copyWith(
+        clearError: true,
+        isOperationInProgress: true,
+        clearFailedRequestIds: true,
+      );
       
       final result = await _bulkOperationService.performBulkApproval(
         state.selectedRequestIds.toList(),
         reason,
       );
       
+      // Extract failed request IDs from errors
+      final failedIds = _extractFailedRequestIds(result.errors);
+      
       state = state.copyWith(
         lastResult: result,
         selectedRequestIds: {},
         isSelectionMode: false,
+        isOperationInProgress: false,
+        failedRequestIds: failedIds,
         clearProgress: true,
       );
     } catch (e) {
-      state = state.copyWith(error: e.toString());
+      state = state.copyWith(
+        error: e.toString(),
+        isOperationInProgress: false,
+      );
     }
   }
 
@@ -142,21 +163,33 @@ class BulkOperationNotifier extends StateNotifier<BulkOperationState> {
     if (state.selectedRequestIds.isEmpty) return;
 
     try {
-      state = state.copyWith(clearError: true);
+      state = state.copyWith(
+        clearError: true,
+        isOperationInProgress: true,
+        clearFailedRequestIds: true,
+      );
       
       final result = await _bulkOperationService.performBulkRejection(
         state.selectedRequestIds.toList(),
         reason,
       );
       
+      // Extract failed request IDs from errors
+      final failedIds = _extractFailedRequestIds(result.errors);
+      
       state = state.copyWith(
         lastResult: result,
         selectedRequestIds: {},
         isSelectionMode: false,
+        isOperationInProgress: false,
+        failedRequestIds: failedIds,
         clearProgress: true,
       );
     } catch (e) {
-      state = state.copyWith(error: e.toString());
+      state = state.copyWith(
+        error: e.toString(),
+        isOperationInProgress: false,
+      );
     }
   }
 
@@ -165,21 +198,33 @@ class BulkOperationNotifier extends StateNotifier<BulkOperationState> {
     if (state.selectedRequestIds.isEmpty) return;
 
     try {
-      state = state.copyWith(clearError: true);
+      state = state.copyWith(
+        clearError: true,
+        isOperationInProgress: true,
+        clearFailedRequestIds: true,
+      );
       
       final result = await _bulkOperationService.performBulkExport(
         state.selectedRequestIds.toList(),
         format,
       );
       
+      // Extract failed request IDs from errors
+      final failedIds = _extractFailedRequestIds(result.errors);
+      
       state = state.copyWith(
         lastResult: result,
         selectedRequestIds: {},
         isSelectionMode: false,
+        isOperationInProgress: false,
+        failedRequestIds: failedIds,
         clearProgress: true,
       );
     } catch (e) {
-      state = state.copyWith(error: e.toString());
+      state = state.copyWith(
+        error: e.toString(),
+        isOperationInProgress: false,
+      );
     }
   }
 
@@ -208,6 +253,73 @@ class BulkOperationNotifier extends StateNotifier<BulkOperationState> {
   /// Clear error state
   void clearError() {
     state = state.copyWith(clearError: true);
+  }
+
+  /// Retry failed requests from the last operation
+  Future<void> retryFailedRequests() async {
+    if (state.failedRequestIds.isEmpty || state.lastResult == null) return;
+
+    final lastResult = state.lastResult!;
+    
+    // Determine the operation type and retry with the same parameters
+    switch (lastResult.type) {
+      case BulkOperationType.approval:
+        // For retry, we'll use a generic approval reason
+        await performBulkApproval('Retry bulk approval');
+        break;
+      case BulkOperationType.rejection:
+        // For retry, we'll need to prompt for rejection reason again
+        // This should be handled by the UI layer
+        break;
+      case BulkOperationType.export:
+        // For retry, we'll use PDF format as default
+        await performBulkExport(ExportFormat.pdf);
+        break;
+    }
+  }
+
+  /// Select only the failed requests from the last operation
+  void selectFailedRequests() {
+    if (state.failedRequestIds.isNotEmpty) {
+      state = state.copyWith(
+        selectedRequestIds: Set<String>.from(state.failedRequestIds),
+        isSelectionMode: true,
+      );
+    }
+  }
+
+  /// Get operation history
+  Future<List<BulkOperationResult>> getOperationHistory() async {
+    try {
+      return await _bulkOperationService.getBulkOperationHistory();
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+      return [];
+    }
+  }
+
+  /// Check if an operation can be undone
+  Future<bool> canUndoOperation(String operationId) async {
+    try {
+      return await _bulkOperationService.canUndoBulkOperation(operationId);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Extract failed request IDs from error messages
+  List<String> _extractFailedRequestIds(List<String> errors) {
+    final failedIds = <String>[];
+    
+    for (final error in errors) {
+      // Look for patterns like "Failed to process request: request_id"
+      final match = RegExp(r'request[:\s]+([a-zA-Z0-9_-]+)').firstMatch(error);
+      if (match != null && match.group(1) != null) {
+        failedIds.add(match.group(1)!);
+      }
+    }
+    
+    return failedIds;
   }
 }
 
