@@ -79,42 +79,50 @@ class EfficiencyMetricsWidget extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
+        Column(
           children: [
-            Expanded(
-              child: _buildOverviewCard(
-                'Approval Rate',
-                '${metrics.odApprovalRate.toStringAsFixed(1)}%',
-                Icons.check_circle_outline,
-                _getApprovalRateColor(metrics.odApprovalRate),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildOverviewCard(
+                    'Approval Rate',
+                    '${metrics.odApprovalRate.toStringAsFixed(1)}%',
+                    Icons.check_circle_outline,
+                    _getApprovalRateColor(metrics.odApprovalRate),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildOverviewCard(
+                    'Avg Processing Time',
+                    '${metrics.averageODProcessingTime.toStringAsFixed(1)}h',
+                    Icons.schedule,
+                    _getProcessingTimeColor(metrics.averageODProcessingTime),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildOverviewCard(
-                'Avg Processing Time',
-                '${metrics.averageODProcessingTime.toStringAsFixed(1)}h',
-                Icons.schedule,
-                _getProcessingTimeColor(metrics.averageODProcessingTime),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildOverviewCard(
-                'Response Time',
-                '${metrics.odResponseTime.toStringAsFixed(1)}h',
-                Icons.reply,
-                _getResponseTimeColor(metrics.odResponseTime),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildOverviewCard(
-                'Total Processed',
-                '${metrics.totalODsProcessed}',
-                Icons.assignment_turned_in,
-                AppTheme.primaryColor,
-              ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildOverviewCard(
+                    'Response Time',
+                    '${metrics.odResponseTime.toStringAsFixed(1)}h',
+                    Icons.reply,
+                    _getResponseTimeColor(metrics.odResponseTime),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildOverviewCard(
+                    'Total Processed',
+                    '${metrics.totalODsProcessed}',
+                    Icons.assignment_turned_in,
+                    AppTheme.primaryColor,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -124,50 +132,31 @@ class EfficiencyMetricsWidget extends ConsumerWidget {
 
   Widget _buildOverviewCard(String title, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(icon, color: color, size: 24),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: color,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 8),
           Text(
             value,
             style: TextStyle(
-              fontSize: 24,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
               color: color,
             ),
+          ),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -321,24 +310,20 @@ class EfficiencyMetricsWidget extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
+          Column(
             children: [
-              Expanded(
-                child: _buildComparisonCard(
-                  'Department Comparison',
-                  metrics.departmentComparison,
-                  Icons.business,
-                  Colors.blue,
-                ),
+              _buildComparisonCard(
+                'Department Comparison',
+                metrics.departmentComparison,
+                Icons.business,
+                Colors.blue,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildComparisonCard(
-                  'Institution Comparison',
-                  metrics.institutionComparison,
-                  Icons.school,
-                  Colors.purple,
-                ),
+              const SizedBox(height: 16),
+              _buildComparisonCard(
+                'Institution Comparison',
+                metrics.institutionComparison,
+                Icons.school,
+                Colors.purple,
               ),
             ],
           ),
