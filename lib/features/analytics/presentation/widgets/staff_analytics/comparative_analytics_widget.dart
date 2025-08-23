@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:odtrack_academia/core/theme/app_theme.dart';
+import 'package:odtrack_academia/models/analytics_models.dart';
 import 'package:odtrack_academia/providers/staff_analytics_provider.dart';
 import 'package:odtrack_academia/services/analytics/staff_analytics_service.dart';
 import 'package:odtrack_academia/shared/widgets/loading_widget.dart';
 import 'package:odtrack_academia/shared/widgets/empty_state_widget.dart';
 
 /// Widget for displaying comparative analytics across semesters
-class ComparativeAnalyticsWidget extends ConsumerStatefulWidget {
+class ComparativeAnalyticsWidget extends ConsumerWidget {
   final String staffId;
   final List<String> semesters;
 
@@ -19,27 +20,7 @@ class ComparativeAnalyticsWidget extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ComparativeAnalyticsWidget> createState() => _ComparativeAnalyticsWidgetState();
-}
-
-class _ComparativeAnalyticsWidgetState extends ConsumerState<ComparativeAnalyticsWidget> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadComparativeAnalytics();
-    });
-  }
-
-  Future<void> _loadComparativeAnalytics() async {
-    await ref.read(staffAnalyticsProvider.notifier).loadComparativeAnalytics(
-      widget.staffId,
-      widget.semesters,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final comparativeAnalytics = ref.watch(comparativeAnalyticsProvider);
     final isLoading = ref.watch(staffAnalyticsLoadingProvider);
 
@@ -138,7 +119,7 @@ class _ComparativeAnalyticsWidgetState extends ConsumerState<ComparativeAnalytic
                           style: const TextStyle(fontSize: 10, color: Colors.grey),
                         );
                       }
-                      return const Text('');
+                      return const Text(' ');
                     },
                   ),
                 ),
@@ -235,10 +216,7 @@ class _ComparativeAnalyticsWidgetState extends ConsumerState<ComparativeAnalytic
         children: [
           const Text(
             'Trend Analysis',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           Row(
@@ -297,10 +275,7 @@ class _ComparativeAnalyticsWidgetState extends ConsumerState<ComparativeAnalytic
           const SizedBox(height: 8),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 4),
           Text(
@@ -314,10 +289,7 @@ class _ComparativeAnalyticsWidgetState extends ConsumerState<ComparativeAnalytic
           const SizedBox(height: 4),
           Text(
             'Confidence: ${(trend.confidence * 100).toStringAsFixed(0)}%',
-            style: const TextStyle(
-              fontSize: 10,
-              color: Colors.grey,
-            ),
+            style: const TextStyle(fontSize: 10, color: Colors.grey),
           ),
         ],
       ),
@@ -336,9 +308,14 @@ class _ComparativeAnalyticsWidgetState extends ConsumerState<ComparativeAnalytic
           children: [
             Icon(Icons.info_outline, color: Colors.grey),
             SizedBox(width: 12),
-            Text(
-              'No significant improvements detected in the analyzed period.',
-              style: TextStyle(color: Colors.grey),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Text(
+                  'No significant improvements detected in the analyzed period.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
             ),
           ],
         ),
@@ -365,10 +342,7 @@ class _ComparativeAnalyticsWidgetState extends ConsumerState<ComparativeAnalytic
             children: [
               const Text(
                 'Performance Improvements',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               Container(
@@ -407,17 +381,11 @@ class _ComparativeAnalyticsWidgetState extends ConsumerState<ComparativeAnalytic
                     children: [
                       Text(
                         improvement.area,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                       ),
                       Text(
                         improvement.description,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ],
                   ),
@@ -430,11 +398,7 @@ class _ComparativeAnalyticsWidgetState extends ConsumerState<ComparativeAnalytic
                   ),
                   child: Text(
                     '+${improvement.improvementPercentage.toStringAsFixed(1)}%',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -489,10 +453,7 @@ class _ComparativeAnalyticsWidgetState extends ConsumerState<ComparativeAnalytic
             children: [
               const Text(
                 'Areas for Improvement',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               Container(
@@ -531,10 +492,7 @@ class _ComparativeAnalyticsWidgetState extends ConsumerState<ComparativeAnalytic
                     Expanded(
                       child: Text(
                         decline.area,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                       ),
                     ),
                     Container(
@@ -545,11 +503,7 @@ class _ComparativeAnalyticsWidgetState extends ConsumerState<ComparativeAnalytic
                       ),
                       child: Text(
                         '-${decline.declinePercentage.toStringAsFixed(1)}%',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -557,28 +511,19 @@ class _ComparativeAnalyticsWidgetState extends ConsumerState<ComparativeAnalytic
                 const SizedBox(height: 8),
                 Text(
                   decline.description,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 if (decline.suggestedActions.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   const Text(
                     'Suggested Actions:',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                   ),
                   ...decline.suggestedActions.map((action) => Padding(
                     padding: const EdgeInsets.only(left: 8, top: 2),
                     child: Text(
                       '• $action',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey,
-                      ),
+                      style: const TextStyle(fontSize: 11, color: Colors.grey),
                     ),
                   )),
                 ],
@@ -609,10 +554,7 @@ class _ComparativeAnalyticsWidgetState extends ConsumerState<ComparativeAnalytic
         children: [
           const Text(
             'Detailed Semester Comparison',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           SingleChildScrollView(
