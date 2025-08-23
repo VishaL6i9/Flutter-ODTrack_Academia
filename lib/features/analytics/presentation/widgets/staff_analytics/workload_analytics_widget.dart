@@ -79,33 +79,27 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
+        Column(
           children: [
-            Expanded(
-              child: _buildOverviewCard(
-                'Total Hours',
-                '${analytics.totalWorkingHours.toStringAsFixed(1)}h',
-                Icons.access_time,
-                AppTheme.primaryColor,
-              ),
+            _buildOverviewCard(
+              'Total Hours',
+              '${analytics.totalWorkingHours.toStringAsFixed(1)}h',
+              Icons.access_time,
+              AppTheme.primaryColor,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildOverviewCard(
-                'Weekly Average',
-                '${analytics.weeklyAverageHours.toStringAsFixed(1)}h',
-                Icons.calendar_view_week,
-                AppTheme.accentColor,
-              ),
+            const SizedBox(height: 12),
+            _buildOverviewCard(
+              'Weekly Average',
+              '${analytics.weeklyAverageHours.toStringAsFixed(1)}h',
+              Icons.calendar_view_week,
+              AppTheme.accentColor,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildOverviewCard(
-                'Department',
-                analytics.department,
-                Icons.business,
-                Colors.blue,
-              ),
+            const SizedBox(height: 12),
+            _buildOverviewCard(
+              'Department',
+              analytics.department,
+              Icons.business,
+              Colors.blue,
             ),
           ],
         ),
@@ -133,31 +127,38 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
           Row(
             children: [
               Icon(icon, color: color, size: 24),
-              const Spacer(),
-              Container(
+              Expanded(
+                child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: color,
-                    fontWeight: FontWeight.w500,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: color,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
+            ),
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
             ),
           ),
         ],
