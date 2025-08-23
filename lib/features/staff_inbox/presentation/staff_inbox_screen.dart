@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:odtrack_academia/providers/od_request_provider.dart';
+import 'package:odtrack_academia/providers/bulk_operation_provider.dart';
 import 'package:odtrack_academia/models/od_request.dart';
+import 'package:odtrack_academia/models/export_models.dart';
+import 'package:odtrack_academia/models/bulk_operation_models.dart';
 
 class StaffInboxScreen extends ConsumerStatefulWidget {
   const StaffInboxScreen({super.key});
@@ -18,19 +21,155 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
   @override
   Widget build(BuildContext context) {
     final allRequests = ref.watch(odRequestProvider);
+    final bulkOperationState = ref.watch(bulkOperationProvider);
     final filteredRequests = _getFilteredRequests(allRequests);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('OD Inbox'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
+      appBar: _buildAppBar(context, bulkOperationState),
       body: Column(
         children: [
-          _buildFilterTabs(),
-          _buildStats(allRequests),
+          if (!bulkOperationState.isSelectionMode) _buildFilterTabs(),
+          if (!bulkOperationState.isSelectionMode) _buildStats(allRequests),
+          if (bulkOperationState.isSelectionMode) _buildSelectionHeader(bulkOperationState, filteredRequests),
           Expanded(
-            child: _buildRequestsList(filteredRequests),
+            child: _buildRequestsList(filteredRequests, bulkOperationState),
+          ),
+          if (bulkOperationState.isSelectionMode && bulkOperationState.hasSelection)
+            _buildBulkActionBar(context, bulkOperationState),
+        ],
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(BuildContext context, BulkOperationState bulkState) {
+    if (bulkState.isSelectionMode) {
+      return AppBar(
+        title: Text('${bulkState.selectionCount} selected'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () {
+            ref.read(bulkOperationProvider.notifier).toggleSelectionMode();
+          },
+        ),
+        actions: [
+          if (bulkState.selectionCount > 0)
+            IconButton(
+              icon: const Icon(Icons.clear_all),
+              onPressed: () {
+                ref.read(bulkOperationProvider.notifier).clearSelection();
+              },
+              tooltip: 'Clear selection',
+            ),
+        ],
+      );
+    }
+
+    return AppBar(
+      title: const Text('OD Inbox'),
+      backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.checklist),
+          onPressed: () {
+            ref.read(bulkOperationProvider.notifier).toggleSelectionMode();
+          },
+          tooltip: 'Multi-select mode',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSelectionHeader(BulkOperationState bulkState, List<ODRequest> requests) {
+    final pendingRequests = requests.where((r) => r.isPending).toList();
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer,
+        border: Border(
+          bottom: BorderSide(
+            color: Theme.of(context).dividerColor,
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '${bulkState.selectionCount} of ${requests.length} requests selected',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+          TextButton.icon(
+            onPressed: pendingRequests.isEmpty ? null : () {
+              ref.read(bulkOperationProvider.notifier).selectAll(
+                pendingRequests.map((r) => r.id).toList(),
+              );
+            },
+            icon: const Icon(Icons.select_all),
+            label: const Text('Select All'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBulkActionBar(BuildContext context, BulkOperationState bulkState) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(
+          top: BorderSide(
+            color: Theme.of(context).dividerColor,
+            width: 1,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 4,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: bulkState.currentProgress != null ? null : () {
+                _showBulkRejectionDialog(context, bulkState.selectionCount);
+              },
+              icon: const Icon(Icons.close, color: Colors.red),
+              label: const Text('Reject All', style: TextStyle(color: Colors.red)),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.red),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: bulkState.currentProgress != null ? null : () {
+                _showBulkApprovalDialog(context, bulkState.selectionCount);
+              },
+              icon: const Icon(Icons.check),
+              label: const Text('Approve All'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          IconButton(
+            onPressed: bulkState.currentProgress != null ? null : () {
+              _showBulkExportDialog(context, bulkState.selectionCount);
+            },
+            icon: const Icon(Icons.download),
+            tooltip: 'Export selected',
           ),
         ],
       ),
@@ -119,7 +258,7 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
     );
   }
 
-  Widget _buildRequestsList(List<ODRequest> requests) {
+  Widget _buildRequestsList(List<ODRequest> requests, BulkOperationState bulkState) {
     if (requests.isEmpty) {
       return Center(
         child: Column(
@@ -148,53 +287,70 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
       itemCount: requests.length,
       itemBuilder: (context, index) {
         final request = requests[index];
-        return _buildRequestCard(request);
+        return _buildRequestCard(request, bulkState);
       },
     );
   }
 
-  Widget _buildRequestCard(ODRequest request) {
+  Widget _buildRequestCard(ODRequest request, BulkOperationState bulkState) {
+    final isSelected = bulkState.isSelectionMode && 
+                      ref.read(bulkOperationProvider.notifier).isRequestSelected(request.id);
+    final canSelect = bulkState.isSelectionMode && request.isPending;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  child: Text(
-                    request.studentName.split(' ').map((n) => n[0]).take(2).join(),
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
+      color: isSelected ? Theme.of(context).colorScheme.primaryContainer : null,
+      child: InkWell(
+        onTap: bulkState.isSelectionMode && canSelect ? () {
+          ref.read(bulkOperationProvider.notifier).toggleRequestSelection(request.id);
+        } : null,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  if (bulkState.isSelectionMode) ...[
+                    Checkbox(
+                      value: isSelected,
+                      onChanged: canSelect ? (value) {
+                        ref.read(bulkOperationProvider.notifier).toggleRequestSelection(request.id);
+                      } : null,
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  CircleAvatar(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    child: Text(
+                      request.studentName.split(' ').map((n) => n[0]).take(2).join(),
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        request.studentName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          request.studentName,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      Text(
-                        'Reg: ${request.registerNumber}',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
+                        Text(
+                          'Reg: ${request.registerNumber}',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                _buildStatusChip(request.status),
-              ],
-            ),
+                  _buildStatusChip(request.status),
+                ],
+              ),
             const SizedBox(height: 12),
             _buildInfoRow(MdiIcons.calendar, 'Date', 
                 '${request.date.day}/${request.date.month}/${request.date.year}'),
@@ -204,36 +360,37 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
             _buildInfoRow(MdiIcons.clockOutline, 'Submitted', 
                 _formatDateTime(request.createdAt)),
             
-            if (request.isPending) ...[
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _handleReject(request),
-                      icon: const Icon(Icons.close, color: Colors.red),
-                      label: const Text('Reject', style: TextStyle(color: Colors.red)),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.red),
+              if (request.isPending && !bulkState.isSelectionMode) ...[
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _handleReject(request),
+                        icon: const Icon(Icons.close, color: Colors.red),
+                        label: const Text('Reject', style: TextStyle(color: Colors.red)),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.red),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _handleApprove(request),
-                      icon: const Icon(Icons.check),
-                      label: const Text('Approve'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _handleApprove(request),
+                        icon: const Icon(Icons.check),
+                        label: const Text('Approve'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -429,6 +586,233 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
             const Icon(Icons.cancel, color: Colors.white),
             const SizedBox(width: 8),
             Text('Request by ${request.studentName} rejected'),
+          ],
+        ),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  void _showBulkApprovalDialog(BuildContext context, int count) {
+    final reasonController = TextEditingController();
+    
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Approve $count Requests'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('You are about to approve $count OD requests.'),
+              const SizedBox(height: 16),
+              const Text('Approval reason (optional):'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: reasonController,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  hintText: 'Enter approval reason...',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _processBulkApproval(reasonController.text.trim().isEmpty 
+                    ? 'Bulk approval' 
+                    : reasonController.text.trim());
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Approve All'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showBulkRejectionDialog(BuildContext context, int count) {
+    final reasonController = TextEditingController();
+    
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Reject $count Requests'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('You are about to reject $count OD requests.'),
+              const SizedBox(height: 16),
+              const Text('Rejection reason (required):'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: reasonController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  hintText: 'Enter reason for rejection...',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (reasonController.text.trim().isNotEmpty) {
+                  Navigator.of(context).pop();
+                  _processBulkRejection(reasonController.text.trim());
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Reject All'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showBulkExportDialog(BuildContext context, int count) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Export $count Requests'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Choose export format for $count selected requests:'),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.picture_as_pdf),
+                title: const Text('PDF Report'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _processBulkExport(ExportFormat.pdf);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.table_chart),
+                title: const Text('CSV Spreadsheet'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _processBulkExport(ExportFormat.csv);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _processBulkApproval(String reason) async {
+    try {
+      await ref.read(bulkOperationProvider.notifier).performBulkApproval(reason);
+      
+      final result = ref.read(bulkOperationProvider).lastResult;
+      if (result != null) {
+        _showBulkOperationResult(result);
+      }
+    } catch (e) {
+      _showErrorSnackBar('Failed to perform bulk approval: $e');
+    }
+  }
+
+  Future<void> _processBulkRejection(String reason) async {
+    try {
+      await ref.read(bulkOperationProvider.notifier).performBulkRejection(reason);
+      
+      final result = ref.read(bulkOperationProvider).lastResult;
+      if (result != null) {
+        _showBulkOperationResult(result);
+      }
+    } catch (e) {
+      _showErrorSnackBar('Failed to perform bulk rejection: $e');
+    }
+  }
+
+  Future<void> _processBulkExport(ExportFormat format) async {
+    try {
+      await ref.read(bulkOperationProvider.notifier).performBulkExport(format);
+      
+      final result = ref.read(bulkOperationProvider).lastResult;
+      if (result != null) {
+        _showBulkOperationResult(result);
+      }
+    } catch (e) {
+      _showErrorSnackBar('Failed to perform bulk export: $e');
+    }
+  }
+
+  void _showBulkOperationResult(BulkOperationResult result) {
+    final isSuccess = result.failedItems == 0;
+    final message = isSuccess
+        ? 'Successfully processed ${result.successfulItems} requests'
+        : 'Processed ${result.successfulItems} requests, ${result.failedItems} failed';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isSuccess ? Icons.check_circle : Icons.warning,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 8),
+            Expanded(child: Text(message)),
+            if (result.canUndo)
+              TextButton(
+                onPressed: () {
+                  ref.read(bulkOperationProvider.notifier).undoLastOperation();
+                },
+                child: const Text('UNDO', style: TextStyle(color: Colors.white)),
+              ),
+          ],
+        ),
+        backgroundColor: isSuccess ? Colors.green : Colors.orange,
+        duration: const Duration(seconds: 5),
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(child: Text(message)),
           ],
         ),
         backgroundColor: Colors.red,
