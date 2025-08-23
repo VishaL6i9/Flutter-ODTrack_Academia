@@ -6,6 +6,8 @@ import 'package:odtrack_academia/providers/bulk_operation_provider.dart';
 import 'package:odtrack_academia/models/od_request.dart';
 import 'package:odtrack_academia/models/export_models.dart';
 import 'package:odtrack_academia/models/bulk_operation_models.dart';
+import 'package:odtrack_academia/shared/widgets/bulk_operation_progress_dialog.dart';
+import 'package:odtrack_academia/shared/widgets/bulk_operation_result_dialog.dart';
 
 class StaffInboxScreen extends ConsumerStatefulWidget {
   const StaffInboxScreen({super.key});
@@ -17,12 +19,18 @@ class StaffInboxScreen extends ConsumerStatefulWidget {
 class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
   String _selectedFilter = 'All';
   final List<String> _filters = ['All', 'Pending', 'Approved', 'Rejected'];
+  bool _isProgressDialogShown = false;
 
   @override
   Widget build(BuildContext context) {
     final allRequests = ref.watch(odRequestProvider);
     final bulkOperationState = ref.watch(bulkOperationProvider);
     final filteredRequests = _getFilteredRequests(allRequests);
+
+    // Listen for progress changes to show/hide progress dialog
+    ref.listen<BulkOperationState>(bulkOperationProvider, (previous, current) {
+      _handleBulkOperationStateChange(context, previous, current);
+    });
 
     return Scaffold(
       appBar: _buildAppBar(context, bulkOperationState),
@@ -117,6 +125,8 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
   }
 
   Widget _buildBulkActionBar(BuildContext context, BulkOperationState bulkState) {
+    final isOperationInProgress = bulkState.isOperationInProgress || bulkState.currentProgress != null;
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -135,41 +145,74 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: bulkState.currentProgress != null ? null : () {
-                _showBulkRejectionDialog(context, bulkState.selectionCount);
-              },
-              icon: const Icon(Icons.close, color: Colors.red),
-              label: const Text('Reject All', style: TextStyle(color: Colors.red)),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.red),
-              ),
+          // Progress indicator when operation is in progress
+          if (isOperationInProgress) ...[
+            Row(
+              children: [
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    bulkState.currentProgress?.message ?? 'Processing bulk operation...',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    ref.read(bulkOperationProvider.notifier).cancelCurrentOperation();
+                  },
+                  child: const Text('Cancel'),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: bulkState.currentProgress != null ? null : () {
-                _showBulkApprovalDialog(context, bulkState.selectionCount);
-              },
-              icon: const Icon(Icons.check),
-              label: const Text('Approve All'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
+            const SizedBox(height: 12),
+          ],
+          
+          // Action buttons
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: isOperationInProgress ? null : () {
+                    _showBulkRejectionDialog(context, bulkState.selectionCount);
+                  },
+                  icon: const Icon(Icons.close, color: Colors.red),
+                  label: const Text('Reject All', style: TextStyle(color: Colors.red)),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.red),
+                  ),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          IconButton(
-            onPressed: bulkState.currentProgress != null ? null : () {
-              _showBulkExportDialog(context, bulkState.selectionCount);
-            },
-            icon: const Icon(Icons.download),
-            tooltip: 'Export selected',
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: isOperationInProgress ? null : () {
+                    _showBulkApprovalDialog(context, bulkState.selectionCount);
+                  },
+                  icon: const Icon(Icons.check),
+                  label: const Text('Approve All'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              IconButton(
+                onPressed: isOperationInProgress ? null : () {
+                  _showBulkExportDialog(context, bulkState.selectionCount);
+                },
+                icon: const Icon(Icons.download),
+                tooltip: 'Export selected',
+              ),
+            ],
           ),
         ],
       ),
@@ -736,73 +779,15 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
   }
 
   Future<void> _processBulkApproval(String reason) async {
-    try {
-      await ref.read(bulkOperationProvider.notifier).performBulkApproval(reason);
-      
-      final result = ref.read(bulkOperationProvider).lastResult;
-      if (result != null) {
-        _showBulkOperationResult(result);
-      }
-    } catch (e) {
-      _showErrorSnackBar('Failed to perform bulk approval: $e');
-    }
+    await ref.read(bulkOperationProvider.notifier).performBulkApproval(reason);
   }
 
   Future<void> _processBulkRejection(String reason) async {
-    try {
-      await ref.read(bulkOperationProvider.notifier).performBulkRejection(reason);
-      
-      final result = ref.read(bulkOperationProvider).lastResult;
-      if (result != null) {
-        _showBulkOperationResult(result);
-      }
-    } catch (e) {
-      _showErrorSnackBar('Failed to perform bulk rejection: $e');
-    }
+    await ref.read(bulkOperationProvider.notifier).performBulkRejection(reason);
   }
 
   Future<void> _processBulkExport(ExportFormat format) async {
-    try {
-      await ref.read(bulkOperationProvider.notifier).performBulkExport(format);
-      
-      final result = ref.read(bulkOperationProvider).lastResult;
-      if (result != null) {
-        _showBulkOperationResult(result);
-      }
-    } catch (e) {
-      _showErrorSnackBar('Failed to perform bulk export: $e');
-    }
-  }
-
-  void _showBulkOperationResult(BulkOperationResult result) {
-    final isSuccess = result.failedItems == 0;
-    final message = isSuccess
-        ? 'Successfully processed ${result.successfulItems} requests'
-        : 'Processed ${result.successfulItems} requests, ${result.failedItems} failed';
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              isSuccess ? Icons.check_circle : Icons.warning,
-              color: Colors.white,
-            ),
-            const SizedBox(width: 8),
-            Expanded(child: Text(message)),
-            if (result.canUndo)
-              TextButton(
-                onPressed: () {
-                  ref.read(bulkOperationProvider.notifier).undoLastOperation();
-                },
-                child: const Text('UNDO', style: TextStyle(color: Colors.white)),
-              ),
-          ],
-        ),
-        backgroundColor: isSuccess ? Colors.green : Colors.orange,
-        duration: const Duration(seconds: 5),
-      ),
-    );
+    await ref.read(bulkOperationProvider.notifier).performBulkExport(format);
   }
 
   void _showErrorSnackBar(String message) {
@@ -819,5 +804,124 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
         duration: const Duration(seconds: 3),
       ),
     );
+  }
+
+  /// Handle bulk operation state changes to show/hide dialogs
+  void _handleBulkOperationStateChange(
+    BuildContext context,
+    BulkOperationState? previous,
+    BulkOperationState current,
+  ) {
+    // Show progress dialog when operation starts
+    if (current.currentProgress != null && !_isProgressDialogShown) {
+      _isProgressDialogShown = true;
+      showBulkOperationProgressDialog(
+        context: context,
+        title: _getProgressDialogTitle(current.currentProgress!),
+        onCancel: () {
+          ref.read(bulkOperationProvider.notifier).cancelCurrentOperation();
+          Navigator.of(context).pop();
+          _isProgressDialogShown = false;
+        },
+      );
+    }
+
+    // Hide progress dialog when operation completes
+    if (previous?.currentProgress != null && 
+        current.currentProgress == null && 
+        _isProgressDialogShown) {
+      _isProgressDialogShown = false;
+      Navigator.of(context).pop(); // Close progress dialog
+    }
+
+    // Show result dialog when operation completes
+    if (previous?.lastResult != current.lastResult && 
+        current.lastResult != null &&
+        !current.isOperationInProgress) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showBulkOperationResultDialog(current.lastResult!);
+      });
+    }
+
+    // Show error snackbar
+    if (current.error != null && previous?.error != current.error) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showErrorSnackBar(current.error!);
+      });
+    }
+  }
+
+  /// Get appropriate title for progress dialog based on operation type
+  String _getProgressDialogTitle(BulkOperationProgress progress) {
+    // Extract operation type from operation ID or use a generic title
+    if (progress.operationId.contains('approval')) {
+      return 'Processing Bulk Approval';
+    } else if (progress.operationId.contains('rejection')) {
+      return 'Processing Bulk Rejection';
+    } else if (progress.operationId.contains('export')) {
+      return 'Processing Bulk Export';
+    }
+    return 'Processing Bulk Operation';
+  }
+
+  /// Show detailed bulk operation result dialog
+  void _showBulkOperationResultDialog(BulkOperationResult result) {
+    showBulkOperationResultDialog(
+      context: context,
+      result: result,
+      onRetryFailed: result.failedItems > 0 ? () {
+        Navigator.of(context).pop(); // Close result dialog
+        _retryFailedRequests(result);
+      } : null,
+      onUndo: result.canUndo ? () {
+        Navigator.of(context).pop(); // Close result dialog
+        _undoLastOperation();
+      } : null,
+    );
+  }
+
+  /// Retry failed requests from the last operation
+  void _retryFailedRequests(BulkOperationResult result) {
+    // Select failed requests and show appropriate dialog
+    ref.read(bulkOperationProvider.notifier).selectFailedRequests();
+    
+    switch (result.type) {
+      case BulkOperationType.approval:
+        _showBulkApprovalDialog(context, result.failedItems);
+        break;
+      case BulkOperationType.rejection:
+        _showBulkRejectionDialog(context, result.failedItems);
+        break;
+      case BulkOperationType.export:
+        _showBulkExportDialog(context, result.failedItems);
+        break;
+    }
+  }
+
+  /// Undo the last bulk operation
+  Future<void> _undoLastOperation() async {
+    try {
+      final success = await ref.read(bulkOperationProvider.notifier).undoLastOperation();
+      
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.undo, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Operation undone successfully'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      } else {
+        _showErrorSnackBar('Failed to undo operation');
+      }
+    } catch (e) {
+      _showErrorSnackBar('Error undoing operation: $e');
+    }
   }
 }
