@@ -84,42 +84,50 @@ class TimeAllocationWidget extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
+        Column(
           children: [
-            Expanded(
-              child: _buildOverviewCard(
-                'Total Time',
-                '${totalHours.toStringAsFixed(1)}h',
-                Icons.access_time,
-                AppTheme.primaryColor,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildOverviewCard(
+                    'Total Time',
+                    '${totalHours.toStringAsFixed(1)}h',
+                    Icons.access_time,
+                    AppTheme.primaryColor,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildOverviewCard(
+                    'Teaching',
+                    '${analytics.teachingPercentage.toStringAsFixed(1)}%',
+                    Icons.school,
+                    Colors.green,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildOverviewCard(
-                'Teaching',
-                '${analytics.teachingPercentage.toStringAsFixed(1)}%',
-                Icons.school,
-                Colors.green,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildOverviewCard(
-                'Administrative',
-                '${analytics.administrativePercentage.toStringAsFixed(1)}%',
-                Icons.business,
-                Colors.orange,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildOverviewCard(
-                'OD Processing',
-                '${analytics.odProcessingPercentage.toStringAsFixed(1)}%',
-                Icons.assignment,
-                Colors.blue,
-              ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildOverviewCard(
+                    'Administrative',
+                    '${analytics.administrativePercentage.toStringAsFixed(1)}%',
+                    Icons.business,
+                    Colors.orange,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildOverviewCard(
+                    'OD Processing',
+                    '${analytics.odProcessingPercentage.toStringAsFixed(1)}%',
+                    Icons.assignment,
+                    Colors.blue,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -129,50 +137,31 @@ class TimeAllocationWidget extends ConsumerWidget {
 
   Widget _buildOverviewCard(String title, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(icon, color: color, size: 24),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: color,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 8),
           Text(
             value,
             style: TextStyle(
-              fontSize: 24,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
               color: color,
             ),
+          ),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
