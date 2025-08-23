@@ -59,6 +59,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -66,7 +67,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
               style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
-            _buildDropdown(
+                        _buildDropdown(
               icon: MdiIcons.calendarBlank,
               label: 'Year',
               value: _selectedYear,
@@ -120,9 +121,19 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
         labelText: label,
         prefixIcon: Icon(icon),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       ),
-      items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
+      items: items.map((item) => DropdownMenuItem(value: item, child: Expanded(child: Text(item, overflow: TextOverflow.ellipsis)))).toList(),
+      isExpanded: true,
+      selectedItemBuilder: (BuildContext context) {
+        return items.map((item) {
+          return Text(
+            item,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          );
+        }).toList();
+      },
       onChanged: onChanged,
     );
   }
