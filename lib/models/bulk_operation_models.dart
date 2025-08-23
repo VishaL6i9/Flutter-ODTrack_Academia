@@ -1,18 +1,29 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:hive/hive.dart';
 
 part 'bulk_operation_models.g.dart';
 
 /// Bulk operation result model
 @JsonSerializable()
+@HiveType(typeId: 10)
 class BulkOperationResult {
+  @HiveField(0)
   final String operationId;
+  @HiveField(1)
   final BulkOperationType type;
+  @HiveField(2)
   final int totalItems;
+  @HiveField(3)
   final int successfulItems;
+  @HiveField(4)
   final int failedItems;
+  @HiveField(5)
   final List<String> errors;
+  @HiveField(6)
   final DateTime startTime;
+  @HiveField(7)
   final DateTime? endTime;
+  @HiveField(8)
   final bool canUndo;
 
   const BulkOperationResult({
@@ -59,11 +70,15 @@ class BulkOperationProgress {
 }
 
 /// Bulk operation type enumeration
+@HiveType(typeId: 11)
 enum BulkOperationType {
   @JsonValue('approval')
+  @HiveField(0)
   approval,
   @JsonValue('rejection')
+  @HiveField(1)
   rejection,
   @JsonValue('export')
+  @HiveField(2)
   export,
 }
