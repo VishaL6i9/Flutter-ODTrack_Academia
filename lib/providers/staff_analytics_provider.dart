@@ -101,6 +101,7 @@ class StaffAnalyticsNotifier extends StateNotifier<StaffAnalyticsState> {
         _staffAnalyticsService.getTeachingAnalytics(staffId, semester),
         _staffAnalyticsService.getTimeAllocationAnalytics(staffId, dateRange),
         _staffAnalyticsService.getEfficiencyMetrics(staffId, dateRange),
+        _staffAnalyticsService.getComparativeAnalytics(staffId, ['current', 'previous', 'previous-2']), // Add this line
       ]);
 
       state = state.copyWith(
@@ -108,6 +109,7 @@ class StaffAnalyticsNotifier extends StateNotifier<StaffAnalyticsState> {
         teachingAnalytics: futures[1] as TeachingAnalytics,
         timeAllocationAnalytics: futures[2] as TimeAllocationAnalytics,
         efficiencyMetrics: futures[3] as EfficiencyMetrics,
+        comparativeAnalytics: futures[4] as ComparativeAnalytics, // Update index
         isLoading: false,
         lastUpdated: DateTime.now(),
       );
