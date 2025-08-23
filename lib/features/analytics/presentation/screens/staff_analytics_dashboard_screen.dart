@@ -185,12 +185,12 @@ class _StaffAnalyticsDashboardScreenState extends ConsumerState<StaffAnalyticsDa
     final error = ref.watch(staffAnalyticsErrorProvider);
 
     return Theme(
-      data: ThemeData.light(),
+      data: ThemeData.dark(),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Staff Analytics Dashboard'),
           elevation: 0,
-          backgroundColor: AppTheme.primaryColor,
+          backgroundColor: Colors.black,
           foregroundColor: Colors.white,
           actions: [
             IconButton(
