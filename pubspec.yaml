@@ -54,27 +54,27 @@ dependencies:
   # Utilities
   connectivity_plus: ^6.0.5
   permission_handler: ^12.0.1
-  
+
   # Navigation
   go_router: ^16.0.0
 
   # M5 Enhanced Features Dependencies
-  
+
   # Analytics & Charts
   fl_chart: ^0.69.0
-  
+
   # PDF Generation
   pdf: ^3.11.1
   printing: ^5.13.2
-  
+
   # Calendar Integration
   device_calendar: ^4.3.2
-  
+
   # Enhanced File Operations
   share_plus: ^10.1.2
   open_file: ^3.5.7
-  
-  
+
+
 
 dev_dependencies:
   flutter_test:
@@ -89,7 +89,7 @@ dev_dependencies:
   json_serializable: ^6.8.0
   retrofit_generator: ^9.1.2
   riverpod_generator: ^2.4.3
-  
+
   # Testing
   mockito: ^5.4.4
   mocktail: ^1.0.4
