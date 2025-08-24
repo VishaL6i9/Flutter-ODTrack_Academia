@@ -23,7 +23,7 @@ class SampleDataService {
     await _populateStaffMembers();
     await _populateWorkloadData();
     await _populateODRequests();
-    await _populateUsers();
+    // await _populateUsers();
   }
 
   /// Populate sample staff members

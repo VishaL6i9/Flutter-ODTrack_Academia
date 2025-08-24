@@ -34,7 +34,7 @@ class AuthState {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier(this._staffAnalyticsService) : super(const AuthState()) {
-    _loadUserFromStorage();
+    // _loadUserFromStorage();
   }
 
   Box<User> get _userBox => Hive.box<User>(AppConstants.userBox);
