@@ -40,19 +40,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Box<User> get _userBox => Hive.box<User>(AppConstants.userBox);
   final StaffAnalyticsService _staffAnalyticsService;
 
-  Future<void> _loadUserFromStorage() async {
-    try {
-      // Check if there are any users in the box
-      if (_userBox.isNotEmpty) {
-        // For now, get the first user - in a real app, you'd have a specific key
-        final user = _userBox.values.first;
-        state = state.copyWith(user: user);
-      }
-    } catch (e) {
-      // Clear invalid data if there's an error
-      await _userBox.clear();
-    }
-  }
+  // Future<void> _loadUserFromStorage() async {
+  //   try {
+  //     // Check if there are any users in the box
+  //     if (_userBox.isNotEmpty) {
+  //       // For now, get the first user - in a real app, you'd have a specific key
+  //       final user = _userBox.values.first;
+  //       state = state.copyWith(user: user);
+  //     }
+  //   } catch (e) {
+  //     // Clear invalid data if there's an error
+  //     await _userBox.clear();
+  //   }
+  // }
 
   Future<void> loginStudent(String registerNumber, DateTime dateOfBirth) async {
     state = state.copyWith(isLoading: true, error: null);

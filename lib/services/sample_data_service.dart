@@ -199,45 +199,45 @@ class SampleDataService {
   }
 
   /// Populate sample users
-  Future<void> _populateUsers() async {
-    // Check if the box is already open, if not open it
-    Box<User> box;
-    if (Hive.isBoxOpen(_usersBoxName)) {
-      box = Hive.box<User>(_usersBoxName);
-    } else {
-      box = await Hive.openBox<User>(_usersBoxName);
-    }
-    
-    if (box.isNotEmpty) return; // Data already exists
-
-    // Add staff users from StaffData
-    final staffUsers = StaffData.allStaff.map((staff) => User(
-      id: staff.id,
-      name: staff.name,
-      email: staff.email,
-      role: 'staff',
-      department: staff.department,
-    )).toList();
-
-    for (final user in staffUsers) {
-      await box.put(user.id, user);
-    }
-
-    // Add some student users for testing
-    for (int i = 0; i < 20; i++) {
-      final user = User(
-        id: 'student_${i.toString().padLeft(3, '0')}',
-        name: _generateStudentName(),
-        email: 'student${i.toString().padLeft(3, '0')}@college.edu',
-        role: 'student',
-        registerNumber: '20CS${(100 + i).toString()}',
-        department: 'Computer Science',
-        year: '${1 + _random.nextInt(4)}',
-        section: String.fromCharCode(65 + _random.nextInt(3)), // A, B, C
-      );
-      await box.put(user.id, user);
-    }
-  }
+  // Future<void> _populateUsers() async {
+  //   // Check if the box is already open, if not open it
+  //   Box<User> box;
+  //   if (Hive.isBoxOpen(_usersBoxName)) {
+  //     box = Hive.box<User>(_usersBoxName);
+  //   } else {
+  //     box = await Hive.openBox<User>(_usersBoxName);
+  //   }
+  //
+  //   if (box.isNotEmpty) return; // Data already exists
+  //
+  //   // Add staff users from StaffData
+  //   final staffUsers = StaffData.allStaff.map((staff) => User(
+  //     id: staff.id,
+  //     name: staff.name,
+  //     email: staff.email,
+  //     role: 'staff',
+  //     department: staff.department,
+  //   )).toList();
+  //
+  //   for (final user in staffUsers) {
+  //     await box.put(user.id, user);
+  //   }
+  //
+  //   // Add some student users for testing
+  //   for (int i = 0; i < 20; i++) {
+  //     final user = User(
+  //       id: 'student_${i.toString().padLeft(3, '0')}',
+  //       name: _generateStudentName(),
+  //       email: 'student${i.toString().padLeft(3, '0')}@college.edu',
+  //       role: 'student',
+  //       registerNumber: '20CS${(100 + i).toString()}',
+  //       department: 'Computer Science',
+  //       year: '${1 + _random.nextInt(4)}',
+  //       section: String.fromCharCode(65 + _random.nextInt(3)), // A, B, C
+  //     );
+  //     await box.put(user.id, user);
+  //   }
+  // }
 
   /// Helper methods
   Grade _parseGradeFromYear(String year) {
