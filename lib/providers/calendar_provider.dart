@@ -370,6 +370,16 @@ class CalendarNotifier extends StateNotifier<AsyncValue<CalendarState>> {
       return false;
     }
   }
+
+  /// Remove OD event from calendar by request ID
+  Future<void> removeODEventByRequestId(String odRequestId) async {
+    try {
+      await _calendarService.removeODEventByRequestId(odRequestId);
+    } catch (e) {
+      debugPrint('Error removing OD event by request ID: $e');
+      rethrow;
+    }
+  }
 }
 
 /// Calendar provider
