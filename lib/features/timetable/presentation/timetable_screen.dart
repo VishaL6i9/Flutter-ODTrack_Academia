@@ -123,7 +123,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       ),
-      items: items.map((item) => DropdownMenuItem(value: item, child: Expanded(child: Text(item, overflow: TextOverflow.ellipsis)))).toList(),
+      items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, overflow: TextOverflow.ellipsis))).toList(),
       isExpanded: true,
       selectedItemBuilder: (BuildContext context) {
         return items.map((item) {
