@@ -23,8 +23,11 @@ abstract class CalendarService {
   /// Update existing OD event in calendar
   Future<void> updateODEventInCalendar(ODRequest request);
   
-  /// Remove OD event from calendar
+  /// Remove OD event from calendar by event ID
   Future<void> removeODEventFromCalendar(String eventId);
+  
+  /// Remove OD event from calendar by OD request ID
+  Future<void> removeODEventByRequestId(String odRequestId);
   
   /// Sync all approved OD events to calendar
   Future<void> syncAllODEventsToCalendar();
