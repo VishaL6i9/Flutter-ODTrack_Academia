@@ -44,6 +44,7 @@ void main() {
         expect(calendarService.addODEventToCalendar, isA<Function>());
         expect(calendarService.updateODEventInCalendar, isA<Function>());
         expect(calendarService.removeODEventFromCalendar, isA<Function>());
+        expect(calendarService.removeODEventByRequestId, isA<Function>());
       });
     });
 
