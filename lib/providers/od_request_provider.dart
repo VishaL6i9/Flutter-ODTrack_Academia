@@ -1,8 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:odtrack_academia/models/od_request.dart';
+import 'package:odtrack_academia/services/calendar/calendar_sync_service.dart';
 
 class ODRequestNotifier extends StateNotifier<List<ODRequest>> {
-  ODRequestNotifier() : super(_demoRequests);
+  final CalendarSyncService? _calendarSyncService;
+  
+  ODRequestNotifier({CalendarSyncService? calendarSyncService}) 
+    : _calendarSyncService = calendarSyncService,
+      super(_demoRequests);
 
   static final List<ODRequest> _demoRequests = [
     ODRequest(
@@ -48,15 +53,30 @@ class ODRequestNotifier extends StateNotifier<List<ODRequest>> {
     await Future<void>.delayed(const Duration(seconds: 1));
     
     state = [request, ...state];
+    
+    // Sync with calendar if service is available
+    if (_calendarSyncService != null) {
+      try {
+        await _calendarSyncService!.handleODRequestCreation(request);
+      } catch (e) {
+        // Log error but don't fail the request creation
+        print('Calendar sync error during request creation: $e');
+      }
+    }
   }
 
   Future<void> updateRequestStatus(String requestId, String newStatus, {String? reason}) async {
+    // Find the old request for calendar sync
+    final oldRequest = state.firstWhere((request) => request.id == requestId);
+    
     // Simulate API call
     await Future<void>.delayed(const Duration(milliseconds: 500));
     
+    ODRequest? updatedRequest;
+    
     state = state.map((request) {
       if (request.id == requestId) {
-        return ODRequest(
+        updatedRequest = ODRequest(
           id: request.id,
           studentId: request.studentId,
           studentName: request.studentName,
@@ -71,9 +91,52 @@ class ODRequestNotifier extends StateNotifier<List<ODRequest>> {
           approvedBy: newStatus == 'approved' ? 'Demo Staff' : request.approvedBy,
           rejectionReason: newStatus == 'rejected' ? reason : request.rejectionReason,
         );
+        return updatedRequest!;
       }
       return request;
     }).toList();
+    
+    // Sync with calendar if service is available and request was updated
+    if (_calendarSyncService != null && updatedRequest != null) {
+      try {
+        await _calendarSyncService!.handleODRequestStatusChange(oldRequest, updatedRequest!);
+      } catch (e) {
+        // Log error but don't fail the status update
+        print('Calendar sync error during status update: $e');
+      }
+    }
+  }
+
+  Future<void> deleteRequest(String requestId) async {
+    // Find the request to delete for calendar sync
+    final requestToDelete = state.firstWhere((request) => request.id == requestId);
+    
+    // Simulate API call
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    
+    state = state.where((request) => request.id != requestId).toList();
+    
+    // Sync with calendar if service is available
+    if (_calendarSyncService != null) {
+      try {
+        await _calendarSyncService!.handleODRequestDeletion(requestToDelete);
+      } catch (e) {
+        // Log error but don't fail the deletion
+        print('Calendar sync error during request deletion: $e');
+      }
+    }
+  }
+
+  Future<void> syncAllRequestsWithCalendar() async {
+    // Sync all requests with calendar
+    if (_calendarSyncService != null) {
+      try {
+        await _calendarSyncService!.syncAllODRequests(state);
+      } catch (e) {
+        print('Calendar sync error during bulk sync: $e');
+        rethrow;
+      }
+    }
   }
 
   List<ODRequest> getRequestsByStatus(String status) {
@@ -82,5 +145,6 @@ class ODRequestNotifier extends StateNotifier<List<ODRequest>> {
 }
 
 final odRequestProvider = StateNotifierProvider<ODRequestNotifier, List<ODRequest>>((ref) {
-  return ODRequestNotifier();
+  final calendarSyncService = ref.watch(calendarSyncServiceProvider);
+  return ODRequestNotifier(calendarSyncService: calendarSyncService);
 });
