@@ -217,6 +217,45 @@ class CalendarServiceImpl implements CalendarService {
   }
 
   @override
+  Future<void> removeODEventByRequestId(String odRequestId) async {
+    try {
+      final hasPermission = await hasCalendarPermission();
+      if (!hasPermission) {
+        throw Exception('Calendar permission not granted');
+      }
+
+      // Find the event mapping for this OD request
+      final eventMapping = await _getEventMapping(odRequestId);
+      if (eventMapping == null) {
+        debugPrint('No calendar event found for OD request: $odRequestId');
+        return;
+      }
+
+      final eventId = eventMapping['eventId'] as String?;
+      final calendarId = eventMapping['calendarId'] as String?;
+      
+      if (eventId == null || calendarId == null) {
+        debugPrint('Invalid event mapping for OD request: $odRequestId');
+        return;
+      }
+
+      final deleteResult = await _deviceCalendarPlugin.deleteEvent(calendarId, eventId);
+      
+      if (!deleteResult.isSuccess) {
+        throw Exception('Failed to delete calendar event: ${deleteResult.errors}');
+      }
+
+      // Remove event mapping from local storage
+      await _removeEventMapping(odRequestId);
+      
+      debugPrint('Successfully removed OD event from calendar for request: $odRequestId');
+    } catch (e) {
+      debugPrint('Error removing OD event from calendar by request ID: $e');
+      rethrow;
+    }
+  }
+
+  @override
   Future<void> syncAllODEventsToCalendar() async {
     try {
       final settings = await getSyncSettings();
