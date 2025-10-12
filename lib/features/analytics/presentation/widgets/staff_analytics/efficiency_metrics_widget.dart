@@ -7,6 +7,7 @@ import 'package:odtrack_academia/providers/staff_analytics_provider.dart';
 import 'package:odtrack_academia/services/analytics/staff_analytics_service.dart';
 import 'package:odtrack_academia/shared/widgets/loading_widget.dart';
 import 'package:odtrack_academia/shared/widgets/empty_state_widget.dart';
+import 'package:odtrack_academia/features/analytics/presentation/utils/analytics_theme_utils.dart';
 
 /// Widget for displaying efficiency metrics with interactive charts
 class EfficiencyMetricsWidget extends ConsumerWidget {
@@ -128,13 +129,16 @@ class EfficiencyMetricsWidget extends ConsumerWidget {
   }
 
   Widget _buildOverviewCard(String title, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getContainerBackgroundColor(context, color),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: AnalyticsThemeUtils.getBorderColor(context, color),
+          ),
+        ),
       child: Column(
         children: [
           Icon(icon, color: color, size: 20),
@@ -149,31 +153,27 @@ class EfficiencyMetricsWidget extends ConsumerWidget {
           ),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: Colors.grey,
+              color: AnalyticsThemeUtils.getSecondaryTextColor(context),
             ),
             textAlign: TextAlign.center,
           ),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildODProcessingMetrics(EfficiencyMetrics metrics) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getCardBackgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: AnalyticsThemeUtils.getCardShadow(context),
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -230,26 +230,30 @@ class EfficiencyMetricsWidget extends ConsumerWidget {
           ),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildMetricCard(String title, String value, String rating, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getContainerBackgroundColor(context, color, opacity: 0.05),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: AnalyticsThemeUtils.getBorderColor(context, color, opacity: 0.2),
+          ),
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: Colors.grey,
+              color: AnalyticsThemeUtils.getSecondaryTextColor(context),
             ),
           ),
           const SizedBox(height: 8),
@@ -279,23 +283,19 @@ class EfficiencyMetricsWidget extends ConsumerWidget {
           ),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildPerformanceComparison(EfficiencyMetrics metrics) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getCardBackgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: AnalyticsThemeUtils.getCardShadow(context),
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -326,17 +326,21 @@ class EfficiencyMetricsWidget extends ConsumerWidget {
           ),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildComparisonCard(String title, ComparisonMetrics comparison, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getContainerBackgroundColor(context, color, opacity: 0.05),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: AnalyticsThemeUtils.getBorderColor(context, color, opacity: 0.2),
+          ),
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -392,46 +396,44 @@ class EfficiencyMetricsWidget extends ConsumerWidget {
           ),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildComparisonMetric(String label, String value, Color color) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.grey,
+    return Builder(
+      builder: (context) => Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: AnalyticsThemeUtils.getSecondaryTextColor(context),
+            ),
           ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: color,
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: color,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildODStatusDistribution(EfficiencyMetrics metrics) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getCardBackgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: AnalyticsThemeUtils.getCardShadow(context),
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -469,23 +471,19 @@ class EfficiencyMetricsWidget extends ConsumerWidget {
           ),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildStudentSatisfactionScore(EfficiencyMetrics metrics) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getCardBackgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: AnalyticsThemeUtils.getCardShadow(context),
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -524,7 +522,7 @@ class EfficiencyMetricsWidget extends ConsumerWidget {
                       'Based on student feedback and response quality',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey.shade600,
+                        color: AnalyticsThemeUtils.getSecondaryTextColor(context),
                       ),
                     ),
                   ],
@@ -537,7 +535,7 @@ class EfficiencyMetricsWidget extends ConsumerWidget {
                 child: CircularProgressIndicator(
                   value: metrics.studentSatisfactionScore / 100,
                   strokeWidth: 8,
-                  backgroundColor: Colors.grey.shade200,
+                  backgroundColor: AnalyticsThemeUtils.getSecondaryBackgroundColor(context),
                   valueColor: AlwaysStoppedAnimation<Color>(
                     _getSatisfactionColor(metrics.studentSatisfactionScore),
                   ),
@@ -547,6 +545,7 @@ class EfficiencyMetricsWidget extends ConsumerWidget {
           ),
         ],
       ),
+    ),
     );
   }
 

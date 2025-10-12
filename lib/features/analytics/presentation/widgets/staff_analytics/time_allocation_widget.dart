@@ -8,6 +8,7 @@ import 'package:odtrack_academia/providers/staff_analytics_provider.dart';
 import 'package:odtrack_academia/services/analytics/staff_analytics_service.dart';
 import 'package:odtrack_academia/shared/widgets/loading_widget.dart';
 import 'package:odtrack_academia/shared/widgets/empty_state_widget.dart';
+import 'package:odtrack_academia/features/analytics/presentation/utils/analytics_theme_utils.dart';
 
 /// Widget for displaying time allocation analytics
 class TimeAllocationWidget extends ConsumerWidget {
@@ -133,13 +134,16 @@ class TimeAllocationWidget extends ConsumerWidget {
   }
 
   Widget _buildOverviewCard(String title, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getContainerBackgroundColor(context, color),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: AnalyticsThemeUtils.getBorderColor(context, color),
+          ),
+        ),
       child: Column(
         children: [
           Icon(icon, color: color, size: 20),
@@ -154,31 +158,27 @@ class TimeAllocationWidget extends ConsumerWidget {
           ),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: Colors.grey,
+              color: AnalyticsThemeUtils.getSecondaryTextColor(context),
             ),
             textAlign: TextAlign.center,
           ),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildActivityTimeChart(TimeAllocationAnalytics analytics) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getCardBackgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: AnalyticsThemeUtils.getCardShadow(context),
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -216,23 +216,19 @@ class TimeAllocationWidget extends ConsumerWidget {
           ),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildDailyTimeChart(TimeAllocationAnalytics analytics) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getCardBackgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: AnalyticsThemeUtils.getCardShadow(context),
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -271,7 +267,10 @@ class TimeAllocationWidget extends ConsumerWidget {
                       getTitlesWidget: (value, meta) {
                         return Text(
                           '${value.toInt()}h',
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          style: TextStyle(
+                            fontSize: 12, 
+                            color: AnalyticsThemeUtils.getSecondaryTextColor(context),
+                          ),
                         );
                       },
                     ),
@@ -284,7 +283,10 @@ class TimeAllocationWidget extends ConsumerWidget {
                         final dayIndex = value.toInt() + 1;
                         return Text(
                           _getDayName(dayIndex).substring(0, 3),
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          style: TextStyle(
+                            fontSize: 12, 
+                            color: AnalyticsThemeUtils.getSecondaryTextColor(context),
+                          ),
                         );
                       },
                     ),
@@ -300,7 +302,7 @@ class TimeAllocationWidget extends ConsumerWidget {
                   horizontalInterval: 2,
                   getDrawingHorizontalLine: (value) {
                     return FlLine(
-                      color: Colors.grey.shade200,
+                      color: AnalyticsThemeUtils.getGridLineColor(context),
                       strokeWidth: 1,
                     );
                   },
@@ -310,23 +312,19 @@ class TimeAllocationWidget extends ConsumerWidget {
           ),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildActivityPercentages(TimeAllocationAnalytics analytics) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getCardBackgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: AnalyticsThemeUtils.getCardShadow(context),
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -347,40 +345,42 @@ class TimeAllocationWidget extends ConsumerWidget {
           _buildPercentageBar('Other Activities', analytics.otherActivitiesPercentage, Colors.purple),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildPercentageBar(String label, double percentage, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
+    return Builder(
+      builder: (context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
               ),
-            ),
-            Text(
-              '${percentage.toStringAsFixed(1)}%',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: color,
-                fontSize: 14,
+              Text(
+                '${percentage.toStringAsFixed(1)}%',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                  fontSize: 14,
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Container(
-          height: 8,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade200,
-            borderRadius: BorderRadius.circular(4),
+            ],
           ),
+          const SizedBox(height: 4),
+          Container(
+            height: 8,
+            decoration: BoxDecoration(
+              color: AnalyticsThemeUtils.getSecondaryBackgroundColor(context),
+              borderRadius: BorderRadius.circular(4),
+            ),
           child: FractionallySizedBox(
             alignment: Alignment.centerLeft,
             widthFactor: percentage / 100,
@@ -393,46 +393,46 @@ class TimeAllocationWidget extends ConsumerWidget {
           ),
         ),
       ],
+    ),
     );
   }
 
   Widget _buildTimeConflicts(TimeAllocationAnalytics analytics) {
     if (analytics.conflicts.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.green.shade50,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.green.shade200),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.check_circle_outline, color: Colors.green.shade600),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text(
-                'No time conflicts detected. Schedule looks well organized!',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
+      return Builder(
+        builder: (context) => Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AnalyticsThemeUtils.getContainerBackgroundColor(context, Colors.green),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AnalyticsThemeUtils.getBorderColor(context, Colors.green),
             ),
-          ],
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.check_circle_outline, color: Colors.green.shade600),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'No time conflicts detected. Schedule looks well organized!',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getCardBackgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: AnalyticsThemeUtils.getCardShadow(context),
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -449,7 +449,7 @@ class TimeAllocationWidget extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.red.shade100,
+                  color: AnalyticsThemeUtils.getContainerBackgroundColor(context, Colors.red),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -468,10 +468,16 @@ class TimeAllocationWidget extends ConsumerWidget {
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: _getConflictColor(conflict.severity).withValues(alpha: 0.1),
+              color: AnalyticsThemeUtils.getContainerBackgroundColor(
+                context, 
+                _getConflictColor(conflict.severity),
+              ),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: _getConflictColor(conflict.severity).withValues(alpha: 0.3),
+                color: AnalyticsThemeUtils.getBorderColor(
+                  context, 
+                  _getConflictColor(conflict.severity),
+                ),
               ),
             ),
             child: Column(
@@ -514,9 +520,9 @@ class TimeAllocationWidget extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Text(
                   'Conflicting activities: ${conflict.conflictingActivities.join(', ')}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey,
+                    color: AnalyticsThemeUtils.getSecondaryTextColor(context),
                   ),
                 ),
               ],
@@ -524,6 +530,7 @@ class TimeAllocationWidget extends ConsumerWidget {
           )),
         ],
       ),
+    ),
     );
   }
 

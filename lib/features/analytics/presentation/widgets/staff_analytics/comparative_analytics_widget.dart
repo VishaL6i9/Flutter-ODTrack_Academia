@@ -6,6 +6,7 @@ import 'package:odtrack_academia/providers/staff_analytics_provider.dart';
 import 'package:odtrack_academia/services/analytics/staff_analytics_service.dart';
 import 'package:odtrack_academia/shared/widgets/loading_widget.dart';
 import 'package:odtrack_academia/shared/widgets/empty_state_widget.dart';
+import 'package:odtrack_academia/features/analytics/presentation/utils/analytics_theme_utils.dart';
 
 /// Widget for displaying comparative analytics across semesters
 class ComparativeAnalyticsWidget extends ConsumerWidget {
@@ -64,32 +65,33 @@ class ComparativeAnalyticsWidget extends ConsumerWidget {
   }
 
   Widget _buildSemesterComparisonOverview(ComparativeAnalytics analytics) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Semester Comparison Overview',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+    return Builder(
+      builder: (context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Semester Comparison Overview',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 250,
-          child: LineChart(
-            LineChartData(
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: false,
-                horizontalInterval: 10,
-                getDrawingHorizontalLine: (value) {
-                  return FlLine(
-                    color: Colors.grey.shade200,
-                    strokeWidth: 1,
-                  );
-                },
-              ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 250,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: 10,
+                  getDrawingHorizontalLine: (value) {
+                    return FlLine(
+                      color: AnalyticsThemeUtils.getGridLineColor(context),
+                      strokeWidth: 1,
+                    );
+                  },
+                ),
               titlesData: FlTitlesData(
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
@@ -98,7 +100,10 @@ class ComparativeAnalyticsWidget extends ConsumerWidget {
                     getTitlesWidget: (value, meta) {
                       return Text(
                         '${value.toInt()}',
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style: TextStyle(
+                          fontSize: 12, 
+                          color: AnalyticsThemeUtils.getSecondaryTextColor(context),
+                        ),
                       );
                     },
                   ),
@@ -112,7 +117,10 @@ class ComparativeAnalyticsWidget extends ConsumerWidget {
                       if (index >= 0 && index < analytics.semesterComparisons.length) {
                         return Text(
                           analytics.semesterComparisons[index].semester,
-                          style: const TextStyle(fontSize: 10, color: Colors.grey),
+                          style: TextStyle(
+                            fontSize: 10, 
+                            color: AnalyticsThemeUtils.getSecondaryTextColor(context),
+                          ),
                         );
                       }
                       return const Text(' ');
@@ -169,6 +177,7 @@ class ComparativeAnalyticsWidget extends ConsumerWidget {
           ],
         ),
       ],
+    ),
     );
   }
 
@@ -194,19 +203,14 @@ class ComparativeAnalyticsWidget extends ConsumerWidget {
   }
 
   Widget _buildTrendAnalysisCharts(ComparativeAnalytics analytics) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getCardBackgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: AnalyticsThemeUtils.getCardShadow(context),
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -244,6 +248,7 @@ class ComparativeAnalyticsWidget extends ConsumerWidget {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -251,13 +256,16 @@ class ComparativeAnalyticsWidget extends ConsumerWidget {
     final color = _getTrendColor(trend.direction);
     final trendIcon = _getTrendIcon(trend.direction);
     
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getContainerBackgroundColor(context, color),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: AnalyticsThemeUtils.getBorderColor(context, color),
+          ),
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -285,66 +293,72 @@ class ComparativeAnalyticsWidget extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             'Confidence: ${(trend.confidence * 100).toStringAsFixed(0)}%',
-            style: const TextStyle(fontSize: 10, color: Colors.grey),
+            style: TextStyle(
+              fontSize: 10, 
+              color: AnalyticsThemeUtils.getSecondaryTextColor(context),
+            ),
           ),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildPerformanceImprovements(ComparativeAnalytics analytics) {
     if (analytics.improvements.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Row(
-          children: [
-            Icon(Icons.info_outline, color: Colors.grey),
-            SizedBox(width: 12),
-            Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Text(
-                  'No significant improvements detected in the analyzed period.',
-                  style: TextStyle(color: Colors.grey),
+      return Builder(
+        builder: (context) => Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AnalyticsThemeUtils.getSecondaryBackgroundColor(context),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.info_outline, 
+                color: AnalyticsThemeUtils.getSecondaryTextColor(context),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Text(
+                    'No significant improvements detected in the analyzed period.',
+                    style: TextStyle(
+                      color: AnalyticsThemeUtils.getSecondaryTextColor(context),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text(
-                'Performance Improvements',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getCardBackgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: AnalyticsThemeUtils.getCardShadow(context),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Text(
+                  'Performance Improvements',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.green.shade100,
+                  color: AnalyticsThemeUtils.getContainerBackgroundColor(context, Colors.green),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -363,9 +377,11 @@ class ComparativeAnalyticsWidget extends ConsumerWidget {
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.green.shade50,
+              color: AnalyticsThemeUtils.getContainerBackgroundColor(context, Colors.green, opacity: 0.05),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.green.shade200),
+              border: Border.all(
+                color: AnalyticsThemeUtils.getBorderColor(context, Colors.green, opacity: 0.2),
+              ),
             ),
             child: Row(
               children: [
@@ -381,7 +397,10 @@ class ComparativeAnalyticsWidget extends ConsumerWidget {
                       ),
                       Text(
                         improvement.description,
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style: TextStyle(
+                          fontSize: 12, 
+                          color: AnalyticsThemeUtils.getSecondaryTextColor(context),
+                        ),
                       ),
                     ],
                   ),
@@ -402,60 +421,60 @@ class ComparativeAnalyticsWidget extends ConsumerWidget {
           )),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildPerformanceDeclines(ComparativeAnalytics analytics) {
     if (analytics.declines.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.green.shade50,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.green.shade200),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.check_circle_outline, color: Colors.green.shade600),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text(
-                'No performance declines detected. Great job maintaining consistency!',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
+      return Builder(
+        builder: (context) => Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AnalyticsThemeUtils.getContainerBackgroundColor(context, Colors.green, opacity: 0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AnalyticsThemeUtils.getBorderColor(context, Colors.green, opacity: 0.2),
             ),
-          ],
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.check_circle_outline, color: Colors.green.shade600),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'No performance declines detected. Great job maintaining consistency!',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text(
-                'Areas for Improvement',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getCardBackgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: AnalyticsThemeUtils.getCardShadow(context),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Text(
+                  'Areas for Improvement',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.orange.shade100,
+                  color: AnalyticsThemeUtils.getContainerBackgroundColor(context, Colors.orange),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -474,9 +493,11 @@ class ComparativeAnalyticsWidget extends ConsumerWidget {
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.orange.shade50,
+              color: AnalyticsThemeUtils.getContainerBackgroundColor(context, Colors.orange, opacity: 0.05),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.orange.shade200),
+              border: Border.all(
+                color: AnalyticsThemeUtils.getBorderColor(context, Colors.orange, opacity: 0.2),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -507,7 +528,10 @@ class ComparativeAnalyticsWidget extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Text(
                   decline.description,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: TextStyle(
+                    fontSize: 12, 
+                    color: AnalyticsThemeUtils.getSecondaryTextColor(context),
+                  ),
                 ),
                 if (decline.suggestedActions.isNotEmpty) ...[
                   const SizedBox(height: 8),
@@ -519,7 +543,10 @@ class ComparativeAnalyticsWidget extends ConsumerWidget {
                     padding: const EdgeInsets.only(left: 8, top: 2),
                     child: Text(
                       '• $action',
-                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 11, 
+                        color: AnalyticsThemeUtils.getSecondaryTextColor(context),
+                      ),
                     ),
                   )),
                 ],
@@ -528,23 +555,19 @@ class ComparativeAnalyticsWidget extends ConsumerWidget {
           )),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildDetailedSemesterComparison(ComparativeAnalytics analytics) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getCardBackgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: AnalyticsThemeUtils.getCardShadow(context),
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -573,7 +596,10 @@ class ComparativeAnalyticsWidget extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: _getScoreColor(comparison.efficiencyScore).withValues(alpha: 0.1),
+                          color: AnalyticsThemeUtils.getContainerBackgroundColor(
+                            context, 
+                            _getScoreColor(comparison.efficiencyScore),
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -589,7 +615,10 @@ class ComparativeAnalyticsWidget extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: _getScoreColor(comparison.satisfactionScore).withValues(alpha: 0.1),
+                          color: AnalyticsThemeUtils.getContainerBackgroundColor(
+                            context, 
+                            _getScoreColor(comparison.satisfactionScore),
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -608,6 +637,7 @@ class ComparativeAnalyticsWidget extends ConsumerWidget {
           ),
         ],
       ),
+    ),
     );
   }
 
