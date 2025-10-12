@@ -391,7 +391,7 @@ class CalendarServiceImpl implements CalendarService {
           successfulRequestIds.add(request.id);
           
           // Add small delay between requests to prevent API rate limiting
-          await Future.delayed(const Duration(milliseconds: 100));
+          await Future<void>.delayed(const Duration(milliseconds: 100));
         } catch (e) {
           errors[request.id] = e.toString();
           debugPrint('Error syncing request ${request.id}: $e');
