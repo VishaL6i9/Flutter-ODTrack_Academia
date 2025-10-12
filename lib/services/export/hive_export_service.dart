@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:open_file/open_file.dart';
@@ -8,16 +9,19 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:odtrack_academia/models/export_models.dart';
 import 'package:odtrack_academia/models/od_request.dart';
 import 'package:odtrack_academia/models/analytics_models.dart';
+
 import 'package:odtrack_academia/services/export/export_service.dart';
+import 'package:odtrack_academia/services/export/pdf_generator.dart';
 import 'package:odtrack_academia/core/storage/enhanced_storage_manager.dart';
 
 /// Hive-based implementation of ExportService
 class HiveExportService implements ExportService {
   final EnhancedStorageManager _storageManager;
+  final PDFGenerator _pdfGenerator;
   final StreamController<ExportProgress> _progressController = StreamController<ExportProgress>.broadcast();
   final List<ExportResult> _exportHistory = [];
 
-  HiveExportService(this._storageManager);
+  HiveExportService(this._storageManager) : _pdfGenerator = PDFGenerator();
 
   @override
   Future<void> initialize() async {
@@ -327,9 +331,47 @@ class HiveExportService implements ExportService {
 
   Future<Map<String, dynamic>> _getStudentData(String studentId, DateRange dateRange) async {
     // Mock implementation - in real app, this would fetch from Hive storage
+    final mockRequests = [
+      {
+        'id': 'req_1',
+        'studentId': studentId,
+        'studentName': 'John Doe',
+        'registerNumber': 'REG001',
+        'date': '2024-01-15T00:00:00.000Z',
+        'periods': [1, 2],
+        'reason': 'Medical appointment',
+        'status': 'approved',
+        'attachmentUrl': null,
+        'createdAt': '2024-01-15T08:00:00.000Z',
+        'approvedAt': '2024-01-15T10:00:00.000Z',
+        'approvedBy': 'Dr. Smith',
+        'rejectionReason': null,
+        'staffId': 'staff_001',
+      },
+      {
+        'id': 'req_2',
+        'studentId': studentId,
+        'studentName': 'John Doe',
+        'registerNumber': 'REG001',
+        'date': '2024-01-20T00:00:00.000Z',
+        'periods': [3, 4, 5],
+        'reason': 'Family function',
+        'status': 'rejected',
+        'attachmentUrl': null,
+        'createdAt': '2024-01-20T08:00:00.000Z',
+        'approvedAt': null,
+        'approvedBy': null,
+        'rejectionReason': 'Insufficient notice period',
+        'staffId': 'staff_001',
+      },
+    ];
+
     return {
       'studentId': studentId,
-      'studentName': 'Student $studentId',
+      'studentName': 'John Doe',
+      'registerNumber': 'REG001',
+      'department': 'Computer Science',
+      'yearSemester': '3rd Year, 5th Semester',
       'dateRange': {
         'startDate': dateRange.startDate.toIso8601String(),
         'endDate': dateRange.endDate.toIso8601String(),
@@ -338,16 +380,8 @@ class HiveExportService implements ExportService {
       'approvedRequests': 3,
       'rejectedRequests': 1,
       'pendingRequests': 1,
-      'requests': [
-        {
-          'id': 'req_1',
-          'reason': 'Medical appointment',
-          'fromDate': '2024-01-15',
-          'toDate': '2024-01-15',
-          'status': 'approved',
-        },
-        // Add more mock data as needed
-      ],
+      'requests': mockRequests,
+      'frequentReasons': ['Medical appointment', 'Family function', 'Personal work'],
     };
   }
 
@@ -355,7 +389,9 @@ class HiveExportService implements ExportService {
     // Mock implementation - in real app, this would fetch from Hive storage
     return {
       'staffId': staffId,
-      'staffName': 'Staff $staffId',
+      'staffName': 'Dr. Jane Smith',
+      'department': 'Computer Science',
+      'designation': 'Associate Professor',
       'dateRange': {
         'startDate': dateRange.startDate.toIso8601String(),
         'endDate': dateRange.endDate.toIso8601String(),
@@ -365,6 +401,11 @@ class HiveExportService implements ExportService {
       'requestsRejected': 3,
       'requestsPending': 2,
       'averageProcessingTime': 2.5,
+      'commonRejectionReasons': [
+        'Insufficient notice period',
+        'Missing documentation',
+        'Exceeds monthly limit'
+      ],
     };
   }
 
@@ -392,70 +433,25 @@ class HiveExportService implements ExportService {
   ) async {
     _updateProgress(exportId, 0.5, 'Creating PDF document...');
     
-    final pdf = pw.Document();
+    late Uint8List pdfBytes;
     
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        build: (pw.Context context) {
-          return [
-            // Title
-            pw.Header(
-              level: 0,
-              child: pw.Text(
-                title,
-                style: pw.TextStyle(
-                  fontSize: 24,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-            ),
-            
-            pw.SizedBox(height: 20),
-            
-            // Metadata
-            if (options.includeMetadata) ...[
-              pw.Text(
-                'Generated on: ${DateTime.now().toString()}',
-                style: const pw.TextStyle(fontSize: 12),
-              ),
-              pw.SizedBox(height: 10),
-            ],
-            
-            // Data content
-            pw.Text(
-              'Report Data:',
-              style: pw.TextStyle(
-                fontSize: 16,
-                fontWeight: pw.FontWeight.bold,
-              ),
-            ),
-            
-            pw.SizedBox(height: 10),
-            
-            // Convert data to readable format
-            ...data.entries.map((entry) => pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(vertical: 2),
-              child: pw.Row(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.SizedBox(
-                    width: 150,
-                    child: pw.Text(
-                      '${entry.key}:',
-                      style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                    ),
-                  ),
-                  pw.Expanded(
-                    child: pw.Text(entry.value.toString()),
-                  ),
-                ],
-              ),
-            )),
-          ];
-        },
-      ),
-    );
+    // Determine report type and generate appropriate PDF
+    if (title.contains('Student Report')) {
+      final studentData = _mapToStudentReportData(data);
+      pdfBytes = await _pdfGenerator.generateStudentReport(studentData);
+    } else if (title.contains('Staff Report')) {
+      final staffData = _mapToStaffReportData(data);
+      pdfBytes = await _pdfGenerator.generateStaffReport(staffData);
+    } else if (title.contains('Analytics Report')) {
+      final analyticsData = _mapToAnalyticsReportData(data);
+      pdfBytes = await _pdfGenerator.generateAnalyticsReport(analyticsData);
+    } else if (title.contains('Bulk')) {
+      final bulkData = _mapToBulkRequestsReportData(data);
+      pdfBytes = await _pdfGenerator.generateBulkRequestsReport(bulkData);
+    } else {
+      // Fallback to generic PDF generation
+      pdfBytes = await _generateGenericPdf(title, data, options);
+    }
     
     _updateProgress(exportId, 0.8, 'Saving PDF file...');
     
@@ -465,7 +461,6 @@ class HiveExportService implements ExportService {
     final filePath = '${directory.path}/$fileName';
     final file = File(filePath);
     
-    final pdfBytes = await pdf.save();
     await file.writeAsBytes(pdfBytes);
     
     return ExportResult(
@@ -536,5 +531,167 @@ class HiveExportService implements ExportService {
   Future<void> _saveExportHistory() async {
     // In a real implementation, this would save to Hive storage
     // For now, we'll keep it in memory
+  }
+
+  // Data mapping methods for PDF generation
+
+  StudentReportData _mapToStudentReportData(Map<String, dynamic> data) {
+    final requests = (data['requests'] as List<dynamic>?)
+        ?.map((r) => ODRequest.fromJson(r as Map<String, dynamic>))
+        .toList() ?? [];
+    
+    return StudentReportData(
+      studentId: data['studentId'] as String? ?? '',
+      studentName: data['studentName'] as String? ?? '',
+      registerNumber: data['registerNumber'] as String? ?? '',
+      department: data['department'] as String? ?? 'Unknown',
+      yearSemester: data['yearSemester'] as String? ?? 'Unknown',
+      dateRange: DateRange(
+        startDate: DateTime.parse((data['dateRange']?['startDate'] as String?) ?? DateTime.now().toIso8601String()),
+        endDate: DateTime.parse((data['dateRange']?['endDate'] as String?) ?? DateTime.now().toIso8601String()),
+      ),
+      totalRequests: data['totalRequests'] as int? ?? 0,
+      approvedRequests: data['approvedRequests'] as int? ?? 0,
+      rejectedRequests: data['rejectedRequests'] as int? ?? 0,
+      pendingRequests: data['pendingRequests'] as int? ?? 0,
+      requests: requests,
+      frequentReasons: (data['frequentReasons'] as List<dynamic>?)
+          ?.map((r) => r.toString())
+          .toList() ?? [],
+    );
+  }
+
+  StaffReportData _mapToStaffReportData(Map<String, dynamic> data) {
+    return StaffReportData(
+      staffId: data['staffId'] as String? ?? '',
+      staffName: data['staffName'] as String? ?? '',
+      department: data['department'] as String? ?? 'Unknown',
+      designation: data['designation'] as String? ?? 'Staff',
+      dateRange: DateRange(
+        startDate: DateTime.parse((data['dateRange']?['startDate'] as String?) ?? DateTime.now().toIso8601String()),
+        endDate: DateTime.parse((data['dateRange']?['endDate'] as String?) ?? DateTime.now().toIso8601String()),
+      ),
+      requestsProcessed: data['requestsProcessed'] as int? ?? 0,
+      requestsApproved: data['requestsApproved'] as int? ?? 0,
+      requestsRejected: data['requestsRejected'] as int? ?? 0,
+      averageProcessingTime: (data['averageProcessingTime'] as num?)?.toDouble() ?? 0.0,
+      commonRejectionReasons: (data['commonRejectionReasons'] as List<dynamic>?)
+          ?.map((r) => r.toString())
+          .toList() ?? [],
+    );
+  }
+
+  AnalyticsReportData _mapToAnalyticsReportData(Map<String, dynamic> data) {
+    final analyticsData = AnalyticsData(
+      totalRequests: data['totalRequests'] as int? ?? 0,
+      approvedRequests: data['approvedRequests'] as int? ?? 0,
+      rejectedRequests: data['rejectedRequests'] as int? ?? 0,
+      pendingRequests: data['pendingRequests'] as int? ?? 0,
+      approvalRate: (data['approvalRate'] as num?)?.toDouble() ?? 0.0,
+      requestsByMonth: Map<String, int>.from(data['requestsByMonth'] as Map? ?? {}),
+      requestsByDepartment: Map<String, int>.from(data['requestsByDepartment'] as Map? ?? {}),
+      topRejectionReasons: (data['topRejectionReasons'] as List<dynamic>?)
+          ?.map((r) => RejectionReason.fromJson(r as Map<String, dynamic>))
+          .toList() ?? [],
+      patterns: (data['patterns'] as List<dynamic>?)
+          ?.map((p) => RequestPattern.fromJson(p as Map<String, dynamic>))
+          .toList() ?? [],
+    );
+
+    return AnalyticsReportData(
+      dateRange: DateRange(
+        startDate: DateTime.parse((data['dateRange']?['startDate'] as String?) ?? DateTime.now().toIso8601String()),
+        endDate: DateTime.parse((data['dateRange']?['endDate'] as String?) ?? DateTime.now().toIso8601String()),
+      ),
+      generatedBy: (data['generatedBy'] as String?) ?? 'System',
+      departmentFilter: data['departmentFilter'] as String?,
+      analyticsData: analyticsData,
+    );
+  }
+
+  BulkRequestsReportData _mapToBulkRequestsReportData(Map<String, dynamic> data) {
+    final requests = (data['requests'] as List<dynamic>?)
+        ?.map((r) => ODRequest.fromJson(r as Map<String, dynamic>))
+        .toList() ?? [];
+
+    return BulkRequestsReportData(
+      requests: requests,
+      exportedBy: (data['exportedBy'] as String?) ?? 'System',
+      filterDescription: data['filterDescription'] as String?,
+    );
+  }
+
+  Future<Uint8List> _generateGenericPdf(
+    String title,
+    Map<String, dynamic> data,
+    ExportOptions options,
+  ) async {
+    final pdf = pw.Document();
+    
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        build: (pw.Context context) {
+          return [
+            // Title
+            pw.Header(
+              level: 0,
+              child: pw.Text(
+                title,
+                style: pw.TextStyle(
+                  fontSize: 24,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+            ),
+            
+            pw.SizedBox(height: 20),
+            
+            // Metadata
+            if (options.includeMetadata) ...[
+              pw.Text(
+                'Generated on: ${DateTime.now().toString()}',
+                style: const pw.TextStyle(fontSize: 12),
+              ),
+              pw.SizedBox(height: 10),
+            ],
+            
+            // Data content
+            pw.Text(
+              'Report Data:',
+              style: pw.TextStyle(
+                fontSize: 16,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+            
+            pw.SizedBox(height: 10),
+            
+            // Convert data to readable format
+            ...data.entries.map((entry) => pw.Padding(
+              padding: const pw.EdgeInsets.symmetric(vertical: 2),
+              child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.SizedBox(
+                    width: 150,
+                    child: pw.Text(
+                      '${entry.key}:',
+                      style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                    ),
+                  ),
+                  pw.Expanded(
+                    child: pw.Text(entry.value.toString()),
+                  ),
+                ],
+              ),
+            )),
+          ];
+        },
+      ),
+    );
+    
+    return pdf.save();
   }
 }
