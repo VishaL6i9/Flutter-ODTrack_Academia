@@ -43,4 +43,10 @@ abstract class CalendarService {
   
   /// Check if auto-sync is enabled
   Future<bool> isAutoSyncEnabled();
+  
+  /// Batch sync multiple OD requests to calendar
+  Future<BatchSyncResult> batchSyncODRequests(List<ODRequest> requests);
+  
+  /// Get calendar sync status for multiple requests
+  Future<Map<String, CalendarSyncStatus>> getCalendarSyncStatus(List<String> requestIds);
 }
