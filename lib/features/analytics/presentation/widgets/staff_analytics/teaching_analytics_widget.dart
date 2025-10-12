@@ -7,6 +7,7 @@ import 'package:odtrack_academia/providers/staff_analytics_provider.dart';
 import 'package:odtrack_academia/services/analytics/staff_analytics_service.dart';
 import 'package:odtrack_academia/shared/widgets/loading_widget.dart';
 import 'package:odtrack_academia/shared/widgets/empty_state_widget.dart';
+import 'package:odtrack_academia/features/analytics/presentation/utils/analytics_theme_utils.dart';
 
 /// Widget for displaying teaching analytics with interactive charts
 class TeachingAnalyticsWidget extends ConsumerWidget {
@@ -36,9 +37,7 @@ class TeachingAnalyticsWidget extends ConsumerWidget {
       );
     }
 
-    return Theme(
-      data: ThemeData.light(),
-      child: SingleChildScrollView(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,7 +65,6 @@ class TeachingAnalyticsWidget extends ConsumerWidget {
           // Detailed Subject Breakdown
           _buildSubjectBreakdown(teachingAnalytics),
         ],
-      ),
       ),
     );
   }
@@ -135,159 +133,160 @@ class TeachingAnalyticsWidget extends ConsumerWidget {
   }
 
   Widget _buildOverviewCard(String title, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getContainerBackgroundColor(context, color),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: AnalyticsThemeUtils.getBorderColor(context, color),
           ),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
             ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 12,
+                color: AnalyticsThemeUtils.getSecondaryTextColor(context),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildSubjectAllocationChart(TeachingAnalytics analytics) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Subject Allocation (Periods per Week)',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getCardBackgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: AnalyticsThemeUtils.getCardShadow(context),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Subject Allocation (Periods per Week)',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 250,
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: _getMaxPeriodsPerWeek(analytics.subjectAllocations) * 1.2,
-                barTouchData: BarTouchData(
-                  enabled: true,
-                  touchTooltipData: BarTouchTooltipData(
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final subjects = analytics.subjectAllocations.keys.toList();
-                      if (groupIndex < subjects.length) {
-                        final subject = subjects[groupIndex];
-                        final allocation = analytics.subjectAllocations[subject]!;
-                        return BarTooltipItem(
-                          '${allocation.subjectName}\n${rod.toY.toInt()} periods/week\n${allocation.studentCount.toInt()} students',
-                          const TextStyle(color: Colors.white, fontSize: 12),
-                        );
-                      }
-                      return null;
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 250,
+              child: BarChart(
+                BarChartData(
+                  alignment: BarChartAlignment.spaceAround,
+                  maxY: _getMaxPeriodsPerWeek(analytics.subjectAllocations) * 1.2,
+                  barTouchData: BarTouchData(
+                    enabled: true,
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                        final subjects = analytics.subjectAllocations.keys.toList();
+                        if (groupIndex < subjects.length) {
+                          final subject = subjects[groupIndex];
+                          final allocation = analytics.subjectAllocations[subject]!;
+                          return BarTooltipItem(
+                            '${allocation.subjectName}\n${rod.toY.toInt()} periods/week\n${allocation.studentCount.toInt()} students',
+                            const TextStyle(color: Colors.white, fontSize: 12),
+                          );
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  titlesData: FlTitlesData(
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 40,
+                        getTitlesWidget: (value, meta) {
+                          return Text(
+                            '${value.toInt()}',
+                            style: TextStyle(
+                              fontSize: 12, 
+                              color: AnalyticsThemeUtils.getSecondaryTextColor(context),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 50,
+                        getTitlesWidget: (value, meta) {
+                          final subjects = analytics.subjectAllocations.keys.toList();
+                          final index = value.toInt();
+                          if (index >= 0 && index < subjects.length) {
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                subjects[index],
+                                style: TextStyle(
+                                  fontSize: 10, 
+                                  color: AnalyticsThemeUtils.getSecondaryTextColor(context),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            );
+                          }
+                          return const Text('');
+                        },
+                      ),
+                    ),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  barGroups: _getSubjectAllocationBars(analytics.subjectAllocations),
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: 2,
+                    getDrawingHorizontalLine: (value) {
+                      return FlLine(
+                        color: AnalyticsThemeUtils.getGridLineColor(context),
+                        strokeWidth: 1,
+                      );
                     },
                   ),
                 ),
-                titlesData: FlTitlesData(
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          '${value.toInt()}',
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
-                        );
-                      },
-                    ),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 50,
-                      getTitlesWidget: (value, meta) {
-                        final subjects = analytics.subjectAllocations.keys.toList();
-                        final index = value.toInt();
-                        if (index >= 0 && index < subjects.length) {
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: Text(
-                              subjects[index],
-                              style: const TextStyle(fontSize: 10, color: Colors.grey),
-                              textAlign: TextAlign.center,
-                            ),
-                          );
-                        }
-                        return const Text('');
-                      },
-                    ),
-                  ),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                ),
-                borderData: FlBorderData(show: false),
-                barGroups: _getSubjectAllocationBars(analytics.subjectAllocations),
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: 2,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: Colors.grey.shade200,
-                      strokeWidth: 1,
-                    );
-                  },
-                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildClassDistributionChart(TeachingAnalytics analytics) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getCardBackgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: AnalyticsThemeUtils.getCardShadow(context),
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
@@ -324,24 +323,20 @@ class TeachingAnalyticsWidget extends ConsumerWidget {
           ),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildGradeWiseAnalytics(TeachingAnalytics analytics) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getCardBackgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: AnalyticsThemeUtils.getCardShadow(context),
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
@@ -369,7 +364,7 @@ class TeachingAnalyticsWidget extends ConsumerWidget {
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey.shade50,
+                color: AnalyticsThemeUtils.getSecondaryBackgroundColor(context),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -406,8 +401,8 @@ class TeachingAnalyticsWidget extends ConsumerWidget {
                         ),
                         Text(
                           '$classCount classes • $totalStudents students • Avg: ${avgClassSize.toStringAsFixed(1)}',
-                          style: const TextStyle(
-                            color: Colors.grey,
+                          style: TextStyle(
+                            color: AnalyticsThemeUtils.getSecondaryTextColor(context),
                             fontSize: 12,
                           ),
                         ),
@@ -427,24 +422,20 @@ class TeachingAnalyticsWidget extends ConsumerWidget {
           }),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildTeachingEfficiencyMetrics(TeachingAnalytics analytics) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getCardBackgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: AnalyticsThemeUtils.getCardShadow(context),
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
@@ -500,18 +491,22 @@ class TeachingAnalyticsWidget extends ConsumerWidget {
           ),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildEfficiencyCard(String title, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Column(
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getContainerBackgroundColor(context, color),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: AnalyticsThemeUtils.getBorderColor(context, color),
+          ),
+        ),
+        child: Column(
         children: [
           Icon(icon, color: color, size: 20),
           const SizedBox(height: 8),
@@ -525,32 +520,28 @@ class TeachingAnalyticsWidget extends ConsumerWidget {
           ),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: Colors.grey,
+              color: AnalyticsThemeUtils.getSecondaryTextColor(context),
             ),
             textAlign: TextAlign.center,
           ),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildSubjectBreakdown(TeachingAnalytics analytics) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AnalyticsThemeUtils.getCardBackgroundColor(context),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: AnalyticsThemeUtils.getCardShadow(context),
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
@@ -568,7 +559,7 @@ class TeachingAnalyticsWidget extends ConsumerWidget {
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.grey.shade50,
+                color: AnalyticsThemeUtils.getSecondaryBackgroundColor(context),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -603,8 +594,8 @@ class TeachingAnalyticsWidget extends ConsumerWidget {
                       ),
                       Text(
                         '${allocation.periodsPerWeek} periods/week',
-                        style: const TextStyle(
-                          color: Colors.grey,
+                        style: TextStyle(
+                          color: AnalyticsThemeUtils.getSecondaryTextColor(context),
                           fontSize: 12,
                         ),
                       ),
@@ -626,28 +617,31 @@ class TeachingAnalyticsWidget extends ConsumerWidget {
           }),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildSubjectStat(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 10,
-            color: Colors.grey,
+    return Builder(
+      builder: (context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: AnalyticsThemeUtils.getSecondaryTextColor(context),
+            ),
           ),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
