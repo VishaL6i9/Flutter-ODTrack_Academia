@@ -7,6 +7,7 @@ import 'package:odtrack_academia/models/staff_workload_models.dart';
 import 'package:odtrack_academia/providers/staff_analytics_provider.dart';
 import 'package:odtrack_academia/shared/widgets/loading_widget.dart';
 import 'package:odtrack_academia/shared/widgets/empty_state_widget.dart';
+import 'package:odtrack_academia/features/analytics/presentation/utils/analytics_theme_utils.dart';
 
 /// Widget for displaying workload analytics with interactive charts
 class WorkloadAnalyticsWidget extends ConsumerWidget {
@@ -36,38 +37,35 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
       );
     }
 
-    return Theme(
-      data: ThemeData.light(),
-      child: SingleChildScrollView(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Workload Overview Cards
-          _buildWorkloadOverview(workloadAnalytics),
+          _buildWorkloadOverview(context, workloadAnalytics),
           const SizedBox(height: 24),
           
           // Hours by Week Chart
-          _buildHoursChart(workloadAnalytics),
+          _buildHoursChart(context, workloadAnalytics),
           const SizedBox(height: 24),
           
           // Activity Breakdown Chart
-          _buildActivityBreakdown(workloadAnalytics),
+          _buildActivityBreakdown(context, workloadAnalytics),
           const SizedBox(height: 24),
           
           // Weekly Trend Chart
-          _buildWeeklyTrend(workloadAnalytics),
+          _buildWeeklyTrend(context, workloadAnalytics),
           const SizedBox(height: 24),
           
           // Workload Alerts
-          _buildWorkloadAlerts(workloadAnalytics),
+          _buildWorkloadAlerts(context, workloadAnalytics),
         ],
-      ),
       ),
     );
   }
 
-  Widget _buildWorkloadOverview(WorkloadAnalytics analytics) {
+  Widget _buildWorkloadOverview(BuildContext context, WorkloadAnalytics analytics) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -82,6 +80,7 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
         Column(
           children: [
             _buildOverviewCard(
+              context,
               'Total Hours',
               '${analytics.totalWorkingHours.toStringAsFixed(1)}h',
               Icons.access_time,
@@ -89,6 +88,7 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             _buildOverviewCard(
+              context,
               'Weekly Average',
               '${analytics.weeklyAverageHours.toStringAsFixed(1)}h',
               Icons.calendar_view_week,
@@ -96,6 +96,7 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             _buildOverviewCard(
+              context,
               'Department',
               analytics.department,
               Icons.business,
@@ -107,19 +108,13 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildOverviewCard(String title, String value, IconData icon, Color color) {
+  Widget _buildOverviewCard(BuildContext context, String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AnalyticsThemeUtils.getCardBackgroundColor(context),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: AnalyticsThemeUtils.getCardShadow(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,24 +124,24 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
               Icon(icon, color: color, size: 24),
               Expanded(
                 child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: color,
-                      fontWeight: FontWeight.w500,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AnalyticsThemeUtils.getContainerBackgroundColor(context, color),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: color,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
             ],
           ),
           const SizedBox(height: 12),
@@ -166,19 +161,13 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildHoursChart(WorkloadAnalytics analytics) {
+  Widget _buildHoursChart(BuildContext context, WorkloadAnalytics analytics) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AnalyticsThemeUtils.getCardBackgroundColor(context),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: AnalyticsThemeUtils.getCardShadow(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,10 +189,7 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
                   drawVerticalLine: false,
                   horizontalInterval: 10,
                   getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: Colors.grey.shade200,
-                      strokeWidth: 1,
-                    );
+                    return AnalyticsThemeUtils.getChartGridLine(context, value);
                   },
                 ),
                 titlesData: FlTitlesData(
@@ -214,7 +200,10 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
                       getTitlesWidget: (value, meta) {
                         return Text(
                           '${value.toInt()}h',
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          style: TextStyle(
+                            fontSize: 12, 
+                            color: AnalyticsThemeUtils.getAxisTextColor(context),
+                          ),
                         );
                       },
                     ),
@@ -228,7 +217,10 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
                         if (weekIndex >= 0 && weekIndex < analytics.hoursByWeek.length) {
                           return Text(
                             'W${weekIndex + 1}',
-                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            style: TextStyle(
+                              fontSize: 12, 
+                              color: AnalyticsThemeUtils.getAxisTextColor(context),
+                            ),
                           );
                         }
                         return const Text('');
@@ -249,12 +241,7 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
                     dotData: FlDotData(
                       show: true,
                       getDotPainter: (spot, percent, barData, index) {
-                        return FlDotCirclePainter(
-                          radius: 4,
-                          color: AppTheme.primaryColor,
-                          strokeWidth: 2,
-                          strokeColor: Colors.white,
-                        );
+                        return AnalyticsThemeUtils.getChartDotPainter(context, AppTheme.primaryColor);
                       },
                     ),
                     belowBarData: BarAreaData(
@@ -271,19 +258,13 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildActivityBreakdown(WorkloadAnalytics analytics) {
+  Widget _buildActivityBreakdown(BuildContext context, WorkloadAnalytics analytics) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AnalyticsThemeUtils.getCardBackgroundColor(context),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: AnalyticsThemeUtils.getCardShadow(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,7 +285,7 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
                   height: 200,
                   child: PieChart(
                     PieChartData(
-                      sections: _getActivitySections(analytics.hoursByActivity),
+                      sections: _getActivitySections(analytics.hoursByActivity, context),
                       centerSpaceRadius: 40,
                       sectionsSpace: 2,
                     ),
@@ -315,7 +296,7 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: _buildActivityLegend(analytics.hoursByActivity),
+                  children: _buildActivityLegend(analytics.hoursByActivity, context),
                 ),
               ),
             ],
@@ -325,19 +306,13 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildWeeklyTrend(WorkloadAnalytics analytics) {
+  Widget _buildWeeklyTrend(BuildContext context, WorkloadAnalytics analytics) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AnalyticsThemeUtils.getCardBackgroundColor(context),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: AnalyticsThemeUtils.getCardShadow(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,7 +330,10 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: _getTrendColor(analytics.trend).withValues(alpha: 0.1),
+                  color: AnalyticsThemeUtils.getContainerBackgroundColor(
+                    context, 
+                    AnalyticsThemeUtils.getTrendColor(context, analytics.trend),
+                  ),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
@@ -364,7 +342,7 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
                     Icon(
                       _getTrendIcon(analytics.trend),
                       size: 16,
-                      color: _getTrendColor(analytics.trend),
+                      color: AnalyticsThemeUtils.getTrendColor(context, analytics.trend),
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -372,7 +350,7 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: _getTrendColor(analytics.trend),
+                        color: AnalyticsThemeUtils.getTrendColor(context, analytics.trend),
                       ),
                     ),
                   ],
@@ -398,7 +376,10 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
                       getTitlesWidget: (value, meta) {
                         return Text(
                           '${value.toInt()}h',
-                          style: const TextStyle(fontSize: 10, color: Colors.grey),
+                          style: TextStyle(
+                            fontSize: 10, 
+                            color: AnalyticsThemeUtils.getAxisTextColor(context),
+                          ),
                         );
                       },
                     ),
@@ -413,7 +394,10 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
                         if (monthIndex >= 0 && monthIndex < months.length) {
                           return Text(
                             months[monthIndex].substring(0, 3),
-                            style: const TextStyle(fontSize: 10, color: Colors.grey),
+                            style: TextStyle(
+                              fontSize: 10, 
+                              color: AnalyticsThemeUtils.getAxisTextColor(context),
+                            ),
                           );
                         }
                         return const Text('');
@@ -434,18 +418,21 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildWorkloadAlerts(WorkloadAnalytics analytics) {
+  Widget _buildWorkloadAlerts(BuildContext context, WorkloadAnalytics analytics) {
     if (analytics.alerts.isEmpty) {
+      final successColor = AnalyticsThemeUtils.getSuccessColor(context);
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.green.shade50,
+          color: AnalyticsThemeUtils.getContainerBackgroundColor(context, successColor),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.green.shade200),
+          border: Border.all(
+            color: AnalyticsThemeUtils.getBorderColor(context, successColor),
+          ),
         ),
         child: Row(
           children: [
-            Icon(Icons.check_circle_outline, color: Colors.green.shade600),
+            Icon(Icons.check_circle_outline, color: successColor),
             const SizedBox(width: 12),
             const Expanded(
               child: Text(
@@ -469,42 +456,47 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        ...analytics.alerts.map((alert) => Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: _getAlertColor(alert.severity).withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: _getAlertColor(alert.severity).withValues(alpha: 0.3)),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                _getAlertIcon(alert.severity),
-                color: _getAlertColor(alert.severity),
+        ...analytics.alerts.map((alert) {
+          final alertColor = AnalyticsThemeUtils.getAlertColor(alert.severity, context);
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AnalyticsThemeUtils.getContainerBackgroundColor(context, alertColor),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: AnalyticsThemeUtils.getBorderColor(context, alertColor),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      alert.message,
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                    Text(
-                      'Severity: ${alert.severity.toUpperCase()}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: _getAlertColor(alert.severity),
-                      ),
-                    ),
-                  ],
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _getAlertIcon(alert.severity),
+                  color: alertColor,
                 ),
-              ),
-            ],
-          ),
-        )),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        alert.message,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      Text(
+                        'Severity: ${alert.severity.toUpperCase()}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: alertColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
       ],
     );
   }
@@ -521,16 +513,8 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
     return spots;
   }
 
-  List<PieChartSectionData> _getActivitySections(Map<String, double> hoursByActivity) {
-    final colors = [
-      AppTheme.primaryColor,
-      AppTheme.accentColor,
-      Colors.orange,
-      Colors.green,
-      Colors.purple,
-      Colors.red,
-      Colors.teal,
-    ];
+  List<PieChartSectionData> _getActivitySections(Map<String, double> hoursByActivity, BuildContext context) {
+    final colors = AnalyticsThemeUtils.getChartColors(context);
     
     final sections = <PieChartSectionData>[];
     final activities = hoursByActivity.keys.toList();
@@ -558,16 +542,8 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
     return sections;
   }
 
-  List<Widget> _buildActivityLegend(Map<String, double> hoursByActivity) {
-    final colors = [
-      AppTheme.primaryColor,
-      AppTheme.accentColor,
-      Colors.orange,
-      Colors.green,
-      Colors.purple,
-      Colors.red,
-      Colors.teal,
-    ];
+  List<Widget> _buildActivityLegend(Map<String, double> hoursByActivity, BuildContext context) {
+    final colors = AnalyticsThemeUtils.getChartColors(context);
     
     final activities = hoursByActivity.keys.toList();
     
@@ -642,17 +618,6 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
     }
   }
 
-  Color _getTrendColor(WorkloadTrend trend) {
-    switch (trend) {
-      case WorkloadTrend.increasing:
-        return Colors.orange;
-      case WorkloadTrend.decreasing:
-        return Colors.red;
-      case WorkloadTrend.stable:
-        return Colors.green;
-    }
-  }
-
   IconData _getAlertIcon(String severity) {
     switch (severity.toLowerCase()) {
       case 'high':
@@ -663,19 +628,6 @@ class WorkloadAnalyticsWidget extends ConsumerWidget {
         return Icons.info;
       default:
         return Icons.info;
-    }
-  }
-
-  Color _getAlertColor(String severity) {
-    switch (severity.toLowerCase()) {
-      case 'high':
-        return Colors.red;
-      case 'medium':
-        return Colors.orange;
-      case 'low':
-        return Colors.blue;
-      default:
-        return Colors.grey;
     }
   }
 }
