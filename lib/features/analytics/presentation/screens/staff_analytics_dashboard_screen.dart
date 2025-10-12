@@ -183,85 +183,86 @@ class _StaffAnalyticsDashboardScreenState extends ConsumerState<StaffAnalyticsDa
     final staffAnalyticsState = ref.watch(staffAnalyticsProvider);
     final isLoading = ref.watch(staffAnalyticsLoadingProvider);
     final error = ref.watch(staffAnalyticsErrorProvider);
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
 
-    return Theme(
-      data: ThemeData.dark(),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Staff Analytics Dashboard'),
-          elevation: 0,
-          backgroundColor: Colors.black,
-          foregroundColor: Colors.white,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: isLoading ? null : _refreshAnalytics,
-              tooltip: 'Refresh Analytics',
-            ),
-            IconButton(
-              icon: const Icon(Icons.filter_list),
-              onPressed: () => _showFilterDialog(context),
-              tooltip: 'Filter Options',
-            ),
-          ],
-          bottom: TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            indicatorColor: Colors.white,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            tabs: _tabs.map((tab) => Tab(
-              icon: Icon(_getTabIcon(tab)),
-              text: _getTabTitle(tab),
-            )).toList(),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Staff Analytics Dashboard'),
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: isLoading ? null : _refreshAnalytics,
+            tooltip: 'Refresh Analytics',
           ),
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: () => _showFilterDialog(context),
+            tooltip: 'Filter Options',
+          ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabs: _tabs.map((tab) => Tab(
+            icon: Icon(_getTabIcon(tab)),
+            text: _getTabTitle(tab),
+          )).toList(),
         ),
-        body: Column(
-          children: [
-            // Analytics Summary Header
-            if (staffAnalyticsState.workloadAnalytics != null)
-              _buildAnalyticsSummaryHeader(staffAnalyticsState.workloadAnalytics!),
-            
-            // Error Display
-            if (error != null)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                margin: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.shade200),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.error_outline, color: Colors.red.shade600),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        error,
-                        style: TextStyle(color: Colors.red.shade700),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => ref.read(staffAnalyticsProvider.notifier).clearError(),
-                      child: const Text('Dismiss'),
-                    ),
-                  ],
+      ),
+      body: Column(
+        children: [
+          // Analytics Summary Header
+          if (staffAnalyticsState.workloadAnalytics != null)
+            _buildAnalyticsSummaryHeader(staffAnalyticsState.workloadAnalytics!),
+          
+          // Error Display
+          if (error != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.red.withValues(alpha: 0.2) : Colors.red.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isDarkMode ? Colors.red.withValues(alpha: 0.5) : Colors.red.shade200,
                 ),
               ),
-            
-            // Tab Content
-            Expanded(
-              child: isLoading
-                  ? const LoadingWidget(message: 'Loading analytics data...')
-                  : TabBarView(
-                      controller: _tabController,
-                      children: _tabs.map((tab) => _buildTabContent(tab)).toList(),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.error_outline, 
+                    color: isDarkMode ? Colors.red.shade300 : Colors.red.shade600,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      error,
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.red.shade300 : Colors.red.shade700,
+                      ),
                     ),
+                  ),
+                  TextButton(
+                    onPressed: () => ref.read(staffAnalyticsProvider.notifier).clearError(),
+                    child: const Text('Dismiss'),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
+          
+          // Tab Content
+          Expanded(
+            child: isLoading
+                ? const LoadingWidget(message: 'Loading analytics data...')
+                : TabBarView(
+                    controller: _tabController,
+                    children: _tabs.map((tab) => _buildTabContent(tab)).toList(),
+                  ),
+          ),
+        ],
       ),
     );
   }
@@ -319,14 +320,19 @@ class _StaffAnalyticsDashboardScreenState extends ConsumerState<StaffAnalyticsDa
   }
 
   Widget _buildSummaryCard(String title, String value, IconData icon, Color color) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+    
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? theme.cardColor : Colors.white,
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: isDarkMode 
+                ? Colors.black.withValues(alpha: 0.3)
+                : Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -347,9 +353,9 @@ class _StaffAnalyticsDashboardScreenState extends ConsumerState<StaffAnalyticsDa
           ),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: Colors.grey,
+              color: isDarkMode ? Colors.grey.shade400 : Colors.grey,
             ),
             textAlign: TextAlign.center,
           ),
