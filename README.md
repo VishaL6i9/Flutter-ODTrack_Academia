@@ -162,10 +162,10 @@ flutter build ios --release
 - [x] **M1: Project Foundation** (Dec 2024)
 - [x] **M2: Authentication & Dashboard** (Jan 2025)
 - [x] **M4: Staff Management System** (Jan 2025)
-- [x] **M5: Enhanced Features** (In Progress)
-  - Advanced reporting & analytics with charts
-  - Export functionality (PDF reports)
-  - Calendar integration
+- [x] **M5: Enhanced Features**
+  - Advanced reporting & analytics with charts (May 2025)
+  - Calendar integration (August 2025)
+  - Export functionality (PDF reports) (October 2025)
 
 ### In Progress 🚧
 - [ ] **M3: Complete OD Request Flow**
