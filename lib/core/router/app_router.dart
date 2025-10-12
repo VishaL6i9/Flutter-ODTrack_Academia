@@ -8,6 +8,7 @@ import 'package:odtrack_academia/features/timetable/presentation/timetable_scree
 import 'package:odtrack_academia/features/staff_directory/presentation/staff_directory_screen.dart';
 import 'package:odtrack_academia/features/staff_inbox/presentation/staff_inbox_screen.dart';
 import 'package:odtrack_academia/features/analytics/presentation/screens/staff_analytics_dashboard_screen.dart';
+import 'package:odtrack_academia/features/export/presentation/export_screen.dart';
 import 'package:odtrack_academia/providers/auth_provider.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -78,6 +79,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           }
           return StaffAnalyticsDashboardScreen(staffId: staffId);
         },
+      ),
+      GoRoute(
+        path: AppConstants.exportRoute,
+        builder: (context, state) => const ExportScreen(),
       ),
     ],
   );
