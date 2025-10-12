@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:odtrack_academia/providers/calendar_provider.dart';
 import 'package:odtrack_academia/providers/od_request_provider.dart';
-import 'package:odtrack_academia/services/calendar/calendar_sync_service.dart';
 
 /// Screen for managing calendar integration settings
 class CalendarSettingsScreen extends ConsumerStatefulWidget {
@@ -594,13 +593,13 @@ class _CalendarSettingsScreenState extends ConsumerState<CalendarSettingsScreen>
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: _batchSyncStatus!.contains('Error') 
-                      ? Colors.red.withOpacity(0.1)
-                      : Colors.green.withOpacity(0.1),
+                      ? Colors.red.withValues(alpha: 0.1)
+                      : Colors.green.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: _batchSyncStatus!.contains('Error') 
-                        ? Colors.red.withOpacity(0.3)
-                        : Colors.green.withOpacity(0.3),
+                        ? Colors.red.withValues(alpha: 0.3)
+                        : Colors.green.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -708,7 +707,7 @@ class _CalendarSettingsScreenState extends ConsumerState<CalendarSettingsScreen>
         const SizedBox(height: 8),
         LinearProgressIndicator(
           value: progress,
-          backgroundColor: Colors.grey.withOpacity(0.3),
+          backgroundColor: Colors.grey.withValues(alpha: 0.3),
         ),
       ],
     );
