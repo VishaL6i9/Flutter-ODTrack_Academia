@@ -37,9 +37,7 @@ class TimeAllocationWidget extends ConsumerWidget {
       );
     }
 
-    return Theme(
-      data: ThemeData.light(),
-      child: SingleChildScrollView(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,7 +61,6 @@ class TimeAllocationWidget extends ConsumerWidget {
           // Time Conflicts
           _buildTimeConflicts(timeAllocationAnalytics),
         ],
-      ),
       ),
     );
   }
