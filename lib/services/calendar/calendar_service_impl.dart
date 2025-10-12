@@ -356,6 +356,113 @@ class CalendarServiceImpl implements CalendarService {
     }
   }
 
+  @override
+  Future<BatchSyncResult> batchSyncODRequests(List<ODRequest> requests) async {
+    final syncTimestamp = DateTime.now();
+    final successfulRequestIds = <String>[];
+    final errors = <String, String>{};
+    
+    try {
+      final hasPermission = await hasCalendarPermission();
+      if (!hasPermission) {
+        throw Exception('Calendar permission not granted');
+      }
+
+      final settings = await getSyncSettings();
+      if (settings.defaultCalendarId.isEmpty) {
+        throw Exception('No default calendar selected');
+      }
+
+      // Filter requests based on sync settings
+      final requestsToSync = requests.where((request) {
+        if (settings.syncApprovedOnly && !request.isApproved) {
+          return settings.includeRejectedEvents && request.isRejected;
+        }
+        if (request.isRejected && !settings.includeRejectedEvents) {
+          return false;
+        }
+        return true;
+      }).toList();
+
+      // Batch sync with rate limiting to avoid overwhelming calendar API
+      for (final request in requestsToSync) {
+        try {
+          await addODEventToCalendar(request, settings.defaultCalendarId);
+          successfulRequestIds.add(request.id);
+          
+          // Add small delay between requests to prevent API rate limiting
+          await Future.delayed(const Duration(milliseconds: 100));
+        } catch (e) {
+          errors[request.id] = e.toString();
+          debugPrint('Error syncing request ${request.id}: $e');
+        }
+      }
+
+      return BatchSyncResult(
+        totalRequests: requestsToSync.length,
+        successCount: successfulRequestIds.length,
+        errorCount: errors.length,
+        successfulRequestIds: successfulRequestIds,
+        errors: errors,
+        syncTimestamp: syncTimestamp,
+      );
+    } catch (e) {
+      debugPrint('Error in batch sync: $e');
+      
+      // Return result with global error
+      return BatchSyncResult(
+        totalRequests: requests.length,
+        successCount: successfulRequestIds.length,
+        errorCount: requests.length - successfulRequestIds.length,
+        successfulRequestIds: successfulRequestIds,
+        errors: {
+          'global': e.toString(),
+          ...errors,
+        },
+        syncTimestamp: syncTimestamp,
+      );
+    }
+  }
+
+  @override
+  Future<Map<String, CalendarSyncStatus>> getCalendarSyncStatus(List<String> requestIds) async {
+    final statusMap = <String, CalendarSyncStatus>{};
+    
+    try {
+      for (final requestId in requestIds) {
+        final eventMapping = await _getEventMapping(requestId);
+        
+        if (eventMapping != null) {
+          statusMap[requestId] = CalendarSyncStatus(
+            requestId: requestId,
+            isSynced: true,
+            eventId: eventMapping['eventId'] as String?,
+            calendarId: eventMapping['calendarId'] as String?,
+            lastSyncTime: DateTime.tryParse(eventMapping['createdAt'] as String? ?? ''),
+          );
+        } else {
+          statusMap[requestId] = CalendarSyncStatus(
+            requestId: requestId,
+            isSynced: false,
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error getting calendar sync status: $e');
+      
+      // Return error status for all requests
+      for (final requestId in requestIds) {
+        statusMap[requestId] = CalendarSyncStatus(
+          requestId: requestId,
+          isSynced: false,
+          error: e.toString(),
+        );
+      }
+    }
+    
+    return statusMap;
+  }
+
   // Private helper methods
 
   device_calendar.Event _createEventFromODRequest(ODRequest request, String calendarId) {
