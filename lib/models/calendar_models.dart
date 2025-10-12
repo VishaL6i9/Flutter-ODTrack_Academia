@@ -93,3 +93,53 @@ class EventReminderSettings {
 
   Map<String, dynamic> toJson() => _$EventReminderSettingsToJson(this);
 }
+
+/// Batch sync result model
+@JsonSerializable()
+class BatchSyncResult {
+  final int totalRequests;
+  final int successCount;
+  final int errorCount;
+  final List<String> successfulRequestIds;
+  final Map<String, String> errors; // requestId -> error message
+  final DateTime syncTimestamp;
+
+  const BatchSyncResult({
+    required this.totalRequests,
+    required this.successCount,
+    required this.errorCount,
+    required this.successfulRequestIds,
+    required this.errors,
+    required this.syncTimestamp,
+  });
+
+  factory BatchSyncResult.fromJson(Map<String, dynamic> json) =>
+      _$BatchSyncResultFromJson(json);
+
+  Map<String, dynamic> toJson() => _$BatchSyncResultToJson(this);
+}
+
+/// Calendar sync status for individual requests
+@JsonSerializable()
+class CalendarSyncStatus {
+  final String requestId;
+  final bool isSynced;
+  final String? eventId;
+  final String? calendarId;
+  final DateTime? lastSyncTime;
+  final String? error;
+
+  const CalendarSyncStatus({
+    required this.requestId,
+    required this.isSynced,
+    this.eventId,
+    this.calendarId,
+    this.lastSyncTime,
+    this.error,
+  });
+
+  factory CalendarSyncStatus.fromJson(Map<String, dynamic> json) =>
+      _$CalendarSyncStatusFromJson(json);
+
+  Map<String, dynamic> toJson() => _$CalendarSyncStatusToJson(this);
+}
