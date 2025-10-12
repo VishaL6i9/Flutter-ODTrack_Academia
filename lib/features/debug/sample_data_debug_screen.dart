@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:odtrack_academia/core/theme/app_theme.dart';
 import 'package:odtrack_academia/providers/sample_data_provider.dart';
+import 'package:odtrack_academia/features/export_demo/export_demo_screen.dart';
 
 /// Debug screen for managing sample data
 class SampleDataDebugScreen extends ConsumerWidget {
@@ -201,6 +202,26 @@ class SampleDataDebugScreen extends ConsumerWidget {
                 label: const Text('Clear Sample Data'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const ExportDemoScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.picture_as_pdf),
+                label: const Text('Show Export PDF Demo'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
