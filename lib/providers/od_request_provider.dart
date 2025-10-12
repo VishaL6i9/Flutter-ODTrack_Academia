@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:odtrack_academia/models/od_request.dart';
 import 'package:odtrack_academia/services/calendar/calendar_sync_service.dart';
@@ -57,10 +58,10 @@ class ODRequestNotifier extends StateNotifier<List<ODRequest>> {
     // Sync with calendar if service is available
     if (_calendarSyncService != null) {
       try {
-        await _calendarSyncService!.handleODRequestCreation(request);
+        await _calendarSyncService.handleODRequestCreation(request);
       } catch (e) {
         // Log error but don't fail the request creation
-        print('Calendar sync error during request creation: $e');
+        debugPrint('Calendar sync error during request creation: $e');
       }
     }
   }
@@ -99,10 +100,10 @@ class ODRequestNotifier extends StateNotifier<List<ODRequest>> {
     // Sync with calendar if service is available and request was updated
     if (_calendarSyncService != null && updatedRequest != null) {
       try {
-        await _calendarSyncService!.handleODRequestStatusChange(oldRequest, updatedRequest!);
+        await _calendarSyncService.handleODRequestStatusChange(oldRequest, updatedRequest!);
       } catch (e) {
         // Log error but don't fail the status update
-        print('Calendar sync error during status update: $e');
+        debugPrint('Calendar sync error during status update: $e');
       }
     }
   }
@@ -119,10 +120,10 @@ class ODRequestNotifier extends StateNotifier<List<ODRequest>> {
     // Sync with calendar if service is available
     if (_calendarSyncService != null) {
       try {
-        await _calendarSyncService!.handleODRequestDeletion(requestToDelete);
+        await _calendarSyncService.handleODRequestDeletion(requestToDelete);
       } catch (e) {
         // Log error but don't fail the deletion
-        print('Calendar sync error during request deletion: $e');
+        debugPrint('Calendar sync error during request deletion: $e');
       }
     }
   }
@@ -131,9 +132,9 @@ class ODRequestNotifier extends StateNotifier<List<ODRequest>> {
     // Sync all requests with calendar
     if (_calendarSyncService != null) {
       try {
-        await _calendarSyncService!.syncAllODRequests(state);
+        await _calendarSyncService.syncAllODRequests(state);
       } catch (e) {
-        print('Calendar sync error during bulk sync: $e');
+        debugPrint('Calendar sync error during bulk sync: $e');
         rethrow;
       }
     }
