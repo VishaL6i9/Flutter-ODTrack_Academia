@@ -380,6 +380,38 @@ class CalendarNotifier extends StateNotifier<AsyncValue<CalendarState>> {
       rethrow;
     }
   }
+
+  /// Perform batch sync of OD requests
+  Future<BatchSyncResult> batchSyncODRequests(List<ODRequest> requests) async {
+    try {
+      final currentState = state.value;
+      if (currentState == null) {
+        throw Exception('Calendar not initialized');
+      }
+
+      state = AsyncValue.data(currentState.copyWith(isLoading: true));
+      
+      final result = await _calendarService.batchSyncODRequests(requests);
+      
+      state = AsyncValue.data(currentState.copyWith(isLoading: false));
+      
+      return result;
+    } catch (e, stackTrace) {
+      debugPrint('Error in batch sync: $e');
+      state = AsyncValue.error(e, stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Get calendar sync status for multiple requests
+  Future<Map<String, CalendarSyncStatus>> getCalendarSyncStatus(List<String> requestIds) async {
+    try {
+      return await _calendarService.getCalendarSyncStatus(requestIds);
+    } catch (e) {
+      debugPrint('Error getting calendar sync status: $e');
+      rethrow;
+    }
+  }
 }
 
 /// Calendar provider
