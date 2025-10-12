@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:odtrack_academia/providers/calendar_provider.dart';
+import 'package:odtrack_academia/providers/od_request_provider.dart';
+import 'package:odtrack_academia/services/calendar/calendar_sync_service.dart';
 
 /// Screen for managing calendar integration settings
 class CalendarSettingsScreen extends ConsumerStatefulWidget {
@@ -13,6 +15,10 @@ class CalendarSettingsScreen extends ConsumerStatefulWidget {
 
 class _CalendarSettingsScreenState extends ConsumerState<CalendarSettingsScreen> {
   bool _isLoading = false;
+  bool _isBatchSyncing = false;
+  String? _batchSyncStatus;
+  int _syncProgress = 0;
+  int _totalSyncItems = 0;
 
   @override
   void initState() {
@@ -82,6 +88,8 @@ class _CalendarSettingsScreenState extends ConsumerState<CalendarSettingsScreen>
             _buildReminderSettingsSection(state),
             const SizedBox(height: 24),
             _buildActionButtons(state),
+            const SizedBox(height: 24),
+            _buildBatchSyncSection(state),
           ],
         ],
       ),
@@ -298,7 +306,7 @@ class _CalendarSettingsScreenState extends ConsumerState<CalendarSettingsScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Actions',
+              'Quick Actions',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),
@@ -306,15 +314,21 @@ class _CalendarSettingsScreenState extends ConsumerState<CalendarSettingsScreen>
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () => _syncAllEvents(),
-                    icon: const Icon(Icons.sync),
-                    label: const Text('Sync All Events'),
+                    onPressed: state.isLoading || _isBatchSyncing ? null : () => _syncAllEvents(),
+                    icon: state.isLoading 
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.sync),
+                    label: const Text('Quick Sync'),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _cleanupEvents(),
+                    onPressed: state.isLoading || _isBatchSyncing ? null : () => _cleanupEvents(),
                     icon: const Icon(Icons.delete, color: Colors.red),
                     label: const Text('Cleanup Events'),
                     style: OutlinedButton.styleFrom(
@@ -541,6 +555,250 @@ class _CalendarSettingsScreenState extends ConsumerState<CalendarSettingsScreen>
             ),
           );
         }
+      }
+    }
+  }
+
+  Widget _buildBatchSyncSection(CalendarState state) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.sync_alt, color: Theme.of(context).primaryColor),
+                const SizedBox(width: 8),
+                Text(
+                  'Batch Calendar Sync',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Sync all existing OD requests with your calendar based on current settings',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            
+            // Sync status indicator
+            if (_isBatchSyncing) ...[
+              _buildSyncProgressIndicator(),
+              const SizedBox(height: 16),
+            ],
+            
+            if (_batchSyncStatus != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _batchSyncStatus!.contains('Error') 
+                      ? Colors.red.withOpacity(0.1)
+                      : Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _batchSyncStatus!.contains('Error') 
+                        ? Colors.red.withOpacity(0.3)
+                        : Colors.green.withOpacity(0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _batchSyncStatus!.contains('Error') 
+                          ? Icons.error_outline
+                          : Icons.check_circle_outline,
+                      color: _batchSyncStatus!.contains('Error') 
+                          ? Colors.red
+                          : Colors.green,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _batchSyncStatus!,
+                        style: TextStyle(
+                          color: _batchSyncStatus!.contains('Error') 
+                              ? Colors.red
+                              : Colors.green,
+                        ),
+                      ),
+                    ),
+                    if (_batchSyncStatus!.contains('Error'))
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 16),
+                        onPressed: () => setState(() => _batchSyncStatus = null),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            
+            // Batch sync button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: state.hasPermission && 
+                           !state.isLoading && 
+                           !_isBatchSyncing &&
+                           state.syncSettings?.defaultCalendarId.isNotEmpty == true
+                    ? () => _performBatchSync()
+                    : null,
+                icon: _isBatchSyncing 
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.sync_alt),
+                label: Text(_isBatchSyncing ? 'Syncing...' : 'Start Batch Sync'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+            
+            if (!state.hasPermission)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Calendar permission required for batch sync',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.orange,
+                  ),
+                ),
+              ),
+            
+            if (state.syncSettings?.defaultCalendarId.isEmpty == true)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Please select a default calendar first',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.orange,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSyncProgressIndicator() {
+    final progress = _totalSyncItems > 0 ? _syncProgress / _totalSyncItems : 0.0;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Syncing OD requests...',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            Text(
+              '$_syncProgress / $_totalSyncItems',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        LinearProgressIndicator(
+          value: progress,
+          backgroundColor: Colors.grey.withOpacity(0.3),
+        ),
+      ],
+    );
+  }
+
+  // Enhanced action methods
+
+  Future<void> _performBatchSync() async {
+    try {
+      setState(() {
+        _isBatchSyncing = true;
+        _batchSyncStatus = null;
+        _syncProgress = 0;
+        _totalSyncItems = 0;
+      });
+
+      // Get all OD requests
+      final odRequests = ref.read(odRequestProvider);
+      
+      if (odRequests.isEmpty) {
+        setState(() {
+          _batchSyncStatus = 'No OD requests found to sync';
+          _isBatchSyncing = false;
+        });
+        return;
+      }
+
+      // Filter requests based on sync settings
+      final calendarState = ref.read(calendarProvider).value;
+      final syncSettings = calendarState?.syncSettings;
+      
+      if (syncSettings == null) {
+        setState(() {
+          _batchSyncStatus = 'Error: Calendar sync settings not available';
+          _isBatchSyncing = false;
+        });
+        return;
+      }
+
+      final requestsToSync = odRequests.where((request) {
+        if (syncSettings.syncApprovedOnly && !request.isApproved) {
+          return syncSettings.includeRejectedEvents && request.isRejected;
+        }
+        if (request.isRejected && !syncSettings.includeRejectedEvents) {
+          return false;
+        }
+        return true;
+      }).toList();
+
+      setState(() {
+        _totalSyncItems = requestsToSync.length;
+      });
+
+      if (requestsToSync.isEmpty) {
+        setState(() {
+          _batchSyncStatus = 'No OD requests match current sync settings';
+          _isBatchSyncing = false;
+        });
+        return;
+      }
+
+      // Perform batch sync using the enhanced calendar provider
+      final result = await ref.read(calendarProvider.notifier).batchSyncODRequests(requestsToSync);
+
+      setState(() {
+        _isBatchSyncing = false;
+        _syncProgress = result.totalRequests;
+        
+        if (result.errorCount == 0) {
+          _batchSyncStatus = 'Successfully synced ${result.successCount} OD requests to calendar';
+        } else if (result.successCount == 0) {
+          _batchSyncStatus = 'Error: Failed to sync all ${result.totalRequests} requests. ${result.errors.values.first}';
+        } else {
+          _batchSyncStatus = 'Synced ${result.successCount} requests, ${result.errorCount} failed. Check logs for details.';
+        }
+      });
+
+    } catch (e) {
+      setState(() {
+        _isBatchSyncing = false;
+        _batchSyncStatus = 'Error during batch sync: $e';
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Batch sync failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
