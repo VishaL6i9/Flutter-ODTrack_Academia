@@ -16,26 +16,46 @@ final exportServiceProvider = Provider<ExportService>((ref) {
 class ExportState {
   final Map<String, ExportProgress> activeExports;
   final List<ExportResult> exportHistory;
+  final List<ExportResult> filteredHistory;
+  final ExportHistoryFilter currentFilter;
+  final ExportStatistics? statistics;
   final bool isLoading;
+  final bool isLoadingHistory;
+  final bool isLoadingStatistics;
   final String? error;
 
   const ExportState({
     this.activeExports = const {},
     this.exportHistory = const [],
+    this.filteredHistory = const [],
+    this.currentFilter = const ExportHistoryFilter(),
+    this.statistics,
     this.isLoading = false,
+    this.isLoadingHistory = false,
+    this.isLoadingStatistics = false,
     this.error,
   });
 
   ExportState copyWith({
     Map<String, ExportProgress>? activeExports,
     List<ExportResult>? exportHistory,
+    List<ExportResult>? filteredHistory,
+    ExportHistoryFilter? currentFilter,
+    ExportStatistics? statistics,
     bool? isLoading,
+    bool? isLoadingHistory,
+    bool? isLoadingStatistics,
     String? error,
   }) {
     return ExportState(
       activeExports: activeExports ?? this.activeExports,
       exportHistory: exportHistory ?? this.exportHistory,
+      filteredHistory: filteredHistory ?? this.filteredHistory,
+      currentFilter: currentFilter ?? this.currentFilter,
+      statistics: statistics ?? this.statistics,
       isLoading: isLoading ?? this.isLoading,
+      isLoadingHistory: isLoadingHistory ?? this.isLoadingHistory,
+      isLoadingStatistics: isLoadingStatistics ?? this.isLoadingStatistics,
       error: error,
     );
   }
@@ -284,6 +304,115 @@ class ExportNotifier extends StateNotifier<ExportState> {
 
   /// Get the number of active exports
   int get activeExportCount => state.activeExports.length;
+
+  /// Apply filter to export history
+  Future<void> applyHistoryFilter(ExportHistoryFilter filter) async {
+    state = state.copyWith(isLoadingHistory: true, error: null);
+    
+    try {
+      final filteredHistory = await _exportService.getFilteredExportHistory(filter);
+      
+      state = state.copyWith(
+        filteredHistory: filteredHistory,
+        currentFilter: filter,
+        isLoadingHistory: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoadingHistory: false,
+        error: 'Failed to filter export history: $e',
+      );
+    }
+  }
+
+  /// Load export statistics
+  Future<void> loadExportStatistics() async {
+    state = state.copyWith(isLoadingStatistics: true, error: null);
+    
+    try {
+      final statistics = await _exportService.getExportStatistics();
+      
+      state = state.copyWith(
+        statistics: statistics,
+        isLoadingStatistics: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoadingStatistics: false,
+        error: 'Failed to load export statistics: $e',
+      );
+    }
+  }
+
+  /// Clear export history
+  Future<void> clearExportHistory() async {
+    try {
+      await _exportService.clearExportHistory();
+      
+      state = state.copyWith(
+        exportHistory: [],
+        filteredHistory: [],
+      );
+    } catch (e) {
+      state = state.copyWith(error: 'Failed to clear export history: $e');
+    }
+  }
+
+  /// Delete specific export from history
+  Future<void> deleteExportFromHistory(String exportId) async {
+    try {
+      await _exportService.deleteExportFromHistory(exportId);
+      
+      // Update local state
+      final updatedHistory = state.exportHistory
+          .where((result) => result.id != exportId)
+          .toList();
+      
+      final updatedFilteredHistory = state.filteredHistory
+          .where((result) => result.id != exportId)
+          .toList();
+      
+      state = state.copyWith(
+        exportHistory: updatedHistory,
+        filteredHistory: updatedFilteredHistory,
+      );
+    } catch (e) {
+      state = state.copyWith(error: 'Failed to delete export: $e');
+    }
+  }
+
+  /// Cleanup old exports
+  Future<void> cleanupOldExports({Duration? olderThan}) async {
+    try {
+      await _exportService.cleanupOldExports(olderThan: olderThan);
+      
+      // Refresh history and statistics
+      await _loadExportHistory();
+      await loadExportStatistics();
+    } catch (e) {
+      state = state.copyWith(error: 'Failed to cleanup old exports: $e');
+    }
+  }
+
+  /// Get export progress with enhanced details
+  ExportProgress? getEnhancedExportProgress(String exportId) {
+    return state.activeExports[exportId];
+  }
+
+  /// Check if export can be cancelled
+  bool canCancelExport(String exportId) {
+    final progress = state.activeExports[exportId];
+    return progress?.isCancellable ?? false;
+  }
+
+  /// Get estimated completion time for export
+  DateTime? getEstimatedCompletionTime(String exportId) {
+    final progress = state.activeExports[exportId];
+    if (progress?.estimatedTimeRemaining != null) {
+      return DateTime.now().add(progress!.estimatedTimeRemaining!);
+    }
+    return null;
+  }
 }
 
 /// Provider for the export notifier
@@ -327,4 +456,44 @@ final activeExportCountProvider = Provider<int>((ref) {
 /// Provider for specific export progress
 final exportProgressProvider = Provider.family<ExportProgress?, String>((ref, exportId) {
   return ref.watch(exportProvider.notifier).getExportProgress(exportId);
+});
+
+/// Provider for filtered export history
+final filteredExportHistoryProvider = Provider<List<ExportResult>>((ref) {
+  return ref.watch(exportProvider).filteredHistory;
+});
+
+/// Provider for current export filter
+final currentExportFilterProvider = Provider<ExportHistoryFilter>((ref) {
+  return ref.watch(exportProvider).currentFilter;
+});
+
+/// Provider for export statistics
+final exportStatisticsProvider = Provider<ExportStatistics?>((ref) {
+  return ref.watch(exportProvider).statistics;
+});
+
+/// Provider for export history loading state
+final exportHistoryLoadingProvider = Provider<bool>((ref) {
+  return ref.watch(exportProvider).isLoadingHistory;
+});
+
+/// Provider for export statistics loading state
+final exportStatisticsLoadingProvider = Provider<bool>((ref) {
+  return ref.watch(exportProvider).isLoadingStatistics;
+});
+
+/// Provider for enhanced export progress
+final enhancedExportProgressProvider = Provider.family<ExportProgress?, String>((ref, exportId) {
+  return ref.watch(exportProvider.notifier).getEnhancedExportProgress(exportId);
+});
+
+/// Provider for checking if export can be cancelled
+final canCancelExportProvider = Provider.family<bool, String>((ref, exportId) {
+  return ref.watch(exportProvider.notifier).canCancelExport(exportId);
+});
+
+/// Provider for estimated completion time
+final estimatedCompletionTimeProvider = Provider.family<DateTime?, String>((ref, exportId) {
+  return ref.watch(exportProvider.notifier).getEstimatedCompletionTime(exportId);
 });
