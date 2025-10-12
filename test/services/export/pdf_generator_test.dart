@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:odtrack_academia/services/export/pdf_generator.dart';
 import 'package:odtrack_academia/models/od_request.dart';
 import 'package:odtrack_academia/models/analytics_models.dart';
+import 'package:odtrack_academia/models/export_models.dart';
+import 'package:odtrack_academia/models/export_filters.dart';
 
 void main() {
   group('PDFGenerator', () {
@@ -367,6 +369,358 @@ void main() {
       );
     });
 
+    group('Enhanced Export Features', () {
+      test('should generate student report with filtering options', () async {
+        // Arrange
+        final studentData = StudentReportData(
+          studentId: 'STU001',
+          studentName: 'John Doe',
+          registerNumber: 'REG001',
+          department: 'Computer Science',
+          yearSemester: '3rd Year, 5th Semester',
+          dateRange: DateRange(
+            startDate: DateTime(2024, 1, 1),
+            endDate: DateTime(2024, 1, 31),
+          ),
+          totalRequests: 5,
+          approvedRequests: 3,
+          rejectedRequests: 1,
+          pendingRequests: 1,
+          requests: [
+            ODRequest(
+              id: 'req_1',
+              studentId: 'STU001',
+              studentName: 'John Doe',
+              registerNumber: 'REG001',
+              date: DateTime(2024, 1, 15),
+              periods: [1, 2],
+              reason: 'Medical appointment',
+              status: 'approved',
+              createdAt: DateTime(2024, 1, 15, 8),
+              approvedBy: 'Dr. Smith',
+              approvedAt: DateTime(2024, 1, 15, 10),
+            ),
+          ],
+          frequentReasons: ['Medical appointment', 'Family function'],
+        );
+
+        const filter = StudentReportFilter(
+          statuses: ['approved'],
+          reasonKeyword: 'medical',
+        );
+
+        const options = ExportOptions(
+          format: ExportFormat.pdf,
+          includeCharts: true,
+          includeMetadata: true,
+        );
+
+        // Act
+        final pdfBytes = await pdfGenerator.generateStudentReport(
+          studentData,
+          filter: filter,
+          options: options,
+        );
+
+        // Assert
+        expect(pdfBytes, isNotNull);
+        expect(pdfBytes.length, greaterThan(0));
+        expect(pdfBytes, isA<List<int>>());
+      });
+
+      test('should generate staff report with charts and summaries', () async {
+        // Arrange
+        final staffData = StaffReportData(
+          staffId: 'STAFF001',
+          staffName: 'Dr. Jane Smith',
+          department: 'Computer Science',
+          designation: 'Associate Professor',
+          dateRange: DateRange(
+            startDate: DateTime(2024, 1, 1),
+            endDate: DateTime(2024, 1, 31),
+          ),
+          requestsProcessed: 25,
+          requestsApproved: 20,
+          requestsRejected: 3,
+          averageProcessingTime: 2.5,
+          commonRejectionReasons: [
+            'Insufficient notice period',
+            'Missing documentation',
+          ],
+        );
+
+        const options = ExportOptions(
+          format: ExportFormat.pdf,
+          includeCharts: true,
+          includeMetadata: true,
+        );
+
+        // Act
+        final pdfBytes = await pdfGenerator.generateStaffReport(
+          staffData,
+          options: options,
+        );
+
+        // Assert
+        expect(pdfBytes, isNotNull);
+        expect(pdfBytes.length, greaterThan(0));
+        expect(pdfBytes, isA<List<int>>());
+        // Should be larger with charts and enhanced analytics
+        expect(pdfBytes.length, greaterThan(2000));
+      });
+
+      test(
+        'should generate bulk requests report with custom formatting',
+        () async {
+          // Arrange
+          final bulkData = BulkRequestsReportData(
+            requests: [
+              ODRequest(
+                id: 'req_1',
+                studentId: 'STU001',
+                studentName: 'John Doe',
+                registerNumber: 'REG001',
+                date: DateTime(2024, 1, 15),
+                periods: [1, 2],
+                reason: 'Medical appointment',
+                status: 'approved',
+                createdAt: DateTime(2024, 1, 15, 8),
+              ),
+              ODRequest(
+                id: 'req_2',
+                studentId: 'STU002',
+                studentName: 'Jane Smith',
+                registerNumber: 'REG002',
+                date: DateTime(2024, 1, 16),
+                periods: [3, 4],
+                reason: 'Family function',
+                status: 'pending',
+                createdAt: DateTime(2024, 1, 16, 9),
+              ),
+            ],
+            exportedBy: 'Admin User',
+            filterDescription: 'All requests from January 2024',
+          );
+
+          const filter = BulkReportFilter(statuses: ['approved', 'pending']);
+
+          const options = ExportOptions(
+            format: ExportFormat.pdf,
+            includeCharts: true,
+            customTitle: 'Custom Bulk Export Report',
+            customData: {'includeDetails': true, 'includeTimestamps': true},
+          );
+
+          // Act
+          final pdfBytes = await pdfGenerator.generateBulkRequestsReport(
+            bulkData,
+            filter: filter,
+            options: options,
+          );
+
+          // Assert
+          expect(pdfBytes, isNotNull);
+          expect(pdfBytes.length, greaterThan(0));
+          expect(pdfBytes, isA<List<int>>());
+        },
+      );
+
+      test('should include charts when requested', () async {
+        // Arrange
+        final studentData = StudentReportData(
+          studentId: 'STU001',
+          studentName: 'John Doe',
+          registerNumber: 'REG001',
+          department: 'Computer Science',
+          yearSemester: '3rd Year, 5th Semester',
+          dateRange: DateRange(
+            startDate: DateTime(2024, 1, 1),
+            endDate: DateTime(2024, 1, 31),
+          ),
+          totalRequests: 5,
+          approvedRequests: 3,
+          rejectedRequests: 1,
+          pendingRequests: 1,
+          requests: [
+            ODRequest(
+              id: 'req_1',
+              studentId: 'STU001',
+              studentName: 'John Doe',
+              registerNumber: 'REG001',
+              date: DateTime(2024, 1, 15),
+              periods: [1, 2],
+              reason: 'Medical appointment',
+              status: 'approved',
+              createdAt: DateTime(2024, 1, 15, 8),
+            ),
+          ],
+          frequentReasons: ['Medical appointment'],
+        );
+
+        const optionsWithCharts = ExportOptions(
+          format: ExportFormat.pdf,
+          includeCharts: true,
+        );
+
+        const optionsWithoutCharts = ExportOptions(
+          format: ExportFormat.pdf,
+          includeCharts: false,
+        );
+
+        // Act
+        final pdfWithCharts = await pdfGenerator.generateStudentReport(
+          studentData,
+          options: optionsWithCharts,
+        );
+
+        final pdfWithoutCharts = await pdfGenerator.generateStudentReport(
+          studentData,
+          options: optionsWithoutCharts,
+        );
+
+        // Assert
+        expect(pdfWithCharts, isNotNull);
+        expect(pdfWithoutCharts, isNotNull);
+        // PDF with charts should be larger
+        expect(pdfWithCharts.length, greaterThan(pdfWithoutCharts.length));
+      });
+
+      test('should apply filtering correctly', () async {
+        // Arrange
+        final studentData = StudentReportData(
+          studentId: 'STU001',
+          studentName: 'John Doe',
+          registerNumber: 'REG001',
+          department: 'Computer Science',
+          yearSemester: '3rd Year, 5th Semester',
+          dateRange: DateRange(
+            startDate: DateTime(2024, 1, 1),
+            endDate: DateTime(2024, 1, 31),
+          ),
+          totalRequests: 3,
+          approvedRequests: 2,
+          rejectedRequests: 1,
+          pendingRequests: 0,
+          requests: [
+            ODRequest(
+              id: 'req_1',
+              studentId: 'STU001',
+              studentName: 'John Doe',
+              registerNumber: 'REG001',
+              date: DateTime(2024, 1, 15),
+              periods: [1, 2],
+              reason: 'Medical appointment',
+              status: 'approved',
+              createdAt: DateTime(2024, 1, 15, 8),
+            ),
+            ODRequest(
+              id: 'req_2',
+              studentId: 'STU001',
+              studentName: 'John Doe',
+              registerNumber: 'REG001',
+              date: DateTime(2024, 1, 20),
+              periods: [3, 4],
+              reason: 'Family function',
+              status: 'rejected',
+              createdAt: DateTime(2024, 1, 20, 8),
+            ),
+          ],
+          frequentReasons: ['Medical appointment', 'Family function'],
+        );
+
+        const filter = StudentReportFilter(statuses: ['approved']);
+
+        const options = ExportOptions(format: ExportFormat.pdf);
+
+        // Act
+        final pdfBytes = await pdfGenerator.generateStudentReport(
+          studentData,
+          filter: filter,
+          options: options,
+        );
+
+        // Assert
+        expect(pdfBytes, isNotNull);
+        expect(pdfBytes.length, greaterThan(0));
+      });
+    });
+
+    group('Chart Generation', () {
+      test('should handle empty data in charts gracefully', () async {
+        // Arrange
+        final studentData = StudentReportData(
+          studentId: 'STU001',
+          studentName: 'John Doe',
+          registerNumber: 'REG001',
+          department: 'Computer Science',
+          yearSemester: '3rd Year, 5th Semester',
+          dateRange: DateRange(
+            startDate: DateTime(2024, 1, 1),
+            endDate: DateTime(2024, 1, 31),
+          ),
+          totalRequests: 0,
+          approvedRequests: 0,
+          rejectedRequests: 0,
+          pendingRequests: 0,
+          requests: [],
+          frequentReasons: [],
+        );
+
+        const options = ExportOptions(
+          format: ExportFormat.pdf,
+          includeCharts: true,
+        );
+
+        // Act & Assert
+        expect(
+          () async => await pdfGenerator.generateStudentReport(
+            studentData,
+            options: options,
+          ),
+          returnsNormally,
+        );
+      });
+
+      test(
+        'should generate different chart types for different data',
+        () async {
+          // Arrange
+          final staffData = StaffReportData(
+            staffId: 'STAFF001',
+            staffName: 'Dr. Jane Smith',
+            department: 'Computer Science',
+            designation: 'Associate Professor',
+            dateRange: DateRange(
+              startDate: DateTime(2024, 1, 1),
+              endDate: DateTime(2024, 1, 31),
+            ),
+            requestsProcessed: 25,
+            requestsApproved: 20,
+            requestsRejected: 5,
+            averageProcessingTime: 2.5,
+            commonRejectionReasons: ['Insufficient notice'],
+          );
+
+          const options = ExportOptions(
+            format: ExportFormat.pdf,
+            includeCharts: true,
+          );
+
+          // Act
+          final pdfBytes = await pdfGenerator.generateStaffReport(
+            staffData,
+            options: options,
+          );
+
+          // Assert
+          expect(pdfBytes, isNotNull);
+          expect(pdfBytes.length, greaterThan(0));
+          // Should include both bar and pie charts
+          expect(pdfBytes.length, greaterThan(2000));
+        },
+      );
+    });
+
     group('Error Handling', () {
       test('should handle null values gracefully', () async {
         // This test ensures the PDF generator doesn't crash with minimal data
@@ -391,6 +745,41 @@ void main() {
         // Act & Assert
         expect(
           () async => await pdfGenerator.generateStudentReport(studentData),
+          returnsNormally,
+        );
+      });
+
+      test('should handle invalid filter parameters gracefully', () async {
+        // Arrange
+        final studentData = StudentReportData(
+          studentId: 'STU001',
+          studentName: 'John Doe',
+          registerNumber: 'REG001',
+          department: 'Computer Science',
+          yearSemester: '3rd Year, 5th Semester',
+          dateRange: DateRange(
+            startDate: DateTime(2024, 1, 1),
+            endDate: DateTime(2024, 1, 31),
+          ),
+          totalRequests: 1,
+          approvedRequests: 1,
+          rejectedRequests: 0,
+          pendingRequests: 0,
+          requests: [],
+          frequentReasons: [],
+        );
+
+        const filter = StudentReportFilter(
+          statuses: [], // Empty filter
+          reasonKeyword: '', // Empty keyword
+        );
+
+        // Act & Assert
+        expect(
+          () async => await pdfGenerator.generateStudentReport(
+            studentData,
+            filter: filter,
+          ),
           returnsNormally,
         );
       });
