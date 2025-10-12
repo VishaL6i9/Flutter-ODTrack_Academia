@@ -8,6 +8,8 @@ ODTrack Academia™ provides students and staff with a lightweight, offline-capa
 - Submit & track OD requests
 - View faculty timetables and Year-Hall assignments
 - Browse the read-only Staff Directory
+- Analyze OD request patterns with charts and generate PDF reports
+- Integrate with device calendar for approved ODs
 
 ## Technology Stack
 
@@ -16,6 +18,9 @@ ODTrack Academia™ provides students and staff with a lightweight, offline-capa
 - **Network**: Dio + Retrofit-Flutter for REST calls
 - **Security**: flutter_secure_storage (AES-256) for JWT
 - **Navigation**: GoRouter for declarative routing
+- **Analytics & Charting**: fl_chart
+- **PDF Generation**: pdf, printing
+- **Calendar Integration**: device_calendar
 
 ## Project Structure
 
@@ -27,27 +32,22 @@ lib/
 │   ├── router/          # GoRouter navigation configuration
 │   └── theme/           # Material Design theming
 ├── features/            # Feature modules (Clean Architecture)
+│   ├── analytics/      # Analytics and reporting
 │   ├── auth/           # Authentication (login/logout)
-│   │   └── presentation/
+│   ├── calendar_settings/ # Calendar integration settings
 │   ├── dashboard/      # Main dashboard for students & staff
-│   │   └── presentation/
+│   ├── debug/          # Debugging utilities
+│   ├── export_demo/    # Demo for export functionality
 │   ├── od_request/     # OD request management
-│   │   └── presentation/
 │   ├── staff_directory/ # Staff directory & search
-│   │   ├── data/       # Staff data models
-│   │   └── presentation/
 │   ├── staff_inbox/    # Staff OD request inbox
-│   │   └── presentation/
 │   ├── staff_profile/  # Staff profile management
-│   │   └── presentation/
-│   └── timetable/      # Timetable viewing (class & staff)
-│       ├── data/       # Timetable data & models
-│       └── presentation/
-├── models/             # Data models (User, ODRequest, etc.)
+│   └── timetable/      # Timetable viewing
+├── models/             # Data models
 ├── providers/          # Riverpod state management
-├── services/           # API services (empty - for future backend)
-├── shared/             # Shared widgets (empty - for future components)
-├── utils/              # Utility functions (empty - for future helpers)
+├── services/           # API and other services
+├── shared/             # Shared widgets
+├── utils/              # Utility functions
 └── main.dart           # App entry point
 ```
 
@@ -142,6 +142,11 @@ flutter build ios --release
   - Edit personal information and contact details
   - Change password with validation
   - Quick access to help and support
+- **Analytics**:
+  - View OD request trends with charts
+  - Generate and share PDF reports
+- **Calendar Integration**:
+  - Sync approved OD requests with the device calendar
 
 ### 🔧 Technical Features
 - **Offline-First**: Local data caching with Hive
@@ -155,25 +160,12 @@ flutter build ios --release
 
 ### Completed ✅
 - [x] **M1: Project Foundation** (Dec 2024)
-  - Flutter project setup with clean architecture
-  - Core navigation with GoRouter
-  - Material Design theming
-  - Riverpod state management setup
-
 - [x] **M2: Authentication & Dashboard** (Jan 2025)
-  - Student login (Register Number + DOB)
-  - Staff login (Email + Password)
-  - Role-based dashboard with quick stats
-  - Basic navigation structure
-
 - [x] **M4: Staff Management System** (Jan 2025)
-  - Staff inbox with OD request filtering
-  - Approve/reject functionality with confirmation dialogs
-  - Staff personal timetable with color coding
-  - Class timetable browser with search/filter
-  - Staff directory with pre-filtering
-  - Staff profile management with editable fields
-  - Password change functionality
+- [x] **M5: Enhanced Features** (In Progress)
+  - Advanced reporting & analytics with charts
+  - Export functionality (PDF reports)
+  - Calendar integration
 
 ### In Progress 🚧
 - [ ] **M3: Complete OD Request Flow**
@@ -184,14 +176,6 @@ flutter build ios --release
   - Digital signature integration
 
 ### Planned 📋
-- [ ] **M5: Enhanced Features**
-  - Push notifications for request updates
-  - Offline data synchronization
-  - Advanced reporting & analytics
-  - Bulk operations for staff
-  - Calendar integration
-  - Export functionality (PDF reports)
-
 - [ ] **M6: Security & Performance**
   - Security audit & penetration testing
   - JWT token refresh mechanism
@@ -201,12 +185,13 @@ flutter build ios --release
   - Accessibility compliance (WCAG 2.1)
 
 - [ ] **M7: Advanced Features**
+  - Push notifications for request updates
+  - Offline data synchronization
+  - Bulk operations for staff
   - Multi-language support (i18n)
   - Dark mode theme
   - Biometric authentication
   - QR code scanning for quick actions
-  - Voice notes for OD reasons
-  - Integration with academic calendar
 
 - [ ] **M8: Production Deployment**
   - Play Store & App Store submissions
@@ -214,7 +199,6 @@ flutter build ios --release
   - Monitoring & crash reporting
   - User feedback system
   - Beta testing program
-  - Production rollout strategy
 
 ## Current Implementation Status
 
@@ -226,13 +210,14 @@ flutter build ios --release
 - Advanced timetable system with color coding and filtering
 - Staff directory with search and pre-filtering
 - Staff profile management system
+- Analytics dashboard with charts
+- PDF report generation and sharing
+- Device calendar integration for approved ODs
 
 ### 🔄 Demo Mode
 - Currently uses hardcoded data for demonstration
 - Mock API responses with simulated delays
 - Local state management without backend persistence
-- Sample timetables for 4 years across multiple departments
-- 33+ staff members with realistic data distribution
 
 ### 🚀 Ready for Backend Integration
 - Clean architecture with separated data layers
