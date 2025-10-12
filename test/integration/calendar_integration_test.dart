@@ -42,8 +42,8 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: MaterialApp(
-            home: const CalendarSettingsScreen(),
+          child: const MaterialApp(
+            home: CalendarSettingsScreen(),
           ),
         ),
       );
@@ -88,8 +88,8 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: MaterialApp(
-            home: const CalendarSettingsScreen(),
+          child: const MaterialApp(
+            home: CalendarSettingsScreen(),
           ),
         ),
       );
@@ -121,12 +121,12 @@ void main() {
           isDefault: true,
         ),
       ]);
-      when(mockCalendarService.getSyncSettings()).thenAnswer((_) async => CalendarSyncSettings(
+      when(mockCalendarService.getSyncSettings()).thenAnswer((_) async => const CalendarSyncSettings(
         autoSyncEnabled: true,
         defaultCalendarId: 'test-calendar-1',
         syncApprovedOnly: true,
         includeRejectedEvents: false,
-        reminderSettings: const EventReminderSettings(
+        reminderSettings: EventReminderSettings(
           enabled: true,
           minutesBefore: 15,
           reminderType: 'notification',
@@ -158,8 +158,8 @@ void main() {
               }),
             ],
           ),
-          child: MaterialApp(
-            home: const CalendarSettingsScreen(),
+          child: const MaterialApp(
+            home: CalendarSettingsScreen(),
           ),
         ),
       );
@@ -192,12 +192,12 @@ void main() {
       final calendarSyncService = CalendarSyncService(mockCalendarService);
       
       when(mockCalendarService.isAutoSyncEnabled()).thenAnswer((_) async => true);
-      when(mockCalendarService.getSyncSettings()).thenAnswer((_) async => CalendarSyncSettings(
+      when(mockCalendarService.getSyncSettings()).thenAnswer((_) async => const CalendarSyncSettings(
         autoSyncEnabled: true,
         defaultCalendarId: 'test-calendar-1',
         syncApprovedOnly: true,
         includeRejectedEvents: false,
-        reminderSettings: const EventReminderSettings(
+        reminderSettings: EventReminderSettings(
           enabled: true,
           minutesBefore: 15,
           reminderType: 'notification',
@@ -221,12 +221,12 @@ void main() {
       final calendarSyncService = CalendarSyncService(mockCalendarService);
       
       when(mockCalendarService.isAutoSyncEnabled()).thenAnswer((_) async => true);
-      when(mockCalendarService.getSyncSettings()).thenAnswer((_) async => CalendarSyncSettings(
+      when(mockCalendarService.getSyncSettings()).thenAnswer((_) async => const CalendarSyncSettings(
         autoSyncEnabled: true,
         defaultCalendarId: 'test-calendar-1',
         syncApprovedOnly: true,
         includeRejectedEvents: false,
-        reminderSettings: const EventReminderSettings(
+        reminderSettings: EventReminderSettings(
           enabled: true,
           minutesBefore: 15,
           reminderType: 'notification',
@@ -254,12 +254,12 @@ void main() {
     test('Calendar Service - Batch Sync with Error Handling', () async {
       // Setup
       when(mockCalendarService.hasCalendarPermission()).thenAnswer((_) async => true);
-      when(mockCalendarService.getSyncSettings()).thenAnswer((_) async => CalendarSyncSettings(
+      when(mockCalendarService.getSyncSettings()).thenAnswer((_) async => const CalendarSyncSettings(
         autoSyncEnabled: true,
         defaultCalendarId: 'test-calendar-1',
         syncApprovedOnly: true,
         includeRejectedEvents: false,
-        reminderSettings: const EventReminderSettings(
+        reminderSettings: EventReminderSettings(
           enabled: true,
           minutesBefore: 15,
           reminderType: 'notification',
