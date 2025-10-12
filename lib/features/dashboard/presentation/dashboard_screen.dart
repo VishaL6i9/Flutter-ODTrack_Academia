@@ -45,6 +45,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 PopupMenuItem<String>(
                   child: const Row(
                     children: [
+                      Icon(Icons.home),
+                      SizedBox(width: 8),
+                      Text('Home'),
+                    ],
+                  ),
+                  onTap: () {
+                    context.go(AppConstants.dashboardRoute);
+                  },
+                ),
+                PopupMenuItem<String>(
+                  child: const Row(
+                    children: [
                       Icon(Icons.person),
                       SizedBox(width: 8),
                       Text('My Profile'),
@@ -57,21 +69,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         builder: (context) => const StaffProfileScreen(),
                       ),
                     );
-                  },
-                ),
-                PopupMenuItem<String>(
-                  child: const Row(
-                    children: [
-                      Icon(Icons.analytics),
-                      SizedBox(width: 8),
-                      Text('Analytics Dashboard'),
-                    ],
-                  ),
-                  onTap: () {
-                    final staffId = ref.read(authProvider).user?.id;
-                    if (staffId != null) {
-                      context.push('${AppConstants.staffAnalyticsRoute}?staffId=$staffId');
-                    }
                   },
                 ),
                 PopupMenuItem<String>(
@@ -264,6 +261,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   context.push('${AppConstants.staffAnalyticsRoute}?staffId=$staffId');
                 }
               },
+            ),
+            _ActionCard(
+              title: 'Export Reports',
+              subtitle: 'Generate and download reports',
+              icon: MdiIcons.fileDownloadOutline,
+              color: Colors.brown,
+              onTap: () => context.push(AppConstants.exportRoute),
             ),
           ]),
           const SizedBox(height: 24),
