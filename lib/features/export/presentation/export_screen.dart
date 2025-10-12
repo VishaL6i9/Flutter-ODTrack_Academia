@@ -7,15 +7,15 @@ import 'package:odtrack_academia/providers/export_provider.dart';
 import 'package:odtrack_academia/shared/widgets/export_progress_widget.dart';
 import 'package:odtrack_academia/shared/widgets/export_history_widget.dart';
 
-/// Demo screen to showcase export progress tracking and sharing integration
-class ExportDemoScreen extends ConsumerStatefulWidget {
-  const ExportDemoScreen({super.key});
+/// Screen for exporting reports and viewing export history
+class ExportScreen extends ConsumerStatefulWidget {
+  const ExportScreen({super.key});
 
   @override
-  ConsumerState<ExportDemoScreen> createState() => _ExportDemoScreenState();
+  ConsumerState<ExportScreen> createState() => _ExportScreenState();
 }
 
-class _ExportDemoScreenState extends ConsumerState<ExportDemoScreen>
+class _ExportScreenState extends ConsumerState<ExportScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
 
@@ -45,7 +45,7 @@ class _ExportDemoScreenState extends ConsumerState<ExportDemoScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Export Demo'),
+        title: const Text('Export Reports'),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
