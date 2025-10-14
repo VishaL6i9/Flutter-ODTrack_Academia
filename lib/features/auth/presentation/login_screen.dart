@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:odtrack_academia/core/constants/app_constants.dart';
+
 import 'package:odtrack_academia/providers/auth_provider.dart';
+import 'package:odtrack_academia/shared/widgets/enhanced_form_field.dart';
+import 'package:odtrack_academia/shared/widgets/enhanced_form.dart';
+import 'package:odtrack_academia/utils/form_validators.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -25,7 +29,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  bool _obscurePassword = true;
+
 
   @override
   void initState() {
@@ -49,10 +53,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         context.go(AppConstants.dashboardRoute);
       }
       if (next.error != null) {
+        // Show enhanced error handling
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(next.error!),
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(child: Text(next.error!)),
+              ],
+            ),
             backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
@@ -151,59 +166,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   Widget _buildStudentLogin(bool isLoading) {
-    return Form(
-      key: _studentFormKey,
+    return EnhancedForm(
+      formKey: _studentFormKey,
+      onSubmit: _handleStudentLogin,
+      isSubmitting: isLoading,
+      submitButtonText: 'Login',
+      submitButtonIcon: Icons.login,
       child: Column(
         children: [
-          TextFormField(
+          EnhancedFormField(
             controller: _registerNumberController,
-            decoration: InputDecoration(
-              labelText: 'Register Number',
-              prefixIcon: const Icon(Icons.badge),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your register number';
-              }
-              return null;
-            },
+            label: 'Register Number',
+            hint: 'Enter your register number',
+            prefixIcon: Icons.badge,
+            validators: [
+              RequiredValidator(fieldName: 'Register number'),
+              RegisterNumberValidator(),
+            ],
+            helpText: 'Use your official college register number',
           ),
           const SizedBox(height: 16),
           InkWell(
             onTap: () => _selectDate(context),
-            child: InputDecorator(
-              decoration: InputDecoration(
-                labelText: 'Date of Birth',
-                prefixIcon: const Icon(Icons.calendar_today),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                _selectedDate != null
-                    ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
-                    : 'Select your date of birth',
-                style: TextStyle(
-                  color: _selectedDate != null ? null : Colors.grey[600],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: isLoading ? null : _handleStudentLogin,
-              child: isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Login'),
+            child: EnhancedFormField(
+              label: 'Date of Birth',
+              hint: _selectedDate != null
+                  ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
+                  : 'Select your date of birth',
+              prefixIcon: Icons.calendar_today,
+              readOnly: true,
+              onTap: () => _selectDate(context),
+              validator: (value) {
+                if (_selectedDate == null) {
+                  return 'Please select your date of birth';
+                }
+                return null;
+              },
+              helpText: 'Select your date of birth for verification',
             ),
           ),
           const SizedBox(height: 16),
@@ -220,71 +219,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   Widget _buildStaffLogin(bool isLoading) {
-    return Form(
-      key: _staffFormKey,
+    return EnhancedForm(
+      formKey: _staffFormKey,
+      onSubmit: _handleStaffLogin,
+      isSubmitting: isLoading,
+      submitButtonText: 'Login',
+      submitButtonIcon: Icons.login,
       child: Column(
         children: [
-          TextFormField(
+          EnhancedFormField(
             controller: _emailController,
-            decoration: InputDecoration(
-              labelText: 'Email',
-              prefixIcon: const Icon(Icons.email),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
+            label: 'Email',
+            hint: 'Enter your email address',
+            prefixIcon: Icons.email,
             keyboardType: TextInputType.emailAddress,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your email';
-              }
-              if (!value.contains('@')) {
-                return 'Please enter a valid email';
-              }
-              return null;
-            },
+            validators: [
+              RequiredValidator(fieldName: 'Email'),
+              EmailValidator(),
+            ],
+            helpText: 'Use your official college email address',
           ),
           const SizedBox(height: 16),
-          TextFormField(
+          EnhancedPasswordField(
             controller: _passwordController,
-            decoration: InputDecoration(
-              labelText: 'Password',
-              prefixIcon: const Icon(Icons.lock),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _obscurePassword = !_obscurePassword;
-                  });
-                },
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            obscureText: _obscurePassword,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your password';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: isLoading ? null : _handleStaffLogin,
-              child: isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Login'),
-            ),
+            label: 'Password',
+            hint: 'Enter your password',
+            validators: [
+              RequiredValidator(fieldName: 'Password'),
+            ],
+            showStrengthIndicator: false,
+            helpText: 'Enter your account password',
           ),
           const SizedBox(height: 16),
           Text(
@@ -314,27 +278,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   void _handleStudentLogin() {
-    if (_studentFormKey.currentState!.validate() && _selectedDate != null) {
-      ref.read(authProvider.notifier).loginStudent(
-            _registerNumberController.text,
-            _selectedDate!,
-          );
-    } else if (_selectedDate == null) {
+    if (_selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select your date of birth'),
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white),
+              SizedBox(width: 8),
+              Text('Please select your date of birth'),
+            ],
+          ),
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
         ),
       );
+      return;
     }
+    
+    ref.read(authProvider.notifier).loginStudent(
+      _registerNumberController.text,
+      _selectedDate!,
+    );
   }
 
   void _handleStaffLogin() {
-    if (_staffFormKey.currentState!.validate()) {
-      ref.read(authProvider.notifier).loginStaff(
-            _emailController.text,
-            _passwordController.text,
-          );
-    }
+    ref.read(authProvider.notifier).loginStaff(
+      _emailController.text,
+      _passwordController.text,
+    );
   }
 }
