@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:odtrack_academia/core/constants/app_constants.dart';
+import 'package:odtrack_academia/core/navigation/navigation_service.dart';
 import 'package:odtrack_academia/features/auth/presentation/login_screen.dart';
 import 'package:odtrack_academia/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:odtrack_academia/features/od_request/presentation/enhanced_new_od_screen.dart';
@@ -226,6 +227,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // If authenticated and on login page, redirect to dashboard
       if (isAuthenticated && isLoginRoute) {
         return AppConstants.dashboardRoute;
+      }
+      
+      // Initialize breadcrumbs for the current route
+      if (isAuthenticated) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          NavigationService.instance.initializeBreadcrumbs(state.matchedLocation);
+        });
       }
       
       return null; // No redirect needed
