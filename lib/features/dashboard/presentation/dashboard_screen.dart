@@ -7,8 +7,10 @@ import 'package:odtrack_academia/providers/auth_provider.dart';
 import 'package:odtrack_academia/features/timetable/presentation/staff_timetable_screen.dart';
 import 'package:odtrack_academia/features/staff_profile/presentation/staff_profile_screen.dart';
 import 'package:odtrack_academia/features/debug/sample_data_debug_screen.dart';
-
 import 'package:odtrack_academia/providers/od_request_provider.dart';
+import 'package:odtrack_academia/shared/widgets/loading_widget.dart';
+import 'package:odtrack_academia/shared/widgets/animated_widgets.dart';
+import 'package:odtrack_academia/shared/widgets/custom_refresh_indicator.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -18,14 +20,45 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  
+  bool _isLoading = true;
 
-  
+  @override
+  void initState() {
+    super.initState();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    // Simulate loading time for better UX
+    await Future<void>.delayed(const Duration(milliseconds: 800));
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _onRefresh() async {
+    // Refresh data
+    await Future<void>.delayed(const Duration(seconds: 1));
+    // Trigger provider refresh if needed
+    ref.invalidate(odRequestProvider);
+  }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final user = authState.user!;
+
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('Welcome, ${user.name.split(' ')[0]}'),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        ),
+        body: const LoadingWidget.dashboard(),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -106,7 +139,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
         ],
       ),
-      body: user.isStudent ? _buildStudentDashboard(context, ref) : _buildStaffDashboard(context, ref),
+      body: CustomRefreshIndicator(
+        onRefresh: _onRefresh,
+        child: user.isStudent ? _buildStudentDashboard(context, ref) : _buildStaffDashboard(context, ref),
+      ),
     );
   }
 
@@ -121,55 +157,64 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildQuickStats([
-            _StatCard(
-              title: 'Pending',
-              value: pendingRequests.toString(),
-              icon: MdiIcons.clockOutline,
-              color: Colors.orange,
-            ),
-            _StatCard(
-              title: 'Approved',
-              value: approvedRequests.toString(),
-              icon: MdiIcons.checkCircleOutline,
-              color: Colors.green,
-            ),
-            _StatCard(
-              title: 'Rejected',
-              value: rejectedRequests.toString(),
-              icon: MdiIcons.closeCircleOutline,
-              color: Colors.red,
-            ),
-          ]),
+          AnimatedListItem(
+            index: 0,
+            child: _buildQuickStats([
+              _StatCard(
+                title: 'Pending',
+                value: pendingRequests.toString(),
+                icon: MdiIcons.clockOutline,
+                color: Colors.orange,
+              ),
+              _StatCard(
+                title: 'Approved',
+                value: approvedRequests.toString(),
+                icon: MdiIcons.checkCircleOutline,
+                color: Colors.green,
+              ),
+              _StatCard(
+                title: 'Rejected',
+                value: rejectedRequests.toString(),
+                icon: MdiIcons.closeCircleOutline,
+                color: Colors.red,
+              ),
+            ]),
+          ),
           const SizedBox(height: 24),
 
-          _buildQuickActions(context, [
-            _ActionCard(
-              title: 'New OD Request',
-              subtitle: 'Submit a new OD request',
-              icon: MdiIcons.plus,
-              color: Colors.blue,
-              onTap: () => context.push(AppConstants.newOdRoute),
-            ),
-            _ActionCard(
-              title: 'View Selected Timetable',
-              subtitle: 'Check the schedule for selected year/section',
-              icon: MdiIcons.timetable,
-              color: Colors.purple,
-              onTap: () {
-                context.push(AppConstants.timetableRoute);
-              },
-            ),
-            _ActionCard(
-              title: 'Staff Directory',
-              subtitle: 'Browse faculty contacts',
-              icon: MdiIcons.accountGroup,
-              color: Colors.teal,
-              onTap: () => context.push(AppConstants.staffDirectoryRoute),
-            ),
-          ]),
+          AnimatedListItem(
+            index: 1,
+            child: _buildQuickActions(context, [
+              _ActionCard(
+                title: 'New OD Request',
+                subtitle: 'Submit a new OD request',
+                icon: MdiIcons.plus,
+                color: Colors.blue,
+                onTap: () => context.push(AppConstants.newOdRoute),
+              ),
+              _ActionCard(
+                title: 'View Selected Timetable',
+                subtitle: 'Check the schedule for selected year/section',
+                icon: MdiIcons.timetable,
+                color: Colors.purple,
+                onTap: () {
+                  context.push(AppConstants.timetableRoute);
+                },
+              ),
+              _ActionCard(
+                title: 'Staff Directory',
+                subtitle: 'Browse faculty contacts',
+                icon: MdiIcons.accountGroup,
+                color: Colors.teal,
+                onTap: () => context.push(AppConstants.staffDirectoryRoute),
+              ),
+            ]),
+          ),
           const SizedBox(height: 24),
-          _buildRecentRequests(context, odRequests.take(3).toList()),
+          AnimatedListItem(
+            index: 2,
+            child: _buildRecentRequests(context, odRequests.take(3).toList()),
+          ),
         ],
       ),
     );
@@ -185,93 +230,102 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildQuickStats([
-            _StatCard(
-              title: 'Pending Review',
-              value: pendingRequests.toString(),
-              icon: MdiIcons.clockOutline,
-              color: Colors.orange,
-            ),
-            _StatCard(
-              title: 'Total Requests',
-              value: totalRequests.toString(),
-              icon: MdiIcons.fileDocumentOutline,
-              color: Colors.blue,
-            ),
-            _StatCard(
-              title: 'Today',
-              value: '0',
-              icon: MdiIcons.calendarToday,
-              color: Colors.green,
-            ),
-          ]),
+          AnimatedListItem(
+            index: 0,
+            child: _buildQuickStats([
+              _StatCard(
+                title: 'Pending Review',
+                value: pendingRequests.toString(),
+                icon: MdiIcons.clockOutline,
+                color: Colors.orange,
+              ),
+              _StatCard(
+                title: 'Total Requests',
+                value: totalRequests.toString(),
+                icon: MdiIcons.fileDocumentOutline,
+                color: Colors.blue,
+              ),
+              _StatCard(
+                title: 'Today',
+                value: '0',
+                icon: MdiIcons.calendarToday,
+                color: Colors.green,
+              ),
+            ]),
+          ),
           const SizedBox(height: 24),
 
-          _buildQuickActions(context, [
-            _ActionCard(
-              title: 'OD Inbox',
-              subtitle: 'Review pending requests',
-              icon: MdiIcons.inbox,
-              color: Colors.blue,
-              onTap: () => context.push(AppConstants.staffInboxRoute),
-            ),
-            _ActionCard(
-              title: 'My Timetable',
-              subtitle: 'View your weekly schedule',
-              icon: MdiIcons.calendarAccount,
-              color: Colors.green,
-              onTap: () {
-                final staffId = ref.read(authProvider).user?.id;
-                if (staffId != null) {
-                  // It's better to have a dedicated route for this
-                  // For now, we'll push the screen directly.
-                  Navigator.push<void>(
-                    context,
-                    MaterialPageRoute<void>(
-                      builder: (BuildContext context) => StaffTimetableScreen(staffId: staffId),
-                    ),
-                  );
-                }
-              },
-            ),
-            _ActionCard(
-              title: 'View Class Timetable',
-              subtitle: 'Check the schedule for any class',
-              icon: MdiIcons.timetable,
-              color: Colors.purple,
-              onTap: () {
-                context.push(AppConstants.timetableRoute);
-              },
-            ),
-            _ActionCard(
-              title: 'Staff Directory',
-              subtitle: 'Browse colleague contacts',
-              icon: MdiIcons.accountGroup,
-              color: Colors.teal,
-              onTap: () => context.push(AppConstants.staffDirectoryRoute),
-            ),
-            _ActionCard(
-              title: 'Analytics Dashboard',
-              subtitle: 'View comprehensive staff analytics',
-              icon: MdiIcons.chartLine,
-              color: Colors.indigo,
-              onTap: () {
-                final staffId = ref.read(authProvider).user?.id;
-                if (staffId != null) {
-                  context.push('${AppConstants.staffAnalyticsRoute}?staffId=$staffId');
-                }
-              },
-            ),
-            _ActionCard(
-              title: 'Export Reports',
-              subtitle: 'Generate and download reports',
-              icon: MdiIcons.fileDownloadOutline,
-              color: Colors.brown,
-              onTap: () => context.push(AppConstants.exportRoute),
-            ),
-          ]),
+          AnimatedListItem(
+            index: 1,
+            child: _buildQuickActions(context, [
+              _ActionCard(
+                title: 'OD Inbox',
+                subtitle: 'Review pending requests',
+                icon: MdiIcons.inbox,
+                color: Colors.blue,
+                onTap: () => context.push(AppConstants.staffInboxRoute),
+              ),
+              _ActionCard(
+                title: 'My Timetable',
+                subtitle: 'View your weekly schedule',
+                icon: MdiIcons.calendarAccount,
+                color: Colors.green,
+                onTap: () {
+                  final staffId = ref.read(authProvider).user?.id;
+                  if (staffId != null) {
+                    // It's better to have a dedicated route for this
+                    // For now, we'll push the screen directly.
+                    Navigator.push<void>(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (BuildContext context) => StaffTimetableScreen(staffId: staffId),
+                      ),
+                    );
+                  }
+                },
+              ),
+              _ActionCard(
+                title: 'View Class Timetable',
+                subtitle: 'Check the schedule for any class',
+                icon: MdiIcons.timetable,
+                color: Colors.purple,
+                onTap: () {
+                  context.push(AppConstants.timetableRoute);
+                },
+              ),
+              _ActionCard(
+                title: 'Staff Directory',
+                subtitle: 'Browse colleague contacts',
+                icon: MdiIcons.accountGroup,
+                color: Colors.teal,
+                onTap: () => context.push(AppConstants.staffDirectoryRoute),
+              ),
+              _ActionCard(
+                title: 'Analytics Dashboard',
+                subtitle: 'View comprehensive staff analytics',
+                icon: MdiIcons.chartLine,
+                color: Colors.indigo,
+                onTap: () {
+                  final staffId = ref.read(authProvider).user?.id;
+                  if (staffId != null) {
+                    context.push('${AppConstants.staffAnalyticsRoute}?staffId=$staffId');
+                  }
+                },
+              ),
+              _ActionCard(
+                title: 'Export Reports',
+                subtitle: 'Generate and download reports',
+                icon: MdiIcons.fileDownloadOutline,
+                color: Colors.brown,
+                onTap: () => context.push(AppConstants.exportRoute),
+              ),
+            ]),
+          ),
           const SizedBox(height: 24),
-          _buildRecentRequests(context, odRequests.where((r) => r.isPending).take(3).toList()),
+          AnimatedListItem(
+            index: 2,
+            child: _buildRecentRequests(context, odRequests.where((r) => r.isPending).take(3).toList()),
+          ),
         ],
       ),
     );
@@ -297,9 +351,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     children: [
                       Icon(stat.icon, color: stat.color, size: 32),
                       const SizedBox(height: 8),
-                      Text(
-                        stat.value,
-                        style: const TextStyle(
+                      AnimatedCounter(
+                        value: int.tryParse(stat.value) ?? 0,
+                        textStyle: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
@@ -331,19 +385,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
-        ...actions.map((action) => Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: action.color.withValues(alpha: 0.1),
-              child: Icon(action.icon, color: action.color),
+        ...actions.asMap().entries.map((entry) {
+          final index = entry.key;
+          final action = entry.value;
+          return AnimatedListItem(
+            index: index,
+            delay: const Duration(milliseconds: 100),
+            child: AnimatedButton(
+              onPressed: action.onTap,
+              child: Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: action.color.withValues(alpha: 0.1),
+                    child: Icon(action.icon, color: action.color),
+                  ),
+                  title: Text(action.title),
+                  subtitle: Text(action.subtitle),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                ),
+              ),
             ),
-            title: Text(action.title),
-            subtitle: Text(action.subtitle),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: action.onTap,
-          ),
-        )),
+          );
+        }),
       ],
     );
   }
