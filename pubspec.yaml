@@ -97,6 +97,7 @@ dev_dependencies:
   msix: ^3.16.11
   flutter_launcher_icons: ^0.13.1
 
+  connectivity_plus_platform_interface: any
 flutter_launcher_icons:
   android: "launcher_icon"
   image_path: "assets/icons/app_icon.png"
