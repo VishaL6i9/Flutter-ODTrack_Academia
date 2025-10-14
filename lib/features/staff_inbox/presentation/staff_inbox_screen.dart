@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+
 import 'package:odtrack_academia/providers/od_request_provider.dart';
 import 'package:odtrack_academia/providers/bulk_operation_provider.dart';
 import 'package:odtrack_academia/models/od_request.dart';
@@ -8,6 +9,8 @@ import 'package:odtrack_academia/models/export_models.dart';
 import 'package:odtrack_academia/models/bulk_operation_models.dart';
 import 'package:odtrack_academia/shared/widgets/bulk_operation_progress_dialog.dart';
 import 'package:odtrack_academia/shared/widgets/bulk_operation_result_dialog.dart';
+
+import 'package:odtrack_academia/shared/widgets/loading_widget.dart';
 
 class StaffInboxScreen extends ConsumerStatefulWidget {
   const StaffInboxScreen({super.key});
@@ -20,6 +23,23 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
   String _selectedFilter = 'All';
   final List<String> _filters = ['All', 'Pending', 'Approved', 'Rejected'];
   bool _isProgressDialogShown = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    // Simulate loading time for better UX
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +51,16 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
     ref.listen<BulkOperationState>(bulkOperationProvider, (previous, current) {
       _handleBulkOperationStateChange(context, previous, current);
     });
+
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Staff Inbox'),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        ),
+        body: const LoadingWidget.staffInbox(),
+      );
+    }
 
     return Scaffold(
       appBar: _buildAppBar(context, bulkOperationState),
