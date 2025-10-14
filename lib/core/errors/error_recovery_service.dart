@@ -198,14 +198,4 @@ class ErrorRecoveryService {
   }
 }
 
-/// Extension methods for easier error handling
-extension BaseErrorExtension on BaseError {
-  /// Check if this error should trigger a user notification
-  bool get shouldNotifyUser => severity == ErrorSeverity.high || severity == ErrorSeverity.critical;
-  
-  /// Get user-friendly error message
-  String get displayMessage => userMessage ?? message;
-  
-  /// Check if error occurred recently (within last 5 minutes)
-  bool get isRecent => DateTime.now().difference(timestamp).inMinutes < 5;
-}
+
