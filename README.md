@@ -19,6 +19,8 @@ ODTrack Academia™ provides students and staff with a lightweight, offline-capa
 - **Security**: flutter_secure_storage (AES-256) for JWT
 - **Navigation**: GoRouter for declarative routing
 - **Analytics & Charting**: fl_chart
+- **Push Notifications**: firebase_messaging, flutter_local_notifications
+- **Offline Storage**: hive_flutter (enhanced for sync queue & caching)
 - **PDF Generation**: pdf, printing
 - **Calendar Integration**: device_calendar
 
@@ -122,6 +124,8 @@ flutter build ios --release
 - **Timetable Access**: View class timetables with color-coded subjects
 - **Staff Directory**: Browse faculty contacts with search functionality
 - **Smart Navigation**: Context-aware navigation to relevant staff profiles
+- **Push Notifications**: Real-time alerts for OD request status changes.
+- **Offline Support**: Seamless app usage and request submission even without internet.
 
 ### 👨‍🏫 Staff Features
 - **Authentication**: Secure login with Email + Password
@@ -147,9 +151,16 @@ flutter build ios --release
   - Generate and share PDF reports
 - **Calendar Integration**:
   - Sync approved OD requests with the device calendar
+- **Push Notifications**: Real-time alerts for new OD requests and status updates.
+- **Bulk Operations**: Efficiently approve, reject, or export multiple OD requests.
+- **Staff Analytics & Workload Management**: Detailed insights into workload, teaching assignments, and efficiency.
 
 ### 🔧 Technical Features
-- **Offline-First**: Local data caching with Hive
+- **Offline-First**: Local data caching with Hive, intelligent sync queue, and conflict resolution.
+- **Push Notifications**: FCM integration for cross-platform notifications.
+- **Intelligent Caching**: Smart cache management with TTL and priority.
+- **Bulk Operations**: Efficient batch processing for staff actions.
+- **Staff Analytics & Workload Management**: Comprehensive tracking and visualization of staff performance.
 - **Responsive Design**: Optimized for various screen sizes
 - **Material Design**: Modern UI following Material Design 3
 - **State Management**: Efficient state handling with Riverpod
@@ -166,6 +177,12 @@ flutter build ios --release
   - Advanced reporting & analytics with charts (May 2025)
   - Calendar integration (August 2025)
   - Export functionality (PDF reports) (October 2025)
+  - Dark mode theme (Staff Analytics Dashboard)
+  - Push notifications for request updates
+  - Offline data synchronization
+  - Bulk operations for staff
+  - Staff Analytics and Workload Management
+  - Enhanced User Experience (skeleton loading, animations, form validation, accessibility)
 
 ### In Progress 🚧
 - [ ] **M3: Complete OD Request Flow**
@@ -185,11 +202,8 @@ flutter build ios --release
   - Accessibility compliance (WCAG 2.1)
 
 - [ ] **M7: Advanced Features**
-  - Push notifications for request updates
-  - Offline data synchronization
-  - Bulk operations for staff
   - Multi-language support (i18n)
-  - Dark mode theme
+
   - Biometric authentication
   - QR code scanning for quick actions
 
@@ -213,18 +227,18 @@ flutter build ios --release
 - Analytics dashboard with charts
 - PDF report generation and sharing
 - Device calendar integration for approved ODs
+- Push notification system for real-time alerts
+- Offline data synchronization with conflict resolution
+- Bulk operations for efficient staff workflow
+- Staff Analytics and Workload Management
+- Enhanced User Experience (skeleton loading, animations, form validation, accessibility)
 
-### 🔄 Demo Mode
-- Currently uses hardcoded data for demonstration
-- Mock API responses with simulated delays
-- Local state management without backend persistence
-
-### 🚀 Ready for Backend Integration
-- Clean architecture with separated data layers
-- Provider pattern ready for API integration
-- Models with JSON serialization support
-- Error handling structure in place
-- Loading states and user feedback systems
+### 🔄 In Progress
+- Backend API integration
+- Real-time status updates
+- File attachment support
+- Email notifications
+- Digital signature integration
 
 ## Contributing
 
