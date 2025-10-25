@@ -43,8 +43,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-/android/build/*
+/android/build
+/android/.kotlin
 /build-output/*
+/.dart_tool
 **/*.g.dart
 **/*.mocks.dart
 **/*.hive
@@ -54,3 +56,4 @@ app.*.map.json
 **/*.png
 **/*.txt
 macos/Flutter/GeneratedPluginRegistrant.swift
+/.kiro/
