@@ -6,7 +6,6 @@ import 'package:odtrack_academia/core/constants/app_constants.dart';
 import 'package:odtrack_academia/providers/auth_provider.dart';
 import 'package:odtrack_academia/features/timetable/presentation/staff_timetable_screen.dart';
 import 'package:odtrack_academia/features/staff_profile/presentation/staff_profile_screen.dart';
-import 'package:odtrack_academia/features/debug/sample_data_debug_screen.dart';
 import 'package:odtrack_academia/providers/od_request_provider.dart';
 import 'package:odtrack_academia/shared/widgets/loading_widget.dart';
 import 'package:odtrack_academia/shared/widgets/animated_widgets.dart';
@@ -101,23 +100,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       context,
                       MaterialPageRoute<void>(
                         builder: (context) => const StaffProfileScreen(),
-                      ),
-                    );
-                  },
-                ),
-                PopupMenuItem<String>(
-                  child: const Row(
-                    children: [
-                      Icon(Icons.bug_report),
-                      SizedBox(width: 8),
-                      Text('Sample Data'),
-                    ],
-                  ),
-                  onTap: () {
-                    Navigator.push<void>(
-                      context,
-                      MaterialPageRoute<void>(
-                        builder: (context) => const SampleDataDebugScreen(),
                       ),
                     );
                   },
