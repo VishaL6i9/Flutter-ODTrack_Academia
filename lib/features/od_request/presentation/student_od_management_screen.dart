@@ -6,14 +6,19 @@ import 'package:odtrack_academia/models/od_request.dart';
 import 'package:odtrack_academia/providers/auth_provider.dart';
 import 'package:odtrack_academia/providers/od_request_provider.dart';
 
-class StudentOdManagementScreen extends ConsumerWidget {
+class StudentOdManagementScreen extends ConsumerStatefulWidget {
   const StudentOdManagementScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StudentOdManagementScreen> createState() => _StudentOdManagementScreenState();
+}
+
+class _StudentOdManagementScreenState extends ConsumerState<StudentOdManagementScreen> {
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(authProvider).user!;
     final allRequests = ref.watch(odRequestProvider);
-    
+
     // Filter requests for current student
     final studentRequests = allRequests
         .where((request) => request.studentId == user.id)
@@ -30,12 +35,12 @@ class StudentOdManagementScreen extends ConsumerWidget {
         ),
       ),
       body: studentRequests.isEmpty
-          ? _buildEmptyState()
+          ? _buildEmptyState(context)
           : _buildRequestList(studentRequests),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -61,7 +66,7 @@ class StudentOdManagementScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () => context.pop(), // Go back to dashboard
+            onPressed: () => context.pop(),
             child: const Text('Create Request'),
           ),
         ],
@@ -69,12 +74,13 @@ class StudentOdManagementScreen extends ConsumerWidget {
     );
   }
 
+
   Widget _buildRequestList(List<ODRequest> requests) {
     return RefreshIndicator(
       onRefresh: () async {
         // In a real app, this would fetch latest data from the API
         // For now, we just wait to simulate a refresh
-        await Future.delayed(const Duration(milliseconds: 500));
+        await Future<void>.delayed(const Duration(milliseconds: 500));
       },
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
@@ -97,7 +103,7 @@ class StudentOdManagementScreen extends ConsumerWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: statusColor.withOpacity(0.3),
+          color: statusColor.withValues(alpha: 0.3),
           width: 1,
         ),
       ),

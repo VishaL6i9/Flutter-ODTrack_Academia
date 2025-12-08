@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -29,7 +30,6 @@ class _NewOdScreenState extends ConsumerState<NewOdScreen> {
   bool _sendToClassCoordinator = false;
   bool _sendToYearCoordinator = false;
   bool _isSubmitting = false;
-  bool _isConfirmingBothSelection = false;
   String? _pendingRequestId;
   Timer? _undoTimer;
 
@@ -43,6 +43,7 @@ class _NewOdScreenState extends ConsumerState<NewOdScreen> {
 
   @override
   void dispose() {
+    _undoTimer?.cancel();
     _reasonController.dispose();
     super.dispose();
   }
@@ -863,17 +864,10 @@ class _NewOdScreenState extends ConsumerState<NewOdScreen> {
           SnackBar(
             content: Text('Failed to cancel request: ${e.toString()}'),
             backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
     }
-  }
-
-  @override
-  void dispose() {
-    _undoTimer?.cancel();
-    _reasonController.dispose();
-    super.dispose();
   }
 }
