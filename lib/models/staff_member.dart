@@ -8,27 +8,39 @@ part 'staff_member.g.dart';
 class StaffMember {
   @HiveField(0)
   final String id;
-  
+
   @HiveField(1)
   final String name;
-  
+
   @HiveField(2)
   final String email;
-  
+
   @HiveField(3)
   final String department;
-  
+
   @HiveField(4)
   final String subject;
-  
+
   @HiveField(5)
   final List<String> years;
-  
+
   @HiveField(6)
   final String? phone;
-  
+
   @HiveField(7)
   final String? designation;
+
+  @HiveField(8)
+  final bool isClassCoordinator;
+
+  @HiveField(9)
+  final List<String> coordinatedSections;
+
+  @HiveField(10)
+  final bool isYearCoordinator;
+
+  @HiveField(11)
+  final List<String> coordinatedYears;
 
   const StaffMember({
     required this.id,
@@ -39,9 +51,13 @@ class StaffMember {
     required this.years,
     this.phone,
     this.designation,
+    this.isClassCoordinator = false,
+    this.coordinatedSections = const [],
+    this.isYearCoordinator = false,
+    this.coordinatedYears = const [],
   });
 
   factory StaffMember.fromJson(Map<String, dynamic> json) => _$StaffMemberFromJson(json);
-  
+
   Map<String, dynamic> toJson() => _$StaffMemberToJson(this);
 }
