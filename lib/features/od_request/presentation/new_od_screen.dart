@@ -24,7 +24,14 @@ class _NewOdScreenState extends ConsumerState<NewOdScreen> {
   DateTime? _selectedDate;
   int? _selectedPeriod;
   StaffMember? _designatedStaff;
+  StaffMember? _classCoordinator;
+  StaffMember? _yearCoordinator;
+  bool _sendToClassCoordinator = false;
+  bool _sendToYearCoordinator = false;
   bool _isSubmitting = false;
+  bool _isConfirmingBothSelection = false;
+  String? _pendingRequestId;
+  Timer? _undoTimer;
 
   final List<String> _periods = [
     '1st Period (9:00 - 10:00)',
@@ -42,21 +49,33 @@ class _NewOdScreenState extends ConsumerState<NewOdScreen> {
 
   void _updateDesignatedStaff() {
     if (_selectedDate == null || _selectedPeriod == null) {
-      setState(() => _designatedStaff = null);
+      setState(() {
+        _designatedStaff = null;
+        _classCoordinator = null;
+        _yearCoordinator = null;
+        _sendToClassCoordinator = false;
+        _sendToYearCoordinator = false;
+      });
       return;
     }
 
     // Check if the selected date is a weekday (Monday-Friday)
     final weekday = _selectedDate!.weekday;
     if (weekday > 5) { // Saturday (6) or Sunday (7)
-      setState(() => _designatedStaff = null);
+      setState(() {
+        _designatedStaff = null;
+        _classCoordinator = null;
+        _yearCoordinator = null;
+        _sendToClassCoordinator = false;
+        _sendToYearCoordinator = false;
+      });
       _showWeekendToast();
       return;
     }
 
     final day = TimetableData.days[weekday - 1];
     final user = ref.read(authProvider).user!;
-    
+
     // Find the student's exact timetable by matching both year and section
     // All students in the same year and section will have the same timetable
     final studentTimetable = TimetableData.allTimetables.firstWhere(
@@ -76,7 +95,7 @@ class _NewOdScreenState extends ConsumerState<NewOdScreen> {
           setState(() {
             _designatedStaff = staff;
           });
-          
+
           // Show toast with staff information
           _showStaffToast(staff, slot.subject);
         } catch (e) {
@@ -91,6 +110,45 @@ class _NewOdScreenState extends ConsumerState<NewOdScreen> {
       setState(() => _designatedStaff = null);
       _showNoStaffToast('Free');
     }
+
+    // Find class and year coordinators based on student's year and section
+    _findCoordinators();
+  }
+
+  void _findCoordinators() {
+    final user = ref.read(authProvider).user!;
+    final year = user.year;
+    final section = user.section;
+
+    if (year == null || section == null) return;
+
+    // Find class coordinator for student's section
+    StaffMember? classCoordinator;
+    try {
+      classCoordinator = StaffData.allStaff.firstWhere((s) =>
+          s.isClassCoordinator && s.coordinatedSections.contains(section));
+    } catch (e) {
+      // No class coordinator found for this section
+      classCoordinator = null;
+    }
+
+    // Find year coordinator for student's year
+    StaffMember? yearCoordinator;
+    try {
+      yearCoordinator = StaffData.allStaff.firstWhere((s) =>
+          s.isYearCoordinator && s.coordinatedYears.contains(year));
+    } catch (e) {
+      // No year coordinator found for this year
+      yearCoordinator = null;
+    }
+
+    setState(() {
+      _classCoordinator = classCoordinator;
+      _yearCoordinator = yearCoordinator;
+      // Reset selection flags when coordinators are found
+      _sendToClassCoordinator = false;
+      _sendToYearCoordinator = false;
+    });
   }
 
   void _showStaffToast(StaffMember staff, String subject) {
@@ -237,6 +295,14 @@ class _NewOdScreenState extends ConsumerState<NewOdScreen> {
                 const SizedBox(height: 24),
                 _buildStaffInfoSection(),
               ],
+              if (_classCoordinator != null) ...[
+                const SizedBox(height: 24),
+                _buildClassCoordinatorSection(),
+              ],
+              if (_yearCoordinator != null) ...[
+                const SizedBox(height: 24),
+                _buildYearCoordinatorSection(),
+              ],
               const SizedBox(height: 24),
               _buildReasonField(),
               const SizedBox(height: 24),
@@ -370,6 +436,158 @@ class _NewOdScreenState extends ConsumerState<NewOdScreen> {
     );
   }
 
+  Widget _buildClassCoordinatorSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Checkbox(
+              value: _sendToClassCoordinator,
+              onChanged: (bool? value) {
+                setState(() {
+                  _sendToClassCoordinator = value ?? false;
+                });
+              },
+            ),
+            const Text('Send to Class Coordinator', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 24.0,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  child: Text(
+                    _classCoordinator!.name.split(' ').map((n) => n[0]).take(2).join(),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _classCoordinator!.name,
+                        style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+                      ),
+                      if (_classCoordinator!.designation != null)
+                        Text(
+                          _classCoordinator!.designation!,
+                          style: TextStyle(fontSize: 14.0, color: Colors.grey[600]),
+                        ),
+                      Text(
+                        'Class: ${_classCoordinator!.coordinatedSections.join(", ")}',
+                        style: const TextStyle(fontSize: 12.0, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push<void>(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (BuildContext context) => StaffDirectoryScreen(
+                          preFilterStaffId: _classCoordinator!.id,
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('View Profile'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildYearCoordinatorSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Checkbox(
+              value: _sendToYearCoordinator,
+              onChanged: (bool? value) {
+                setState(() {
+                  _sendToYearCoordinator = value ?? false;
+                });
+              },
+            ),
+            const Text('Send to Year Coordinator', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 24.0,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  child: Text(
+                    _yearCoordinator!.name.split(' ').map((n) => n[0]).take(2).join(),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _yearCoordinator!.name,
+                        style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+                      ),
+                      if (_yearCoordinator!.designation != null)
+                        Text(
+                          _yearCoordinator!.designation!,
+                          style: TextStyle(fontSize: 14.0, color: Colors.grey[600]),
+                        ),
+                      Text(
+                        'Year: ${_yearCoordinator!.coordinatedYears.join(", ")}',
+                        style: const TextStyle(fontSize: 12.0, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push<void>(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (BuildContext context) => StaffDirectoryScreen(
+                          preFilterStaffId: _yearCoordinator!.id,
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('View Profile'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildReasonField() {
     return TextFormField(
       controller: _reasonController,
@@ -476,10 +694,18 @@ class _NewOdScreenState extends ConsumerState<NewOdScreen> {
       return;
     }
 
+    // Check if both coordinators are selected - show confirmation
+    if (_sendToClassCoordinator && _sendToYearCoordinator) {
+      final confirmed = await _showBothCoordinatorsConfirmation();
+      if (!confirmed) return; // User cancelled submission
+    }
+
     setState(() => _isSubmitting = true);
 
     try {
       final user = ref.read(authProvider).user!;
+      final staffId = _getTargetStaffId();
+
       final request = ODRequest(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         studentId: user.id,
@@ -489,17 +715,17 @@ class _NewOdScreenState extends ConsumerState<NewOdScreen> {
         periods: [_selectedPeriod!],
         reason: _reasonController.text.trim(),
         status: 'pending',
-        staffId: _designatedStaff?.id,
+        staffId: staffId,
         createdAt: DateTime.now(),
       );
 
       await ref.read(odRequestProvider.notifier).createRequest(request);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('OD request submitted successfully!'), backgroundColor: Colors.green),
-        );
-        context.pop();
+        // Show success message with undo option for 30 seconds
+        _showSuccessWithUndo(request.id);
+        // Navigate back after showing the message
+        // context.pop(); // Don't pop immediately, let user see message and potentially undo
       }
     } catch (e) {
       if (mounted) {
@@ -512,5 +738,142 @@ class _NewOdScreenState extends ConsumerState<NewOdScreen> {
         setState(() => _isSubmitting = false);
       }
     }
+  }
+
+  String? _getTargetStaffId() {
+    if (_sendToClassCoordinator && _classCoordinator != null) {
+      return _classCoordinator!.id;
+    } else if (_sendToYearCoordinator && _yearCoordinator != null) {
+      return _yearCoordinator!.id;
+    } else {
+      return _designatedStaff?.id;
+    }
+  }
+
+  Future<bool> _showBothCoordinatorsConfirmation() async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Confirm Submission'),
+              content: const Text(
+                'You have selected both Class and Year Coordinators. The OD request will be sent to both for approval. Do you want to continue?',
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(false); // Cancel
+                  },
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(true); // Confirm
+                  },
+                  child: const Text('Continue'),
+                ),
+              ],
+            );
+          },
+        ) ?? false;
+  }
+
+  void _showSuccessWithUndo(String requestId) {
+    _pendingRequestId = requestId;
+
+    // Cancel any existing timer
+    _undoTimer?.cancel();
+
+    // Show snackbar with undo option
+    final snackBar = SnackBar(
+      content: const Text('OD request submitted successfully!'),
+      backgroundColor: Colors.green,
+      duration: const Duration(seconds: 30), // 30 second window
+      action: SnackBarAction(
+        label: 'UNDO',
+        onPressed: () {
+          _undoRequest(requestId);
+        },
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+
+    // Set up timer to clear the pending request after 30 seconds
+    _undoTimer = Timer(const Duration(seconds: 30), () {
+      _pendingRequestId = null;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Undo period expired. Request cannot be cancelled.'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        // Navigate back after undo window expires
+        if (mounted) {
+          context.pop();
+        }
+      }
+    });
+  }
+
+  Future<void> _undoRequest(String requestId) async {
+    if (_pendingRequestId != requestId) {
+      // Request has already been processed or undo window expired
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cannot undo: request has already been processed.'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    // Cancel the undo timer
+    _undoTimer?.cancel();
+    _pendingRequestId = null;
+
+    try {
+      // Delete the request from storage
+      await ref.read(odRequestProvider.notifier).deleteRequest(requestId);
+
+      // Show success message for undo
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('OD request cancelled successfully!'),
+            backgroundColor: Colors.blue,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        // Navigate back after successful undo
+        if (mounted) {
+          context.pop();
+        }
+      }
+    } catch (e) {
+      // Handle error during undo
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to cancel request: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _undoTimer?.cancel();
+    _reasonController.dispose();
+    super.dispose();
   }
 }
