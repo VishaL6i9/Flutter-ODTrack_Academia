@@ -102,44 +102,47 @@ class StaffInboxSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Filter tabs skeleton
-        Container(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: List.generate(4, (index) => Expanded(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                child: const SkeletonButton(height: 32),
-              ),
-            )),
-          ),
-        ),
-
-        // Stats skeleton
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: List.generate(3, (index) => const Expanded(
-              child: SkeletonCard(
-                height: 60,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SkeletonText(width: 30, height: 24),
-                    SizedBox(height: 4),
-                    SkeletonText(width: 50, height: 12),
-                  ],
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 16), // Add some bottom padding
+      child: Column(
+        children: [
+          // Filter tabs skeleton
+          Container(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: List.generate(4, (index) => Expanded(
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  child: const SkeletonButton(height: 32),
                 ),
-              ),
-            )),
+              )),
+            ),
           ),
-        ),
 
-        // Request list skeleton
-        Expanded(
-          child: ListView.builder(
+          // Stats skeleton
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: List.generate(3, (index) => const Expanded(
+                child: SkeletonCard(
+                  height: 60,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SkeletonText(width: 30, height: 24),
+                      SizedBox(height: 4),
+                      SkeletonText(width: 50, height: 12),
+                    ],
+                  ),
+                ),
+              )),
+            ),
+          ),
+
+          // Request list skeleton
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(), // Disable scrolling since it's in a SingleChildScrollView
             padding: const EdgeInsets.all(16),
             itemCount: 6,
             itemBuilder: (context, index) => const Padding(
@@ -147,8 +150,8 @@ class StaffInboxSkeleton extends StatelessWidget {
               child: RequestCardSkeleton(),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -251,9 +254,7 @@ class AnalyticsSkeleton extends StatelessWidget {
                 children: [
                   SkeletonText(width: 180, height: 18),
                   SizedBox(height: 16),
-                  Expanded(
-                    child: SkeletonLoading(),
-                  ),
+                  SkeletonLoading(), // Removed Expanded to avoid overflow
                 ],
               ),
             ),

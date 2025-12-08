@@ -84,16 +84,14 @@ class _EnhancedFormState extends State<EnhancedForm> {
   Widget _buildContent() {
     return Form(
       key: _formKey,
-      autovalidateMode: widget.enableAutoValidation 
-          ? AutovalidateMode.onUserInteraction 
+      autovalidateMode: widget.enableAutoValidation
+          ? AutovalidateMode.onUserInteraction
           : AutovalidateMode.disabled,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: widget.child,
-          ),
-          
+          widget.child,
+
           if (widget.onSubmit != null) ...[
             const SizedBox(height: 24),
             _buildSubmitButton(),
