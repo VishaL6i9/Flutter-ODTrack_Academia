@@ -6,7 +6,7 @@ import 'package:odtrack_academia/models/analytics_models.dart';
 import 'package:odtrack_academia/models/od_request.dart';
 import 'package:odtrack_academia/models/user.dart';
 import 'package:odtrack_academia/services/analytics/hive_analytics_service.dart';
-import 'package:odtrack_academia/core/storage/enhanced_storage_manager.dart';
+import 'package:odtrack_academia/core/storage/storage_manager.dart';
 
 import 'hive_analytics_service_test.mocks.dart';
 

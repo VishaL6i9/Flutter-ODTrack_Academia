@@ -5,7 +5,7 @@ import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:odtrack_academia/services/export/hive_export_service.dart';
 
-import 'package:odtrack_academia/core/storage/enhanced_storage_manager.dart';
+import 'package:odtrack_academia/core/storage/storage_manager.dart';
 import 'package:odtrack_academia/models/export_models.dart';
 import 'package:odtrack_academia/models/od_request.dart';
 import 'package:odtrack_academia/models/analytics_models.dart';

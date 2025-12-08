@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:odtrack_academia/models/sync_models.dart';
-import 'package:odtrack_academia/core/storage/enhanced_storage_manager.dart';
+import 'package:odtrack_academia/core/storage/storage_manager.dart';
 
 /// Specialized manager for sync queue operations with advanced features
 class SyncQueueManager {

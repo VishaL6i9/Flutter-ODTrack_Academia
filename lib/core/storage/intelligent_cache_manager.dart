@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:odtrack_academia/core/storage/enhanced_storage_manager.dart';
+import 'package:odtrack_academia/core/storage/storage_manager.dart';
 
 /// Intelligent cache manager with advanced TTL and priority-based cleanup
 class IntelligentCacheManager {

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:odtrack_academia/core/storage/enhanced_storage_manager.dart';
+import 'package:odtrack_academia/core/storage/storage_manager.dart';
 import 'package:odtrack_academia/core/storage/intelligent_cache_manager.dart';
 import 'package:odtrack_academia/models/sync_models.dart';
 import 'dart:io';

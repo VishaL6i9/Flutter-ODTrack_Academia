@@ -10,9 +10,9 @@ import 'package:odtrack_academia/models/od_request.dart';
 import 'package:odtrack_academia/models/staff_member.dart';
 import 'package:odtrack_academia/providers/od_request_provider.dart';
 import 'package:odtrack_academia/providers/auth_provider.dart';
-import 'package:odtrack_academia/shared/widgets/enhanced_form.dart';
-import 'package:odtrack_academia/shared/widgets/enhanced_form_field.dart';
-import 'package:odtrack_academia/shared/widgets/enhanced_error_dialog.dart';
+import 'package:odtrack_academia/shared/widgets/form.dart';
+import 'package:odtrack_academia/shared/widgets/form_field.dart';
+import 'package:odtrack_academia/shared/widgets/error_dialog.dart';
 import 'package:odtrack_academia/utils/form_validators.dart';
 
 /// Enhanced version of the OD request screen with improved validation and error handling

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:odtrack_academia/core/errors/base_error.dart';
-import 'package:odtrack_academia/shared/widgets/enhanced_error_dialog.dart';
+import 'package:odtrack_academia/shared/widgets/error_dialog.dart';
 
 /// Enhanced form widget with improved validation and error handling
 class EnhancedForm extends StatefulWidget {

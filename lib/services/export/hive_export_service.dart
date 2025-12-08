@@ -14,7 +14,7 @@ import 'package:odtrack_academia/models/export_filters.dart';
 
 import 'package:odtrack_academia/services/export/export_service.dart';
 import 'package:odtrack_academia/services/export/pdf_generator.dart';
-import 'package:odtrack_academia/core/storage/enhanced_storage_manager.dart';
+import 'package:odtrack_academia/core/storage/storage_manager.dart';
 
 /// Hive-based implementation of ExportService
 class HiveExportService implements ExportService {

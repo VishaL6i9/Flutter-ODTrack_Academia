@@ -1,5 +1,5 @@
 
-import 'package:odtrack_academia/core/storage/enhanced_storage_manager.dart';
+import 'package:odtrack_academia/core/storage/storage_manager.dart';
 import 'package:odtrack_academia/core/storage/sync_queue_manager.dart';
 import 'package:odtrack_academia/services/sync/sync_service.dart';
 import 'package:odtrack_academia/services/sync/hive_sync_service.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:odtrack_academia/shared/widgets/enhanced_form_field.dart';
+import 'package:odtrack_academia/shared/widgets/form_field.dart';
 import 'package:odtrack_academia/utils/form_validators.dart';
 
 void main() {

@@ -2,7 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:odtrack_academia/core/storage/enhanced_storage_manager.dart';
+import 'package:odtrack_academia/core/storage/storage_manager.dart';
 import 'package:odtrack_academia/core/storage/sync_queue_manager.dart';
 import 'package:odtrack_academia/models/syncable_od_request.dart';
 import 'package:odtrack_academia/models/sync_models.dart';

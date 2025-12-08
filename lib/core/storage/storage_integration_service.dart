@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:odtrack_academia/core/storage/enhanced_storage_manager.dart';
+import 'package:odtrack_academia/core/storage/storage_manager.dart';
 import 'package:odtrack_academia/core/storage/sync_queue_manager.dart';
 import 'package:odtrack_academia/core/storage/intelligent_cache_manager.dart';
 import 'package:odtrack_academia/models/sync_models.dart';

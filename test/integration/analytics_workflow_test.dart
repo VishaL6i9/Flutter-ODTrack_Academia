@@ -8,7 +8,7 @@ import 'package:odtrack_academia/services/analytics/analytics_service.dart';
 import 'package:odtrack_academia/services/export/export_service.dart';
 import 'package:odtrack_academia/providers/analytics_provider.dart';
 import 'package:odtrack_academia/providers/export_provider.dart';
-import 'package:odtrack_academia/core/storage/enhanced_storage_manager.dart';
+import 'package:odtrack_academia/core/storage/storage_manager.dart';
 
 import 'analytics_workflow_test.mocks.dart';
 

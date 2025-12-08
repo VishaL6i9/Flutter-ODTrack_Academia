@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:odtrack_academia/core/app.dart';
 import 'package:odtrack_academia/core/constants/app_constants.dart';
-import 'package:odtrack_academia/core/storage/enhanced_storage_config.dart';
+import 'package:odtrack_academia/core/storage/storage_config.dart';
 import 'package:odtrack_academia/core/services/service_registry.dart';
 import 'package:odtrack_academia/services/sample_data_service.dart';
 import 'package:odtrack_academia/models/staff_member.dart';

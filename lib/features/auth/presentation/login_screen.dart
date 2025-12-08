@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:odtrack_academia/core/constants/app_constants.dart';
 
 import 'package:odtrack_academia/providers/auth_provider.dart';
-import 'package:odtrack_academia/shared/widgets/enhanced_form_field.dart';
-import 'package:odtrack_academia/shared/widgets/enhanced_form.dart';
+import 'package:odtrack_academia/shared/widgets/form_field.dart';
+import 'package:odtrack_academia/shared/widgets/form.dart';
 import 'package:odtrack_academia/utils/form_validators.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {

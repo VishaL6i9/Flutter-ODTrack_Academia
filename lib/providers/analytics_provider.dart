@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:odtrack_academia/models/analytics_models.dart';
 import 'package:odtrack_academia/services/analytics/analytics_service.dart';
 import 'package:odtrack_academia/services/analytics/hive_analytics_service.dart';
-import 'package:odtrack_academia/core/storage/enhanced_storage_manager.dart';
+import 'package:odtrack_academia/core/storage/storage_manager.dart';
 
 /// Provider for the enhanced storage manager
 final enhancedStorageManagerProvider = Provider<EnhancedStorageManager>((ref) {
