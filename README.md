@@ -129,8 +129,11 @@ flutter build ios --release
 - **OD Request Management**:
   - Create new OD requests with date/period selection
   - Real-time staff assignment based on timetable
+  - Optional Class and Year Coordinator sections with confirmation when both selected
+  - 30-second undo buffer after submission
   - Toast notifications for staff information
   - View request history with status tracking
+  - Student OD request management screen to track submitted requests
 - **Timetable Access**: View class timetables with color-coded subjects
 - **Staff Directory**: Browse faculty contacts with search functionality
 - **Smart Navigation**: Context-aware navigation to relevant staff profiles
@@ -235,6 +238,9 @@ flutter build ios --release
 - Complete authentication system for students and staff
 - Role-based dashboards with dynamic content
 - Full OD request creation flow with smart staff assignment
+- Optional Class and Year Coordinator sections with dual selection confirmation
+- 30-second undo buffer after request submission
+- Student OD request management screen to track submitted requests
 - Comprehensive staff inbox with approval/rejection workflow
 - Advanced timetable system with color coding and filtering
 - Staff directory with search and pre-filtering
