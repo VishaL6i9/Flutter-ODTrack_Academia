@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:odtrack_academia/core/constants/app_constants.dart';
 import 'package:odtrack_academia/models/od_request.dart';
 import 'package:odtrack_academia/providers/auth_provider.dart';
 import 'package:odtrack_academia/providers/od_request_provider.dart';
@@ -66,7 +67,7 @@ class _StudentOdManagementScreenState extends ConsumerState<StudentOdManagementS
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () => context.pop(),
+            onPressed: () => context.push(AppConstants.newOdRoute),
             child: const Text('Create Request'),
           ),
         ],
