@@ -191,6 +191,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 color: Colors.teal,
                 onTap: () => context.push(AppConstants.staffDirectoryRoute),
               ),
+              _ActionCard(
+                title: 'My OD Requests',
+                subtitle: 'View submitted requests',
+                icon: MdiIcons.clipboardText,
+                color: Colors.orange,
+                onTap: () => context.push(AppConstants.myOdRequestsRoute),
+              ),
             ]),
           ),
           const SizedBox(height: 24),

@@ -31,6 +31,7 @@ class AppConstants {
   static const String loginRoute = '/login';
   static const String dashboardRoute = '/dashboard';
   static const String newOdRoute = '/new-od';
+  static const String myOdRequestsRoute = '/my-od-requests';
   static const String timetableRoute = '/timetable';
   static const String staffDirectoryRoute = '/staff-directory';
   static const String staffInboxRoute = '/staff-inbox';
