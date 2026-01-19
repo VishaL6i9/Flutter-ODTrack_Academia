@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.academicaffairs.odtrack.odtrack_academia"
+    namespace = "com.vishal.odtrack_academia"
     compileSdk = 35
     ndkVersion = "27.0.12077973"
 
@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.academicaffairs.odtrack.odtrack_academia"
+        applicationId = "com.vishal.odtrack_academia"
         minSdk = 24
         targetSdk = 35
         versionCode = 1

@@ -39,7 +39,7 @@ dependencies:
   dio_smart_retry: ^7.0.1
 
   # File Handling
-  file_picker: ^10.2.1
+  file_picker: ^8.1.2
   image_picker: ^1.1.2
   path_provider: ^2.1.4
 
@@ -68,12 +68,18 @@ dependencies:
   printing: ^5.13.2
 
   # Calendar Integration
-  device_calendar: ^4.3.2
+  # device_calendar: ^4.1.0
   timezone: ^0.9.4
 
   # Enhanced File Operations
-  share_plus: ^10.1.2
+  share_plus: ^7.2.0
   open_file: ^3.5.7
+
+  # Logging
+  logging: ^1.2.0
+
+  # Device Information
+  device_info_plus: ^10.1.0
 
 
 

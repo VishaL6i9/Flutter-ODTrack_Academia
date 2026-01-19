@@ -21,7 +21,7 @@
 }
 
 # Keep model classes
--keep class com.academicaffairs.odtrack.odtrack_academia.models.** { *; }
+-keep class com.vishal.odtrack_academia.models.** { *; }
 
 # Play Store / Play Core rules
 -dontwarn com.google.android.play.core.**
