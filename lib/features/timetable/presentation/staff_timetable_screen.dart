@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:odtrack_academia/features/staff_directory/data/staff_data.dart';
 import 'package:odtrack_academia/features/timetable/data/timetable_data.dart';
+import 'package:odtrack_academia/features/timetable/presentation/widgets/timetable_grid.dart';
+import 'package:odtrack_academia/models/period_slot.dart';
 import 'package:odtrack_academia/models/staff_member.dart';
 
 class StaffTimetableScreen extends ConsumerStatefulWidget {
@@ -16,6 +18,7 @@ class StaffTimetableScreen extends ConsumerStatefulWidget {
 
 class _StaffTimetableScreenState extends ConsumerState<StaffTimetableScreen> {
   StaffMember? _staffMember;
+  late Map<String, List<PeriodSlot>> _staffSchedule;
 
   @override
   void initState() {
@@ -23,8 +26,36 @@ class _StaffTimetableScreenState extends ConsumerState<StaffTimetableScreen> {
     try {
       _staffMember = StaffData.allStaff.firstWhere((staff) => staff.id == widget.staffId);
     } catch (e) {
-      // If no staff member found with exact ID, use the first one as demo
       _staffMember = StaffData.allStaff.isNotEmpty ? StaffData.allStaff.first : null;
+    }
+    _generateStaffSchedule();
+  }
+
+  void _generateStaffSchedule() {
+    _staffSchedule = {};
+    if (_staffMember == null) return;
+
+    for (final day in TimetableData.days) {
+      final List<PeriodSlot> daySlots = List.generate(
+        TimetableData.periods.length,
+        (index) => const PeriodSlot(subject: 'Free'),
+      );
+
+      for (final timetable in TimetableData.allTimetables) {
+        final schedule = timetable.schedule[day];
+        if (schedule != null) {
+          for (int i = 0; i < schedule.length; i++) {
+            if (i < daySlots.length && schedule[i].staffId == _staffMember!.id) {
+              // Create a modified subject string to show Year/Section in the grid
+              daySlots[i] = PeriodSlot(
+                subject: schedule[i].subject,
+                staffId: '${timetable.year} ${timetable.section}',
+              );
+            }
+          }
+        }
+      }
+      _staffSchedule[day] = daySlots;
     }
   }
 
@@ -36,7 +67,7 @@ class _StaffTimetableScreenState extends ConsumerState<StaffTimetableScreen> {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Staff Timetable'),
-          backgroundColor: theme.colorScheme.inversePrimary,
+          backgroundColor: theme.colorScheme.surface,
         ),
         body: const Center(
           child: Text('Staff member not found'),
@@ -47,42 +78,22 @@ class _StaffTimetableScreenState extends ConsumerState<StaffTimetableScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('${_staffMember!.name}\'s Timetable'),
-        backgroundColor: theme.colorScheme.inversePrimary,
+        backgroundColor: theme.colorScheme.surface,
+        scrolledUnderElevation: 2,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          _buildStaffHeader(theme),
-          const SizedBox(height: 24),
-          _buildTimetableDisplay(theme),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStaffHeader(ThemeData theme) {
-    return Card(
-      elevation: 4,
-      shadowColor: Colors.black26,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Row(
+      body: Container(
+        color: theme.colorScheme.surfaceContainerLowest.withOpacity(0.5),
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
           children: [
-            Icon(MdiIcons.accountTie, size: 40, color: theme.primaryColor),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _staffMember!.name,
-                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  _staffMember!.designation ?? 'Staff',
-                  style: theme.textTheme.titleMedium?.copyWith(color: Colors.grey.shade600),
-                ),
-              ],
+            _buildStaffHeader(theme),
+            const SizedBox(height: 24),
+            SizedBox(
+              height: 600, // Constrain height for the scrollable grid
+              child: TimetableGrid(
+                schedule: _staffSchedule,
+                subjectCodeMap: TimetableData.subjectCodeMap,
+              ),
             ),
           ],
         ),
@@ -90,93 +101,43 @@ class _StaffTimetableScreenState extends ConsumerState<StaffTimetableScreen> {
     );
   }
 
-  Widget _buildTimetableDisplay(ThemeData theme) {
+  Widget _buildStaffHeader(ThemeData theme) {
     return Card(
-      elevation: 4,
-      shadowColor: Colors.black26,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      clipBehavior: Clip.antiAlias,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width - 32),
-          child: DataTable(
-            dataRowMinHeight: 60,
-            dataRowMaxHeight: 80,
-            headingRowHeight: 40,
-            columnSpacing: 20,
-            columns: [
-              const DataColumn(label: Text('Day', style: TextStyle(fontWeight: FontWeight.bold))),
-              ...TimetableData.periods.map((period) => DataColumn(
-                label: Text(
-                  period.replaceFirst('-', '\n'),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                ),
-              )),
-            ],
-            rows: TimetableData.days.map((day) {
-              return DataRow(
-                cells: [
-                  DataCell(Text(day, style: const TextStyle(fontWeight: FontWeight.bold))),
-                  ...List.generate(TimetableData.periods.length, (periodIndex) {
-                    final assignedClass = _findAssignedClass(day, periodIndex);
-                    return DataCell(_buildClassCell(assignedClass, theme));
-                  }),
+      elevation: 0,
+      color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 30,
+              backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+              child: Icon(MdiIcons.accountTie, size: 30, color: theme.colorScheme.primary),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _staffMember!.name,
+                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    _staffMember!.designation ?? 'Staff Member',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.secondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
-              );
-            }).toList(),
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _findAssignedClass(String day, int periodIndex) {
-    for (final timetable in TimetableData.allTimetables) {
-      final schedule = timetable.schedule[day];
-      if (schedule != null && schedule.length > periodIndex) {
-        final periodSlot = schedule[periodIndex];
-        if (periodSlot.staffId == _staffMember!.id) {
-          return '${timetable.year}\n${timetable.section}\n(${periodSlot.subject})';
-        }
-      }
-    }
-    return 'Free';
-  }
-
-  Widget _buildClassCell(String classInfo, ThemeData theme) {
-    if (classInfo == 'Free') {
-      return Center(
-        child: Text(
-          'Free',
-          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-        ),
-      );
-    }
-
-    // Extract subject from classInfo (format: "Year\nSection\n(Subject)")
-    final lines = classInfo.split('\n');
-    final subject = lines.length >= 3 ? lines[2].replaceAll(RegExp(r'[()]'), '') : 'Unknown';
-    final color = TimetableData.getSubjectColor(subject);
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
-      ),
-      child: Center(
-        child: Text(
-          classInfo,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.bold,
-            fontSize: 11,
-          ),
+              ),
+            ),
+          ],
         ),
       ),
     );

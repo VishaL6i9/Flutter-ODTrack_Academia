@@ -72,9 +72,7 @@ class _StaffAnalyticsFilterWidgetState extends State<StaffAnalyticsFilterWidget>
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: ThemeData.light(),
-      child: Dialog(
+    return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -117,7 +115,6 @@ class _StaffAnalyticsFilterWidgetState extends State<StaffAnalyticsFilterWidget>
             _buildActionButtons(),
           ],
         ),
-      ),
       ),
     );
   }
@@ -165,9 +162,9 @@ class _StaffAnalyticsFilterWidgetState extends State<StaffAnalyticsFilterWidget>
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.grey.shade50,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: Theme.of(context).dividerColor),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

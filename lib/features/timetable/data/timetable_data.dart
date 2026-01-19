@@ -14,6 +14,28 @@ class Timetable {
 }
 
 class TimetableData {
+  static final Map<String, String> subjectCodeMap = {
+    'DSA': 'Data Structures and Algorithms',
+    'DBMS': 'Database Management Systems',
+    'OS': 'Operating Systems',
+    'CN': 'Computer Networks',
+    'SE': 'Software Engineering',
+    'AI': 'Artificial Intelligence',
+    'ML': 'Machine Learning',
+    'OOP': 'Object Oriented Programming',
+    'Discrete': 'Discrete Mathematics',
+    'Math': 'Mathematics',
+    'Physics': 'Applied Physics',
+    'Chem': 'Engineering Chemistry',
+    'Eng': 'Professional English',
+    'Drawing': 'Engineering Drawing',
+    'Web': 'Web Development',
+    'Cloud': 'Cloud Computing',
+    'Cyber': 'Cyber Security',
+    'Project': 'Final Year Project',
+    'DevOps': 'Development Operations',
+  };
+
   static final List<String> days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   static final List<String> periods = [
     '9:00-10:00',

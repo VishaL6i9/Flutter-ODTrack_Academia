@@ -66,11 +66,18 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
       appBar: _buildAppBar(context, bulkOperationState),
       body: Column(
         children: [
-          if (!bulkOperationState.isSelectionMode) _buildFilterTabs(),
-          if (!bulkOperationState.isSelectionMode) _buildStats(allRequests),
-          if (bulkOperationState.isSelectionMode) _buildSelectionHeader(bulkOperationState, filteredRequests),
           Expanded(
-            child: _buildRequestsList(filteredRequests, bulkOperationState),
+            child: CustomScrollView(
+              slivers: [
+                if (!bulkOperationState.isSelectionMode) 
+                  SliverToBoxAdapter(child: _buildFilterTabs()),
+                if (!bulkOperationState.isSelectionMode) 
+                  SliverToBoxAdapter(child: _buildStats(allRequests)),
+                if (bulkOperationState.isSelectionMode) 
+                  SliverToBoxAdapter(child: _buildSelectionHeader(bulkOperationState, filteredRequests)),
+                _buildRequestsSliver(filteredRequests, bulkOperationState),
+              ],
+            ),
           ),
           if (bulkOperationState.isSelectionMode && bulkOperationState.hasSelection)
             _buildBulkActionBar(context, bulkOperationState),
@@ -251,7 +258,7 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
 
   Widget _buildFilterTabs() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
       child: Row(
         children: _filters.map((filter) {
           final isSelected = _selectedFilter == filter;
@@ -268,7 +275,7 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
                 decoration: BoxDecoration(
                   color: isSelected 
                       ? Theme.of(context).colorScheme.primary
-                      : Colors.grey[200],
+                      : Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -293,7 +300,7 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
     final rejected = requests.where((r) => r.isRejected).length;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
           _buildStatCard('Pending', pending, Colors.orange),
@@ -331,37 +338,44 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
     );
   }
 
-  Widget _buildRequestsList(List<ODRequest> requests, BulkOperationState bulkState) {
+  Widget _buildRequestsSliver(List<ODRequest> requests, BulkOperationState bulkState) {
     if (requests.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              MdiIcons.inboxOutline,
-              size: 64,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No ${_selectedFilter.toLowerCase()} requests',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey[600],
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                MdiIcons.inboxOutline,
+                size: 64,
+                color: Colors.grey[400],
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Text(
+                'No ${_selectedFilter.toLowerCase()} requests',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: requests.length,
-      itemBuilder: (context, index) {
-        final request = requests[index];
-        return _buildRequestCard(request, bulkState);
-      },
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final request = requests[index];
+            return _buildRequestCard(request, bulkState);
+          },
+          childCount: requests.length,
+        ),
+      ),
     );
   }
 
@@ -485,13 +499,23 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
         color = Colors.grey;
     }
 
-    return Chip(
-      label: Text(
-        status.toUpperCase(),
-        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+    return Container(
+      width: 85,
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color),
       ),
-      backgroundColor: color.withValues(alpha: 0.1),
-      side: BorderSide(color: color),
+      child: Text(
+        status.toUpperCase(),
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
+      ),
     );
   }
 

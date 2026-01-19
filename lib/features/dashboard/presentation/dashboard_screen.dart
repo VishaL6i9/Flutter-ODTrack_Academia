@@ -325,42 +325,50 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Quick Stats',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4),
+          child: Text(
+            'Quick Stats',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: stats.map((stat) => Expanded(
-            child: Container(
-              margin: const EdgeInsets.only(right: 8),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Icon(stat.icon, color: stat.color, size: 32),
-                      const SizedBox(height: 8),
-                      AnimatedCounter(
-                        value: int.tryParse(stat.value) ?? 0,
-                        textStyle: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+        IntrinsicHeight(
+          child: Row(
+            children: stats.map((stat) => Expanded(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                child: Card(
+                  clipBehavior: Clip.antiAlias,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(stat.icon, color: stat.color, size: 32),
+                        const SizedBox(height: 8),
+                        AnimatedCounter(
+                          value: int.tryParse(stat.value) ?? 0,
+                          textStyle: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      Text(
-                        stat.title,
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
+                        Text(
+                          stat.title,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          )).toList(),
+            )).toList(),
+          ),
         ),
       ],
     );
@@ -370,9 +378,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Quick Actions',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4),
+          child: Text(
+            'Quick Actions',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
         ),
         const SizedBox(height: 12),
         ...actions.asMap().entries.map((entry) {
@@ -384,6 +395,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             child: AnimatedButton(
               onPressed: action.onTap,
               child: Card(
+                clipBehavior: Clip.antiAlias,
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
                   leading: CircleAvatar(
@@ -406,9 +418,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Recent Requests',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4),
+          child: Text(
+            'Recent Requests',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
         ),
         const SizedBox(height: 12),
         if (requests.isEmpty)
@@ -433,12 +448,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
               title: Text('${(request.date as DateTime).day}/${(request.date as DateTime).month}/${(request.date as DateTime).year}'),
               subtitle: Text(request.reason as String),
-              trailing: Chip(
-                label: Text(
-                  (request.status as String).toUpperCase(),
-                  style: const TextStyle(fontSize: 10),
+              trailing: Container(
+                width: 85,
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                decoration: BoxDecoration(
+                  color: _getStatusColor(request.status as String).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _getStatusColor(request.status as String)),
                 ),
-                backgroundColor: _getStatusColor(request.status as String).withValues(alpha: 0.1),
+                child: Text(
+                  (request.status as String).toUpperCase(),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: _getStatusColor(request.status as String),
+                  ),
+                ),
               ),
             ),
           )),

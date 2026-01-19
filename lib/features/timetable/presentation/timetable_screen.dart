@@ -4,6 +4,7 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import 'package:odtrack_academia/features/staff_directory/data/staff_data.dart';
 import 'package:odtrack_academia/features/timetable/data/timetable_data.dart';
 import 'package:odtrack_academia/features/timetable/presentation/staff_timetable_screen.dart';
+import 'package:odtrack_academia/features/timetable/presentation/widgets/timetable_grid.dart';
 import 'package:odtrack_academia/models/period_slot.dart';
 
 class TimetableScreen extends ConsumerStatefulWidget {
@@ -37,115 +38,218 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Class Timetable'),
-        backgroundColor: theme.colorScheme.inversePrimary,
+        title: const Text('Weekly Timetable'),
+        backgroundColor: theme.colorScheme.surface,
+        scrolledUnderElevation: 2,
+        actions: [
+          IconButton(
+            onPressed: () => setState(() {}), // Refresh current time status
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh Status',
+          ),
+        ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
+      body: Column(
         children: [
-          _buildFilterSection(theme),
-          const SizedBox(height: 24),
-          _buildTimetableDisplay(theme),
+          _buildFilterHeader(theme),
+          Expanded(
+            child: Container(
+              color: theme.colorScheme.surfaceContainerLowest.withOpacity(0.5),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              child: _buildTimetableDisplay(theme),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildFilterSection(ThemeData theme) {
-    return Card(
-      elevation: 4,
-      shadowColor: Colors.black26,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Filter & Search',
-              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-                        _buildDropdown(
-              icon: MdiIcons.calendarBlank,
-              label: 'Year',
-              value: _selectedYear,
-              items: TimetableData.allTimetables.map((t) => t.year).toSet().toList(),
-              onChanged: (newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    _selectedYear = newValue;
-                    _selectedSection = TimetableData.allTimetables
-                        .firstWhere((t) => t.year == _selectedYear)
-                        .section;
-                  });
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildDropdown(
-              icon: MdiIcons.accountGroup,
-              label: 'Section',
-              value: _selectedSection,
-              items: TimetableData.allTimetables
-                  .where((t) => t.year == _selectedYear)
-                  .map((t) => t.section)
-                  .toList(),
-              onChanged: (newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    _selectedSection = newValue;
-                  });
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildSearchField(),
-          ],
+  Widget _buildFilterHeader(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(
+          bottom: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _buildSelectionCard(
+                  icon: MdiIcons.calendarBlank,
+                  label: 'Academic Year',
+                  value: _selectedYear,
+                  onTap: () => _showSelectionDialog(
+                    title: 'Select Year',
+                    currentValue: _selectedYear,
+                    items: TimetableData.allTimetables.map((t) => t.year).toSet().toList(),
+                    onSelected: (newValue) {
+                      setState(() {
+                        _selectedYear = newValue;
+                        _selectedSection = TimetableData.allTimetables
+                            .firstWhere((t) => t.year == _selectedYear)
+                            .section;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildSelectionCard(
+                  icon: MdiIcons.accountGroup,
+                  label: 'Class Section',
+                  value: _selectedSection,
+                  onTap: () => _showSelectionDialog(
+                    title: 'Select Section',
+                    currentValue: _selectedSection,
+                    items: TimetableData.allTimetables
+                        .where((t) => t.year == _selectedYear)
+                        .map((t) => t.section)
+                        .toList(),
+                    onSelected: (newValue) {
+                      setState(() => _selectedSection = newValue);
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildSearchField(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelectionCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 14, color: theme.colorScheme.primary),
+                  const SizedBox(width: 6),
+                  Text(
+                    label,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const Spacer(),
+                  Icon(Icons.unfold_more, size: 14, color: theme.disabledColor),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildDropdown({
-    required IconData icon,
-    required String label,
-    required String value,
+  void _showSelectionDialog({
+    required String title,
+    required String currentValue,
     required List<String> items,
-    required ValueChanged<String?> onChanged,
+    required ValueChanged<String> onSelected,
   }) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-      ),
-      items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, overflow: TextOverflow.ellipsis))).toList(),
-      isExpanded: true,
-      selectedItemBuilder: (BuildContext context) {
-        return items.map((item) {
-          return Text(
-            item,
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          );
-        }).toList();
+    final theme = Theme.of(context);
+    final dialogBg = theme.colorScheme.surfaceContainerHighest.withOpacity(0.3);
+
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: theme.colorScheme.surface, // Keep dialog surface for elevation and clarity
+          surfaceTintColor: Colors.transparent,
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          content: Container(
+            decoration: BoxDecoration(
+              color: dialogBg,
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+            ),
+            constraints: const BoxConstraints(maxHeight: 300),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: items.map((item) {
+                  final isSelected = item == currentValue;
+                  return ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                    title: Text(
+                      item,
+                      style: TextStyle(
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected ? Theme.of(context).colorScheme.primary : null,
+                      ),
+                    ),
+                    trailing: isSelected 
+                        ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary) 
+                        : null,
+                    onTap: () {
+                      onSelected(item);
+                      Navigator.pop(context);
+                    },
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        );
       },
-      onChanged: onChanged,
     );
   }
+
 
   Widget _buildSearchField() {
     return TextFormField(
       controller: _searchController,
       decoration: InputDecoration(
-        labelText: 'Search Subject',
+        hintText: 'Search by Subject Name or Code...',
         prefixIcon: const Icon(Icons.search),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        ),
+        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
       ),
       onChanged: (value) => setState(() {}),
     );
@@ -155,135 +259,128 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
     final selectedTimetable = TimetableData.allTimetables.firstWhere(
       (t) => t.year == _selectedYear && t.section == _selectedSection,
     );
-    final String searchTerm = _searchController.text.toLowerCase();
 
-    return Card(
-      elevation: 4,
-      shadowColor: Colors.black26,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      clipBehavior: Clip.antiAlias,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width - 32),
-          child: DataTable(
-            dataRowMinHeight: 60,
-            dataRowMaxHeight: 80,
-            headingRowHeight: 40,
-            columnSpacing: 20,
-            columns: [
-              const DataColumn(label: Text('Day', style: TextStyle(fontWeight: FontWeight.bold))),
-              ...TimetableData.periods.map((period) => DataColumn(
-                    label: Text(
-                      period.replaceFirst('-', '\n'),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
-                  )),
-            ],
-            rows: TimetableData.days.map((day) {
-              final periodSlots = selectedTimetable.schedule[day] ?? List.filled(5, const PeriodSlot(subject: 'Free'));
-              return DataRow(
-                cells: [
-                  DataCell(Text(day, style: const TextStyle(fontWeight: FontWeight.bold))),
-                  ...periodSlots.map((slot) {
-                    final isHighlighted = searchTerm.isNotEmpty && slot.subject.toLowerCase().contains(searchTerm);
-                    return DataCell(
-                      _buildSubjectCell(slot, isHighlighted, theme),
-                      onTap: () {
-                        if (slot.staffId != null) {
-                          _showStaffInfoDialog(context, slot.staffId!);
-                        }
-                      },
-                    );
-                  }),
-                ],
-              );
-            }).toList(),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSubjectCell(PeriodSlot slot, bool isHighlighted, ThemeData theme) {
-    final subject = slot.subject;
-    if (subject == 'Free' || subject == 'LUNCH') {
-      return Center(
-        child: Text(
-          subject,
-          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-        ),
-      );
-    }
-
-    final color = TimetableData.getSubjectColor(subject);
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: color.withAlpha(isHighlighted ? 80 : 25),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isHighlighted ? color : (slot.staffId != null ? color.withAlpha(100) : Colors.transparent),
-          width: slot.staffId != null ? 1.5 : 2,
-        ),
-        boxShadow: isHighlighted
-            ? [BoxShadow(color: color.withAlpha(77), blurRadius: 8, spreadRadius: 1)]
-            : [],
-      ),
-      child: Center(
-        child: Text(
-          subject,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-          ),
-        ),
-      ),
+    return TimetableGrid(
+      schedule: selectedTimetable.schedule,
+      searchTerm: _searchController.text,
+      subjectCodeMap: TimetableData.subjectCodeMap,
+      onStaffTap: (staffId) => _showStaffInfoDialog(context, staffId),
     );
   }
 
   void _showStaffInfoDialog(BuildContext context, String staffId) {
     final staffMember = StaffData.allStaff.firstWhere((s) => s.id == staffId);
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.primary;
+
     showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text(staffMember.name),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          contentPadding: EdgeInsets.zero,
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(staffMember.designation ?? 'Staff Member'),
-              const SizedBox(height: 8),
-              Text(staffMember.department),
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.05),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundColor: color.withOpacity(0.1),
+                      child: Text(
+                        staffMember.name[0],
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            staffMember.name,
+                            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            staffMember.designation ?? 'Staff Member',
+                            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.secondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    _buildInfoRow(MdiIcons.officeBuilding, 'Department', staffMember.department),
+                    const SizedBox(height: 12),
+                    _buildInfoRow(MdiIcons.email, 'Email', staffMember.email),
+                    if (staffMember.phone != null) ...[
+                      const SizedBox(height: 12),
+                      _buildInfoRow(MdiIcons.phone, 'Phone', staffMember.phone!),
+                    ],
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Close'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          Navigator.push<void>(
+                            context,
+                            MaterialPageRoute<void>(
+                              builder: (BuildContext context) => StaffTimetableScreen(staffId: staffId),
+                            ),
+                          );
+                        },
+                        child: const Text('Full Schedule'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.push<void>(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) => StaffTimetableScreen(staffId: staffId),
-                  ),
-                );
-              },
-              child: const Text('View Full Timetable'),
-            ),
-          ],
         );
       },
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: Colors.grey),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+              Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

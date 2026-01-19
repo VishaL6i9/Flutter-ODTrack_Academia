@@ -192,6 +192,7 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
 
   Widget _buildStaffCard(StaffMember staff) {
     return Card(
+      clipBehavior: Clip.antiAlias,
       margin: const EdgeInsets.only(bottom: 12.0),
       child: InkWell(
         onTap: () {

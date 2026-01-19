@@ -41,9 +41,7 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
   Widget build(BuildContext context) {
     final user = ref.watch(authProvider).user!;
     
-    return Theme(
-      data: ThemeData.light(),
-      child: Scaffold(
+    return Scaffold(
         appBar: AppBar(
           title: const Text('My Profile'),
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -74,7 +72,6 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
               ],
             ),
           ),
-        ),
       ),
     );
   }
@@ -191,7 +188,7 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
           borderRadius: BorderRadius.circular(8),
         ),
         filled: !(_isEditing && enabled),
-        fillColor: !(_isEditing && enabled) ? Colors.grey[100] : null,
+        fillColor: !(_isEditing && enabled) ? Theme.of(context).colorScheme.surfaceContainerHighest : null,
       ),
     );
   }

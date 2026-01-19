@@ -41,6 +41,7 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         elevation: isHighContrast ? 4 : 2,
+        clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: isHighContrast ? const BorderSide(color: highContrastOnSurface, width: 2) : BorderSide.none,
@@ -120,11 +121,11 @@ class AppTheme {
   static ThemeData get darkTheme {
     final isHighContrast = AccessibilityService.instance.isHighContrastEnabled;
     final isBoldText = AccessibilityService.instance.isBoldTextEnabled;
-    
+
     return ThemeData(
       useMaterial3: true,
-      colorScheme: isHighContrast 
-          ? _getHighContrastDarkColorScheme() 
+      colorScheme: isHighContrast
+          ? _getHighContrastDarkColorScheme()
           : ColorScheme.fromSeed(
               seedColor: primaryColor,
               brightness: Brightness.dark,
@@ -145,6 +146,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         elevation: isHighContrast ? 4 : 2,
         color: const Color(0xFF2C2C2C),
+        clipBehavior: Clip.antiAlias,
         shadowColor: const Color(0xFF121212),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -161,9 +163,7 @@ class AppTheme {
           disabledForegroundColor: const Color(0xFF616161),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
-            side: isHighContrast 
-                ? const BorderSide(color: highContrastOnPrimary, width: 2) 
-                : BorderSide.none,
+            side: BorderSide.none,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           textStyle: TextStyle(
