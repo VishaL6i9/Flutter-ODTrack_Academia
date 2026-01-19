@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logging/logging.dart';
 import 'package:odtrack_academia/core/constants/app_constants.dart';
 import 'package:odtrack_academia/core/navigation/navigation_service.dart';
 import 'package:odtrack_academia/features/auth/presentation/login_screen.dart';
@@ -12,8 +13,12 @@ import 'package:odtrack_academia/features/staff_directory/presentation/staff_dir
 import 'package:odtrack_academia/features/staff_inbox/presentation/staff_inbox_screen.dart';
 import 'package:odtrack_academia/features/analytics/presentation/screens/staff_analytics_dashboard_screen.dart';
 import 'package:odtrack_academia/features/export/presentation/export_screen.dart';
+import 'package:odtrack_academia/features/settings/presentation/screens/permissions_screen.dart';
 import 'package:odtrack_academia/providers/auth_provider.dart';
+import 'package:odtrack_academia/providers/permissions_provider.dart';
 import 'package:odtrack_academia/shared/widgets/page_transitions.dart';
+
+final _logger = Logger('AppRouter');
 
 /// Build transition widget based on transition type
 Widget _buildTransition(
@@ -211,22 +216,64 @@ class CustomTransitionPage<T> extends Page<T> {
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
+  final permissionsState = ref.watch(permissionsProvider);
+  
+  _logger.info('Router provider called - Auth: ${authState.isAuthenticated}, Permissions Loading: ${permissionsState.isLoading}, All Granted: ${permissionsState.allPermissionsGranted}');
   
   return GoRouter(
-    initialLocation: authState.isAuthenticated 
-        ? AppConstants.dashboardRoute 
-        : AppConstants.loginRoute,
+    initialLocation: AppConstants.permissionsRoute,
     redirect: (context, state) {
       final isAuthenticated = authState.isAuthenticated;
       final isLoginRoute = state.matchedLocation == AppConstants.loginRoute;
+      final isPermissionsRoute = state.matchedLocation == AppConstants.permissionsRoute;
+      
+      _logger.info('=== REDIRECT CHECK ===');
+      _logger.info('Current Location: ${state.matchedLocation}');
+      _logger.info('Auth: $isAuthenticated');
+      _logger.info('PermissionsLoading: ${permissionsState.isLoading}');
+      _logger.info('AllGranted: ${permissionsState.allPermissionsGranted}');
+      
+      // ALWAYS check permissions first, regardless of current location
+      // If permissions not fully loaded yet, redirect to permissions screen
+      if (permissionsState.isLoading) {
+        _logger.info('ACTION: Permissions still loading -> redirect to /settings/permissions');
+        if (!isPermissionsRoute) {
+          return AppConstants.permissionsRoute;
+        }
+        return null;
+      }
+      
+      // If permissions not granted, always show permissions screen
+      if (!permissionsState.allPermissionsGranted) {
+        _logger.info('ACTION: Permissions not granted -> redirect to /settings/permissions');
+        if (!isPermissionsRoute) {
+          return AppConstants.permissionsRoute;
+        }
+        return null;
+      }
+      
+      // Permissions are granted, now handle auth-based routing
+      // If on permissions route and permissions are granted, move forward
+      if (isPermissionsRoute) {
+        _logger.info('ACTION: On permissions route and permissions granted');
+        if (isAuthenticated) {
+          _logger.info('ACTION: Authenticated -> redirect to /dashboard');
+          return AppConstants.dashboardRoute;
+        } else {
+          _logger.info('ACTION: Not authenticated -> redirect to /login');
+          return AppConstants.loginRoute;
+        }
+      }
       
       // If not authenticated and not on login page, redirect to login
       if (!isAuthenticated && !isLoginRoute) {
+        _logger.info('ACTION: Not authenticated -> redirect to /login');
         return AppConstants.loginRoute;
       }
       
       // If authenticated and on login page, redirect to dashboard
       if (isAuthenticated && isLoginRoute) {
+        _logger.info('ACTION: Authenticated on login page -> redirect to /dashboard');
         return AppConstants.dashboardRoute;
       }
       
@@ -237,6 +284,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         });
       }
       
+      _logger.info('ACTION: No redirect needed');
       return null; // No redirect needed
     },
     routes: [
@@ -336,6 +384,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           context,
           state,
           const ExportScreen(),
+          PageTransitionType.slideFromRight,
+        ),
+      ),
+      GoRoute(
+        path: AppConstants.permissionsRoute,
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const PermissionsScreen(),
           PageTransitionType.slideFromRight,
         ),
       ),
