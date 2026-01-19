@@ -1,17 +1,23 @@
 # ODTrack Academia™ - Mobile Client
 
-A Flutter-based mobile application for OD (On Duty) request management in academic institutions.
+A comprehensive Flutter-based mobile application for On-Duty (OD) request management in academic institutions. Built with a focus on offline-first architecture, accessibility compliance, and enhanced user experience.
 
 ## Project Overview
 
-ODTrack Academia™ provides students and staff with a lightweight, offline-capable interface to:
-- Submit & track OD requests
-- View faculty timetables and Year-Hall assignments
-- Browse the read-only Staff Directory
-- Analyze OD request patterns with charts and generate PDF reports
-- Integrate with device calendar for approved ODs
-- Access comprehensive staff analytics and workload management
-- Experience enhanced accessibility with WCAG-compliant features
+ODTrack Academia™ is a production-ready mobile application that provides students and staff with a seamless interface to:
+- **Submit & Track OD Requests**: Create, manage, and track OD requests with real-time status updates
+- **Smart Staff Assignment**: Automatic staff member assignment based on timetable data
+- **Dual Coordinator System**: Optional Class and Year Coordinator sections with confirmation workflow
+- **Timetable Management**: View and manage class and personal timetables with advanced filtering
+- **Staff Directory**: Browse faculty contacts with search and pre-filtering capabilities
+- **Analytics & Reporting**: Interactive charts and professional PDF report generation
+- **Calendar Integration**: Sync approved OD requests with device calendar
+- **Staff Analytics**: Comprehensive workload tracking, teaching analytics, and efficiency metrics
+- **Offline Support**: Full functionality without internet connection with automatic sync
+- **Accessibility**: WCAG 2.1 compliant with screen reader support and keyboard navigation
+- **Dark Mode**: Complete dark theme implementation across all screens
+- **Push Notifications**: Real-time alerts for request status changes
+- **Bulk Operations**: Efficient batch processing for staff actions
 
 ## Technology Stack
 
@@ -124,30 +130,31 @@ flutter build ios --release
 ## Features
 
 ### 🎓 Student Features
-- **Authentication**: Secure login with Register Number + Date of Birth
-- **Dashboard**: Personalized dashboard with OD request statistics
+- **Secure Authentication**: Login with Register Number + Date of Birth
+- **Personalized Dashboard**: Quick stats on OD requests (pending, approved, rejected) with quick actions
 - **OD Request Management**:
   - Create new OD requests with date/period selection
-  - Real-time staff assignment based on timetable
-  - Optional Class and Year Coordinator sections with confirmation when both selected
-  - 30-second undo buffer after submission
+  - Automatic staff assignment based on timetable data
+  - Optional Class and Year Coordinator sections with dual selection confirmation
+  - 30-second undo buffer after submission for safety
+  - Real-time status tracking with visual indicators
+  - Request history with detailed status information
   - Toast notifications for staff information
-  - View request history with status tracking
-  - Student OD request management screen to track submitted requests
-- **Timetable Access**: View class timetables with color-coded subjects
-- **Staff Directory**: Browse faculty contacts with search functionality
+- **Timetable Access**: View class timetables with color-coded subjects and advanced filtering
+- **Staff Directory**: Browse faculty contacts with search functionality and department filtering
 - **Smart Navigation**: Context-aware navigation to relevant staff profiles
 - **Push Notifications**: Real-time alerts for OD request status changes
-- **Offline Support**: Seamless app usage and request submission even without internet
-- **Calendar Integration**: Sync approved OD requests with device calendar
+- **Calendar Integration**: Automatically sync approved OD requests with device calendar
+- **Offline Support**: Full app functionality without internet connection with automatic sync when online
 
 ### 👨‍🏫 Staff Features
-- **Authentication**: Secure login with Email + Password
-- **Dashboard**: Quick stats and action buttons for efficient workflow
+- **Secure Authentication**: Login with Email + Password
+- **Staff Dashboard**: Quick stats and action buttons for efficient workflow
 - **OD Request Inbox**:
   - Filter requests by status (All/Pending/Approved/Rejected)
   - Approve/reject with confirmation dialogs and reason tracking
   - Real-time status updates with visual feedback
+  - Bulk operations for efficient batch processing
 - **Timetable Management**:
   - Personal timetable with color-coded subjects
   - Browse any class timetable with advanced filtering
@@ -160,48 +167,177 @@ flutter build ios --release
   - Edit personal information and contact details
   - Change password with validation
   - Quick access to help and support
-- **Analytics**:
-  - View OD request trends with interactive charts
-  - Generate and share PDF reports
-- **Calendar Integration**:
-  - Sync approved OD requests with the device calendar
+- **Analytics Dashboard**:
+  - Interactive charts for OD request trends and patterns
+  - Request status distribution visualization
+  - Monthly request volume tracking
+  - Top rejection reasons analysis
+  - Department-wise comparison
+  - Generate and share professional PDF reports
+- **Staff Analytics & Workload Management**:
+  - Comprehensive workload tracking with weekly/monthly breakdown
+  - Teaching analytics with subject-wise period allocation
+  - Time allocation tracking by activity type
+  - Efficiency metrics and performance tracking
+  - Comparative analytics (semester-over-semester)
+  - Department benchmarking and peer comparison
+  - Proactive alerts for workload imbalances
+  - Dark mode support for all analytics widgets
+- **Calendar Integration**: Sync approved OD requests with device calendar
 - **Push Notifications**: Real-time alerts for new OD requests and status updates
-- **Bulk Operations**: Efficiently approve, reject, or export multiple OD requests with progress tracking
-- **Staff Analytics & Workload Management**: Detailed insights into workload, teaching assignments, time allocation, and performance metrics with dark mode support
-- **Efficiency Metrics**: Performance tracking and comparative benchmarking with department-level comparisons
+- **Bulk Operations**: 
+  - Approve/reject multiple requests simultaneously
+  - Export multiple requests to PDF
+  - Progress tracking with real-time updates
+  - Undo functionality for bulk operations
+- **Offline Support**: Full functionality without internet connection with automatic sync
 
 ### 🔧 Technical Features
-- **Offline-First**: Local data caching with Hive, intelligent sync queue, and conflict resolution
-- **Push Notifications**: FCM integration for cross-platform notifications
-- **Intelligent Caching**: Smart cache management with TTL and priority
-- **Bulk Operations**: Efficient batch processing for staff actions with progress tracking and undo functionality
-- **Staff Analytics & Workload Management**: Comprehensive tracking and visualization of staff performance with dark mode
-- **PDF Export System**: Professional report generation with institutional branding
-- **Calendar Integration**: Native device calendar integration for approved OD requests
-- **Accessibility**: Full WCAG 2.1 compliance with screen reader support, keyboard navigation, high contrast mode, and semantic labeling
-- **Responsive Design**: Optimized for various screen sizes
-- **Material Design**: Modern UI following Material Design 3 with comprehensive dark mode support
+- **Offline-First Architecture**: 
+  - Local data caching with Hive
+  - Intelligent sync queue for offline operations
+  - Conflict resolution for data synchronization
+  - Background sync worker for automatic synchronization
+- **Push Notifications**: FCM integration for cross-platform real-time alerts
+- **Intelligent Caching**: 
+  - Smart cache management with TTL strategies
+  - Priority-based cleanup mechanism
+  - Efficient memory management
+- **Bulk Operations System**: 
+  - Multi-select UI with checkboxes
+  - Real-time progress tracking
+  - Detailed error reporting
+  - Undo functionality with time window
+- **Staff Analytics & Workload Management**: 
+  - Comprehensive tracking and visualization
+  - Dark mode support across all components
+  - Performance metrics and benchmarking
+- **PDF Export System**: 
+  - Professional report generation
+  - Institutional branding
+  - Multiple template types
+  - Background processing for large exports
+- **Calendar Integration**: 
+  - Native device calendar integration
+  - Complete event lifecycle management
+  - Customizable sync settings
+- **Accessibility (WCAG 2.1 Compliant)**:
+  - Screen reader support with semantic labeling
+  - Keyboard navigation throughout the app
+  - High contrast mode compatibility
+  - Text scaling support (1.0x to 2.0x)
+  - Focus management and visual indicators
+  - Accessible form components
+- **Responsive Design**: Optimized for various screen sizes and orientations
+- **Material Design 3**: Modern UI with comprehensive dark mode support
 - **State Management**: Efficient state handling with Riverpod
 - **Navigation**: Declarative routing with GoRouter, breadcrumbs, and context preservation
-- **Performance**: Optimized builds with tree-shaking and background processing
+- **Performance Optimization**: 
+  - Tree-shaking for smaller builds
+  - Background processing for heavy operations
+  - Skeleton loading screens for better perceived performance
+  - Smooth animations and transitions
+- **Enhanced User Experience**:
+  - Real-time form validation with helpful error messages
+  - Contextual error messages with suggested actions
+  - Smooth page transitions
+  - Micro-interactions for better feedback
+  - Skeleton loading screens instead of blank states
 
 ## Development Milestones
 
 ### Completed ✅
 - [x] **M1: Project Foundation** (Dec 2024)
+  - Project setup with Flutter 3.19+
+  - Riverpod state management configuration
+  - Hive local storage setup
+  - GoRouter navigation configuration
+  - Material Design 3 theming with dark mode support
+
 - [x] **M2: Authentication & Dashboard** (Jan 2025)
+  - Dual authentication system (students & staff)
+  - Role-based dashboards
+  - JWT token management with secure storage
+  - Session management and logout functionality
+
 - [x] **M4: Staff Management System** (Jan 2025)
-- [x] **M5: Enhanced Features**
-  - Advanced reporting & analytics with interactive charts (May 2025)
-  - Calendar integration (August 2025)
-  - Export functionality (PDF reports) (October 2025)
-  - Dark mode theme across all screens and components
-  - Push notifications for request updates
-  - Offline data synchronization with conflict resolution
-  - Bulk operations for staff with progress tracking
-  - Staff Analytics and Workload Management with comprehensive insights
-  - Enhanced User Experience (skeleton loading, animations, form validation)
-  - WCAG-compliant accessibility features (screen readers, keyboard navigation, high contrast mode)
+  - Staff directory with search and filtering
+  - Staff profile management
+  - Timetable system with color coding
+  - Staff inbox for OD request management
+  - Approval/rejection workflow with reason tracking
+
+- [x] **M5: Enhanced Features** (Jan 2025)
+  - **Analytics & Reporting**:
+    - Interactive charts using fl_chart
+    - Request status distribution visualization
+    - Monthly request volume tracking
+    - Top rejection reasons analysis
+    - Department-wise comparison
+    - PDF report generation with institutional branding
+  
+  - **Calendar Integration**:
+    - Device calendar permission management
+    - Automatic event creation for approved ODs
+    - Event lifecycle management
+    - Customizable sync settings
+  
+  - **Offline Support & Synchronization**:
+    - Hive-based local caching
+    - Sync queue for offline operations
+    - Conflict resolution mechanism
+    - Background sync worker with connectivity monitoring
+    - Exponential backoff retry mechanism
+  
+  - **Push Notifications**:
+    - FCM integration for cross-platform notifications
+    - Local notifications for offline scenarios
+    - Deep linking to relevant screens
+    - Notification grouping and badge management
+  
+  - **Bulk Operations**:
+    - Multi-select UI with checkboxes
+    - Batch approval/rejection/export
+    - Real-time progress tracking
+    - Error handling and reporting
+    - Undo functionality with time window
+  
+  - **Staff Analytics & Workload Management**:
+    - Workload tracking with weekly/monthly breakdown
+    - Teaching analytics with subject allocation
+    - Time allocation tracking by activity type
+    - Efficiency metrics and performance tracking
+    - Comparative analytics (semester-over-semester)
+    - Department benchmarking
+    - Dark mode support for all components
+  
+  - **Enhanced User Experience**:
+    - Skeleton loading screens
+    - Smooth page transitions and animations
+    - Real-time form validation
+    - Contextual error messages
+    - Improved navigation with breadcrumbs
+  
+  - **Accessibility (WCAG 2.1 Compliant)**:
+    - Screen reader support with semantic labeling
+    - Keyboard navigation throughout the app
+    - High contrast mode compatibility
+    - Text scaling support (1.0x to 2.0x)
+    - Focus management and visual indicators
+    - Accessible form components
+  
+  - **Dark Mode**:
+    - Complete dark theme implementation
+    - Theme-aware colors across all screens
+    - Proper contrast ratios for accessibility
+    - Consistent styling across components
+
+- [x] **Permissions System** (Jan 2025)
+  - Automatic permission checking on app launch
+  - SDK 24-36 compatibility for storage permissions
+  - Permissions screen with request UI
+  - Router integration for permission flow
+  - Debug logging for permission checking
 
 ### In Progress 🚧
 - [ ] **M3: Complete OD Request Flow**
@@ -218,7 +354,7 @@ flutter build ios --release
   - Data encryption at rest
   - Performance optimization
   - Memory leak detection
-  - Accessibility compliance (WCAG 2.1)
+  - Accessibility compliance verification (WCAG 2.1)
 
 - [ ] **M7: Advanced Features**
   - Multi-language support (i18n)
@@ -235,36 +371,150 @@ flutter build ios --release
 ## Current Implementation Status
 
 ### ✅ Fully Implemented
-- Complete authentication system for students and staff
-- Role-based dashboards with dynamic content
-- Full OD request creation flow with smart staff assignment
-- Optional Class and Year Coordinator sections with dual selection confirmation
-- 30-second undo buffer after request submission
-- Student OD request management screen to track submitted requests
-- Comprehensive staff inbox with approval/rejection workflow
-- Advanced timetable system with color coding and filtering
-- Staff directory with search and pre-filtering
-- Staff profile management system
-- Analytics dashboard with interactive charts using fl_chart
-- PDF report generation and sharing with institutional branding
-- Device calendar integration for approved ODs
-- Push notification system for real-time alerts
-- Offline data synchronization with conflict resolution and background sync worker
-- Bulk operations for efficient staff workflow with progress tracking and undo functionality
-- Staff Analytics and Workload Management with comprehensive insights and dark mode support
-- Enhanced User Experience (skeleton loading, animations, form validation)
-- Comprehensive accessibility features (screen reader support, keyboard navigation, high contrast mode, semantic labeling)
-- Dark mode theme applied across all screens and components
-- Navigation improvements with breadcrumbs and context preservation
+- **Authentication System**:
+  - Dual authentication for students (Register Number + DOB) and staff (Email + Password)
+  - JWT token management with secure storage (AES-256 encryption)
+  - Session management and logout functionality
+  - Role-based access control
+
+- **Student Features**:
+  - Personalized dashboard with OD request statistics
+  - Complete OD request creation flow with smart staff assignment
+  - Optional Class and Year Coordinator sections with dual selection confirmation
+  - 30-second undo buffer after request submission
+  - Student OD request management screen to track submitted requests
+  - Timetable viewing with color-coded subjects
+  - Staff directory with search functionality
+  - Context-aware navigation to staff profiles
+
+- **Staff Features**:
+  - Staff dashboard with quick stats and actions
+  - Comprehensive OD request inbox with filtering
+  - Approval/rejection workflow with reason tracking
+  - Personal and class timetable management
+  - Staff directory with department filtering
+  - Staff profile management with edit capabilities
+  - Bulk operations for efficient batch processing
+
+- **Analytics & Reporting**:
+  - Interactive charts using fl_chart (pie, bar, line charts)
+  - Request status distribution visualization
+  - Monthly request volume tracking
+  - Top rejection reasons analysis
+  - Department-wise comparison
+  - Professional PDF report generation with institutional branding
+  - Multiple template types for different reports
+
+- **Offline Support & Synchronization**:
+  - Hive-based local caching with intelligent TTL strategies
+  - Sync queue for offline operations
+  - Conflict resolution mechanism
+  - Background sync worker with connectivity monitoring
+  - Exponential backoff retry mechanism
+  - Automatic synchronization when online
+
+- **Push Notifications**:
+  - FCM integration for cross-platform notifications
+  - Local notifications for offline scenarios
+  - Deep linking to relevant screens
+  - Notification grouping and badge management
+  - Real-time alerts for OD request status changes
+
+- **Bulk Operations**:
+  - Multi-select UI with checkboxes and selection indicators
+  - Batch approval, rejection, and export operations
+  - Real-time progress tracking with visual indicators
+  - Detailed error reporting for failed operations
+  - Undo functionality with configurable time window
+
+- **Calendar Integration**:
+  - Device calendar permission management
+  - Automatic event creation for approved ODs
+  - Complete event lifecycle management (CRUD)
+  - Customizable sync settings
+  - Proper cleanup of created events
+
+- **Staff Analytics & Workload Management**:
+  - Workload tracking with weekly/monthly breakdown
+  - Teaching analytics with subject-wise period allocation
+  - Time allocation tracking by activity type
+  - Efficiency metrics and performance tracking
+  - Comparative analytics (semester-over-semester)
+  - Department benchmarking and peer comparison
+  - Proactive alerts for workload imbalances
+  - Dark mode support for all analytics components
+
+- **Enhanced User Experience**:
+  - Skeleton loading screens for better perceived performance
+  - Smooth page transitions and micro-interactions
+  - Real-time form validation with helpful error messages
+  - Contextual error messages with suggested actions
+  - Improved navigation with breadcrumbs
+  - Context preservation across navigation
+
+- **Accessibility (WCAG 2.1 Compliant)**:
+  - Screen reader support with semantic labeling
+  - Keyboard navigation throughout the app
+  - High contrast mode compatibility
+  - Text scaling support (1.0x to 2.0x)
+  - Focus management with visual indicators
+  - Accessible form components
+  - Semantic HTML-like structure in Flutter
+
+- **Dark Mode**:
+  - Complete dark theme implementation
+  - Theme-aware colors across all screens
+  - Proper contrast ratios for accessibility
+  - Consistent styling across all components
+  - Automatic theme switching based on system settings
+
+- **Permissions System**:
+  - Automatic permission checking on app launch
+  - SDK 24-36 compatibility for storage permissions
+  - Permissions screen with request UI
+  - Router integration for permission flow
+  - Debug logging for permission checking
 
 ### 🔄 In Progress
-- Backend API integration
-- Real-time status updates
-- File attachment support
-- Email notifications
+- Backend API integration for real-time data
+- File attachment support for OD requests
+- Email notifications system
 - Digital signature integration
 
-## Contributing
+### 📋 Planned
+- Security audit & penetration testing
+- JWT token refresh mechanism
+- Data encryption at rest
+- Performance optimization and memory leak detection
+- Multi-language support (i18n)
+- Biometric authentication
+- QR code scanning for quick actions
+- Play Store & App Store submissions
+- CI/CD pipeline setup
+- Monitoring & crash reporting
+
+## Recent Updates (January 2025)
+
+### Permissions System Implementation
+- **Automatic Permission Checking**: Permissions are now checked automatically on app launch
+- **SDK Compatibility**: Full support for Android SDK 24-36 with appropriate permission handling:
+  - SDK 24-28: Uses `WRITE_EXTERNAL_STORAGE`
+  - SDK 29: No special permissions required (scoped storage)
+  - SDK 30+: Uses `MANAGE_EXTERNAL_STORAGE`
+- **Permissions Screen**: New dedicated screen for requesting and managing permissions
+- **Router Integration**: Automatic redirect to permissions screen if permissions not granted
+- **Debug Logging**: Comprehensive logging for permission checking flow
+
+### Theme & UI Improvements
+- **Global Button Styling**: All buttons now inherit 8px border radius from theme definition
+- **Consistent Design**: Removed redundant button shape definitions across all screens
+- **Code Quality**: Fixed lint issues and improved code maintainability
+
+### Code Quality Improvements
+- Replaced `print()` with `debugPrint()` for production code
+- Fixed const constructor issues in theme definitions
+- Removed unused variables and improved code clarity
+- All files pass Flutter analysis without warnings or errors
 
 1. Follow Flutter/Dart style guidelines
 2. Use conventional commit messages
