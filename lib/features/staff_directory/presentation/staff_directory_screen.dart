@@ -249,6 +249,7 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
               _buildInfoRow(MdiIcons.domain, 'Department', staff.department),
               _buildInfoRow(MdiIcons.bookOpenPageVariant, 'Subject', staff.subject),
               _buildInfoRow(MdiIcons.schoolOutline, 'Years', staff.years.join(', ')),
+              _buildCoordinatorInfoRow(staff),
               _buildInfoRow(MdiIcons.email, 'Email', staff.email),
               if (staff.phone != null)
                 _buildInfoRow(MdiIcons.phone, 'Phone', staff.phone!),
@@ -273,6 +274,67 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
           ),
           Expanded(
             child: Text(value),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCoordinatorInfoRow(StaffMember staff) {
+    List<String> coordinatorRoles = [];
+
+    if (staff.isClassCoordinator && staff.coordinatedSections.isNotEmpty) {
+      // Show specific sections instead of just count
+      for (String section in staff.coordinatedSections) {
+        coordinatorRoles.add('Class Coordinator ($section)');
+      }
+    }
+
+    if (staff.isYearCoordinator && staff.coordinatedYears.isNotEmpty) {
+      // Show specific years instead of just count
+      for (String year in staff.coordinatedYears) {
+        coordinatorRoles.add('Year Coordinator ($year)');
+      }
+    }
+
+    if (coordinatorRoles.isEmpty) {
+      return Container(); // Return empty container if not a coordinator
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(MdiIcons.accountTie, size: 16.0, color: Colors.grey[600]),
+          const SizedBox(width: 8.0),
+          const Text(
+            'Roles: ',
+            style: TextStyle(fontWeight: FontWeight.w500),
+          ),
+          Expanded(
+            child: Wrap(
+              spacing: 4.0,
+              runSpacing: 2.0,
+              children: [
+                for (int i = 0; i < coordinatorRoles.length; i++)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: Text(
+                      coordinatorRoles[i],
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontSize: 12.0,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
       ),

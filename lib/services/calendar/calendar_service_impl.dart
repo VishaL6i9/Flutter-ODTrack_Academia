@@ -1,28 +1,25 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:device_calendar/device_calendar.dart' as device_calendar;
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:timezone/timezone.dart' as tz;
 
 import 'package:odtrack_academia/models/calendar_models.dart';
 import 'package:odtrack_academia/models/od_request.dart';
 import 'package:odtrack_academia/services/calendar/calendar_service.dart';
 
-/// Concrete implementation of CalendarService using device_calendar package
+/// Concrete implementation of CalendarService using local storage
+/// Note: device_calendar plugin removed due to Android SDK 35 compatibility issues
+/// Calendar events are stored locally in Hive
 class CalendarServiceImpl implements CalendarService {
   static const String _calendarEventsBoxName = 'calendar_events_box';
   static const String _calendarSettingsBoxName = 'calendar_settings_box';
   static const String _settingsKey = 'calendar_sync_settings';
   
-  final device_calendar.DeviceCalendarPlugin _deviceCalendarPlugin;
   Box<Map<String, dynamic>>? _eventsBox;
   Box<Map<String, dynamic>>? _settingsBox;
   
-  CalendarServiceImpl({
-    device_calendar.DeviceCalendarPlugin? deviceCalendarPlugin,
-  }) : _deviceCalendarPlugin = deviceCalendarPlugin ?? device_calendar.DeviceCalendarPlugin();
+  CalendarServiceImpl();
 
   @override
   Future<void> initialize() async {
@@ -57,20 +54,12 @@ class CalendarServiceImpl implements CalendarService {
   Future<bool> requestCalendarPermission() async {
     try {
       if (Platform.isAndroid) {
-        // For Android, request calendar permissions
         final status = await Permission.calendarFullAccess.request();
         return status.isGranted;
       } else if (Platform.isIOS) {
-        // For iOS, the device_calendar plugin handles permissions internally
-        final permissionsGranted = await _deviceCalendarPlugin.hasPermissions();
-        if (permissionsGranted.isSuccess && permissionsGranted.data == true) {
-          return true;
-        }
-        
-        final requestResult = await _deviceCalendarPlugin.requestPermissions();
-        return requestResult.isSuccess && requestResult.data == true;
+        final status = await Permission.calendarFullAccess.request();
+        return status.isGranted;
       }
-      
       return false;
     } catch (e) {
       debugPrint('Error requesting calendar permission: $e');
@@ -81,14 +70,10 @@ class CalendarServiceImpl implements CalendarService {
   @override
   Future<bool> hasCalendarPermission() async {
     try {
-      if (Platform.isAndroid) {
+      if (Platform.isAndroid || Platform.isIOS) {
         final status = await Permission.calendarFullAccess.status;
         return status.isGranted;
-      } else if (Platform.isIOS) {
-        final permissionsGranted = await _deviceCalendarPlugin.hasPermissions();
-        return permissionsGranted.isSuccess && permissionsGranted.data == true;
       }
-      
       return false;
     } catch (e) {
       debugPrint('Error checking calendar permission: $e');
@@ -99,27 +84,16 @@ class CalendarServiceImpl implements CalendarService {
   @override
   Future<List<Calendar>> getAvailableCalendars() async {
     try {
-      final hasPermission = await hasCalendarPermission();
-      if (!hasPermission) {
-        debugPrint('Calendar permission not granted');
-        return [];
-      }
-
-      final calendarsResult = await _deviceCalendarPlugin.retrieveCalendars();
-      if (!calendarsResult.isSuccess || calendarsResult.data == null) {
-        debugPrint('Failed to retrieve calendars: ${calendarsResult.errors}');
-        return [];
-      }
-
-      return calendarsResult.data!.map((deviceCalendar) {
-        return Calendar(
-          id: deviceCalendar.id!,
-          name: deviceCalendar.name ?? 'Unknown Calendar',
-          accountName: deviceCalendar.accountName,
-          isDefault: deviceCalendar.isDefault ?? false,
-          isReadOnly: deviceCalendar.isReadOnly ?? false,
-        );
-      }).toList();
+      // Return a default local calendar since we're not using device_calendar
+      return [
+        const Calendar(
+          id: 'local_calendar',
+          name: 'ODTrack Calendar',
+          accountName: 'Local Storage',
+          isDefault: true,
+          isReadOnly: false,
+        ),
+      ];
     } catch (e) {
       debugPrint('Error getting available calendars: $e');
       return [];
@@ -129,23 +103,10 @@ class CalendarServiceImpl implements CalendarService {
   @override
   Future<void> addODEventToCalendar(ODRequest request, String calendarId) async {
     try {
-      final hasPermission = await hasCalendarPermission();
-      if (!hasPermission) {
-        throw Exception('Calendar permission not granted');
-      }
-
-      // Create calendar event from OD request
-      final event = _createEventFromODRequest(request, calendarId);
-      
-      final createResult = await _deviceCalendarPlugin.createOrUpdateEvent(event);
-      if (createResult?.isSuccess != true || createResult?.data == null) {
-        throw Exception('Failed to create calendar event: ${createResult?.errors}');
-      }
-
-      // Store event mapping in local storage
-      await _storeEventMapping(request.id, createResult!.data!, calendarId);
-      
-      debugPrint('Successfully added OD event to calendar: ${request.id}');
+      // Store event locally in Hive
+      final eventData = _createEventDataFromODRequest(request, calendarId);
+      await _storeEventMappingData(request.id, eventData);
+      debugPrint('Successfully stored OD event locally: ${request.id}');
     } catch (e) {
       debugPrint('Error adding OD event to calendar: $e');
       rethrow;
@@ -161,21 +122,10 @@ class CalendarServiceImpl implements CalendarService {
         return;
       }
 
-      final hasPermission = await hasCalendarPermission();
-      if (!hasPermission) {
-        throw Exception('Calendar permission not granted');
-      }
-
-      // Update the existing event
-      final event = _createEventFromODRequest(request, eventMapping['calendarId'] as String);
-      event.eventId = eventMapping['eventId'] as String?;
-      
-      final updateResult = await _deviceCalendarPlugin.createOrUpdateEvent(event);
-      if (updateResult?.isSuccess != true) {
-        throw Exception('Failed to update calendar event: ${updateResult?.errors}');
-      }
-      
-      debugPrint('Successfully updated OD event in calendar: ${request.id}');
+      final calendarId = eventMapping['calendarId'] as String? ?? 'local_calendar';
+      final eventData = _createEventDataFromODRequest(request, calendarId);
+      await _storeEventMappingData(request.id, eventData);
+      debugPrint('Successfully updated OD event locally: ${request.id}');
     } catch (e) {
       debugPrint('Error updating OD event in calendar: $e');
       rethrow;
@@ -185,30 +135,13 @@ class CalendarServiceImpl implements CalendarService {
   @override
   Future<void> removeODEventFromCalendar(String eventId) async {
     try {
-      final hasPermission = await hasCalendarPermission();
-      if (!hasPermission) {
-        throw Exception('Calendar permission not granted');
-      }
-
-      // Find the event mapping
       final eventMapping = await _getEventMappingByEventId(eventId);
       if (eventMapping == null) {
         debugPrint('No event mapping found for event ID: $eventId');
         return;
       }
 
-      final deleteResult = await _deviceCalendarPlugin.deleteEvent(
-        eventMapping['calendarId'] as String?,
-        eventId,
-      );
-      
-      if (!deleteResult.isSuccess) {
-        throw Exception('Failed to delete calendar event: ${deleteResult.errors}');
-      }
-
-      // Remove event mapping from local storage
       await _removeEventMapping(eventMapping['odRequestId'] as String);
-      
       debugPrint('Successfully removed OD event from calendar: $eventId');
     } catch (e) {
       debugPrint('Error removing OD event from calendar: $e');
@@ -219,35 +152,13 @@ class CalendarServiceImpl implements CalendarService {
   @override
   Future<void> removeODEventByRequestId(String odRequestId) async {
     try {
-      final hasPermission = await hasCalendarPermission();
-      if (!hasPermission) {
-        throw Exception('Calendar permission not granted');
-      }
-
-      // Find the event mapping for this OD request
       final eventMapping = await _getEventMapping(odRequestId);
       if (eventMapping == null) {
         debugPrint('No calendar event found for OD request: $odRequestId');
         return;
       }
 
-      final eventId = eventMapping['eventId'] as String?;
-      final calendarId = eventMapping['calendarId'] as String?;
-      
-      if (eventId == null || calendarId == null) {
-        debugPrint('Invalid event mapping for OD request: $odRequestId');
-        return;
-      }
-
-      final deleteResult = await _deviceCalendarPlugin.deleteEvent(calendarId, eventId);
-      
-      if (!deleteResult.isSuccess) {
-        throw Exception('Failed to delete calendar event: ${deleteResult.errors}');
-      }
-
-      // Remove event mapping from local storage
       await _removeEventMapping(odRequestId);
-      
       debugPrint('Successfully removed OD event from calendar for request: $odRequestId');
     } catch (e) {
       debugPrint('Error removing OD event from calendar by request ID: $e');
@@ -264,22 +175,8 @@ class CalendarServiceImpl implements CalendarService {
         return;
       }
 
-      final hasPermission = await hasCalendarPermission();
-      if (!hasPermission) {
-        throw Exception('Calendar permission not granted');
-      }
-
-      // This would typically get OD requests from a repository
-      // For now, we'll just log that sync would happen
-      debugPrint('Syncing all OD events to calendar...');
-      
-      // TODO: Implement actual sync logic when OD request repository is available
-      // This would involve:
-      // 1. Get all approved OD requests (if syncApprovedOnly is true)
-      // 2. Check which ones don't have calendar events
-      // 3. Create calendar events for missing ones
-      // 4. Update existing events if OD request data changed
-      
+      debugPrint('Syncing all OD events to local calendar...');
+      // Events are stored locally, no external sync needed
     } catch (e) {
       debugPrint('Error syncing all OD events to calendar: $e');
       rethrow;
@@ -289,30 +186,8 @@ class CalendarServiceImpl implements CalendarService {
   @override
   Future<void> cleanupODEventsFromCalendar() async {
     try {
-      final hasPermission = await hasCalendarPermission();
-      if (!hasPermission) {
-        throw Exception('Calendar permission not granted');
-      }
-
-      // Get all stored event mappings
-      final allMappings = _eventsBox?.values.toList() ?? [];
-      
-      for (final mapping in allMappings) {
-        final mappingData = Map<String, dynamic>.from(mapping);
-        try {
-          await _deviceCalendarPlugin.deleteEvent(
-            mappingData['calendarId'] as String?,
-            mappingData['eventId'] as String?,
-          );
-        } catch (e) {
-          debugPrint('Error deleting event ${mappingData['eventId']}: $e');
-        }
-      }
-
-      // Clear all event mappings
       await _eventsBox?.clear();
-      
-      debugPrint('Successfully cleaned up all OD events from calendar');
+      debugPrint('Successfully cleaned up all OD events from local calendar');
     } catch (e) {
       debugPrint('Error cleaning up OD events from calendar: $e');
       rethrow;
@@ -465,10 +340,23 @@ class CalendarServiceImpl implements CalendarService {
 
   // Private helper methods
 
-  device_calendar.Event _createEventFromODRequest(ODRequest request, String calendarId) {
-    final event = device_calendar.Event(calendarId);
+  Map<String, dynamic> _createEventDataFromODRequest(ODRequest request, String calendarId) {
+    final startTime = DateTime(
+      request.date.year,
+      request.date.month,
+      request.date.day,
+      9,
+      0,
+    );
     
-    // Set event title based on OD request status
+    final endTime = DateTime(
+      request.date.year,
+      request.date.month,
+      request.date.day,
+      9 + request.periods.length,
+      0,
+    );
+    
     String title = 'OD Request';
     if (request.isApproved) {
       title = 'OD - ${request.reason}';
@@ -478,37 +366,16 @@ class CalendarServiceImpl implements CalendarService {
       title = 'OD (Pending) - ${request.reason}';
     }
     
-    event.title = title;
-    event.description = _buildEventDescription(request);
-    
-    // Set event timing - assuming periods are during school hours
-    // This is a simplified approach - in reality, you'd need period timing data
-    final startTime = DateTime(
-      request.date.year,
-      request.date.month,
-      request.date.day,
-      9, // Assuming school starts at 9 AM
-      0,
-    );
-    
-    final endTime = DateTime(
-      request.date.year,
-      request.date.month,
-      request.date.day,
-      9 + request.periods.length, // Assuming 1 hour per period
-      0,
-    );
-    
-    event.start = tz.TZDateTime.from(startTime, tz.local);
-    event.end = tz.TZDateTime.from(endTime, tz.local);
-    
-    // Set event properties
-    event.allDay = false;
-    
-    // Add metadata
-    event.description = '${event.description}\n\nOD Request ID: ${request.id}';
-    
-    return event;
+    return {
+      'odRequestId': request.id,
+      'eventId': 'event_${request.id}',
+      'calendarId': calendarId,
+      'title': title,
+      'description': _buildEventDescription(request),
+      'startTime': startTime.toIso8601String(),
+      'endTime': endTime.toIso8601String(),
+      'createdAt': DateTime.now().toIso8601String(),
+    };
   }
 
   String _buildEventDescription(ODRequest request) {
@@ -530,15 +397,8 @@ class CalendarServiceImpl implements CalendarService {
     return buffer.toString();
   }
 
-  Future<void> _storeEventMapping(String odRequestId, String eventId, String calendarId) async {
-    final mapping = {
-      'odRequestId': odRequestId,
-      'eventId': eventId,
-      'calendarId': calendarId,
-      'createdAt': DateTime.now().toIso8601String(),
-    };
-    
-    await _eventsBox?.put(odRequestId, mapping);
+  Future<void> _storeEventMappingData(String odRequestId, Map<String, dynamic> eventData) async {
+    await _eventsBox?.put(odRequestId, eventData);
   }
 
   Future<Map<String, dynamic>?> _getEventMapping(String odRequestId) async {
