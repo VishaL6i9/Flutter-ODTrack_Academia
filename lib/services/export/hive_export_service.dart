@@ -2,11 +2,12 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:math' as math;
+import 'package:logging/logging.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:open_file/open_file.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:odtrack_academia/models/export_models.dart';
 import 'package:odtrack_academia/models/od_request.dart';
 import 'package:odtrack_academia/models/analytics_models.dart';
@@ -192,14 +193,15 @@ class HiveExportService implements ExportService {
             .toList(),
       };
 
-      _updateProgress(exportId, 0.4, 'Generating report...');
+      _updateProgress(exportId, 0.4, 'Generating enhanced analytics report...');
 
-      // Generate the report based on format
-      final result = await _generateReport(
+      // Generate the enhanced report with analytics formatting
+      final result = await _generateEnhancedReport(
         exportId,
         options.customTitle ?? 'Analytics Report',
         reportData,
         options,
+        ReportType.analytics,
       );
 
       _updateProgress(exportId, 1.0, 'Export completed');
@@ -375,6 +377,96 @@ class HiveExportService implements ExportService {
     return 'export_${DateTime.now().millisecondsSinceEpoch}';
   }
 
+  /// Get the appropriate downloads directory for the platform
+  /// Handles Android SDK 24-36 with proper permission and storage strategies
+  /// - SDK 24-28: Legacy storage with WRITE_EXTERNAL_STORAGE permission
+  /// - SDK 29: Scoped storage (app-specific downloads)
+  /// - SDK 30-36: Scoped storage with MANAGE_EXTERNAL_STORAGE for public Downloads
+  Future<String> _getDownloadsPath(String fileName) async {
+    if (Platform.isAndroid) {
+      try {
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+        final sdkInt = androidInfo.version.sdkInt;
+
+        if (sdkInt >= 30) {
+          // Android 11+ (R and above): Scoped storage with MANAGE_EXTERNAL_STORAGE
+          // Check if permission is granted
+          final manageExternalStorageStatus = await Permission.manageExternalStorage.status;
+          
+          if (manageExternalStorageStatus.isGranted) {
+            // Permission granted, use public Downloads directory
+            const publicDownloadsPath = '/storage/emulated/0/Download';
+            final publicDownloadsDir = Directory(publicDownloadsPath);
+
+            try {
+              if (await publicDownloadsDir.exists()) {
+                Logger.root.info('Using public Downloads directory: $publicDownloadsPath');
+                return '$publicDownloadsPath/$fileName';
+              }
+            } catch (e) {
+              Logger.root.warning('Cannot access public Downloads: $e');
+            }
+          } else {
+            Logger.root.warning('MANAGE_EXTERNAL_STORAGE permission not granted, using app-specific directory');
+          }
+          
+          // Fallback to app-specific documents directory
+          final appDir = await getApplicationDocumentsDirectory();
+          Logger.root.info('Using app-specific directory: ${appDir.path}');
+          return '${appDir.path}/$fileName';
+        } else if (sdkInt >= 29) {
+          // Android 10 (Q): Scoped storage introduced
+          // Use app-specific downloads directory (getDownloadsDirectory returns app-internal)
+          final downloadsDir = await getDownloadsDirectory();
+          if (downloadsDir != null) {
+            Logger.root.info('Using app-specific downloads directory: ${downloadsDir.path}');
+            return '${downloadsDir.path}/$fileName';
+          }
+          // Fallback to app-specific documents directory
+          final appDir = await getApplicationDocumentsDirectory();
+          Logger.root.info('Using app-specific documents directory: ${appDir.path}');
+          return '${appDir.path}/$fileName';
+        } else {
+          // Android 9 and below (SDK 24-28): Legacy storage
+          // Check if permission is granted
+          final storageStatus = await Permission.storage.status;
+          
+          if (storageStatus.isGranted) {
+            // Permission granted, use public Downloads directory
+            const publicDownloadsPath = '/storage/emulated/0/Download';
+            final publicDownloadsDir = Directory(publicDownloadsPath);
+
+            try {
+              if (await publicDownloadsDir.exists()) {
+                Logger.root.info('Using public Downloads directory: $publicDownloadsPath');
+                return '$publicDownloadsPath/$fileName';
+              }
+            } catch (e) {
+              Logger.root.warning('Cannot access public Downloads: $e');
+            }
+          } else {
+            Logger.root.warning('WRITE_EXTERNAL_STORAGE permission not granted, using app-specific directory');
+          }
+          
+          // Fallback to app-specific documents directory
+          final appDir = await getApplicationDocumentsDirectory();
+          Logger.root.info('Using app-specific directory: ${appDir.path}');
+          return '${appDir.path}/$fileName';
+        }
+      } catch (e) {
+        Logger.root.warning('Error getting downloads path: $e');
+        // Fallback to app documents directory
+        final appDir = await getApplicationDocumentsDirectory();
+        Logger.root.info('Using fallback app-specific directory: ${appDir.path}');
+        return '${appDir.path}/$fileName';
+      }
+    } else {
+      // For non-Android platforms
+      final downloadsDir = await getDownloadsDirectory() ?? await getApplicationDocumentsDirectory();
+      return '${downloadsDir.path}/$fileName';
+    }
+  }
+
   void _updateProgress(
     String exportId, 
     double progress, 
@@ -544,7 +636,7 @@ class HiveExportService implements ExportService {
   ) async {
     switch (options.format) {
       case ExportFormat.pdf:
-        return await _generateEnhancedPdfReport(
+        return await _generatePdfReport(
           exportId,
           title,
           data,
@@ -552,7 +644,7 @@ class HiveExportService implements ExportService {
           reportType,
         );
       case ExportFormat.csv:
-        return await _generateEnhancedCsvReport(
+        return await _generateCsvReport(
           exportId,
           title,
           data,
@@ -564,23 +656,7 @@ class HiveExportService implements ExportService {
     }
   }
 
-  Future<ExportResult> _generateReport(
-    String exportId,
-    String title,
-    Map<String, dynamic> data,
-    ExportOptions options,
-  ) async {
-    switch (options.format) {
-      case ExportFormat.pdf:
-        return await _generatePdfReport(exportId, title, data, options);
-      case ExportFormat.csv:
-        return await _generateCsvReport(exportId, title, data, options);
-      case ExportFormat.excel:
-        throw UnimplementedError('Excel export not yet implemented');
-    }
-  }
-
-  Future<ExportResult> _generateEnhancedPdfReport(
+  Future<ExportResult> _generatePdfReport(
     String exportId,
     String title,
     Map<String, dynamic> data,
@@ -590,7 +666,7 @@ class HiveExportService implements ExportService {
     _updateProgress(
       exportId,
       0.5,
-      'Creating enhanced PDF document with charts...',
+      'Creating PDF document with charts...',
     );
 
     late Uint8List pdfBytes;
@@ -630,20 +706,19 @@ class HiveExportService implements ExportService {
         break;
     }
 
-    _updateProgress(exportId, 0.8, 'Saving enhanced PDF file...');
+    _updateProgress(exportId, 0.8, 'Saving PDF file...');
 
-    // Save to file
-    final directory = await getApplicationDocumentsDirectory();
-    final fileName =
-        '${title.replaceAll(' ', '_').toLowerCase()}_${DateTime.now().millisecondsSinceEpoch}.pdf';
-    final filePath = '${directory.path}/$fileName';
+    String filePath;
+    final fileName = '${title.replaceAll(' ', '_').toLowerCase()}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+    filePath = await _getDownloadsPath(fileName);
+
+    // Create and write the file
     final file = File(filePath);
-
     await file.writeAsBytes(pdfBytes);
 
     return ExportResult(
       id: exportId,
-      fileName: fileName,
+      fileName: filePath.split('/').last,
       filePath: filePath,
       format: ExportFormat.pdf,
       fileSize: pdfBytes.length,
@@ -652,14 +727,14 @@ class HiveExportService implements ExportService {
     );
   }
 
-  Future<ExportResult> _generateEnhancedCsvReport(
+  Future<ExportResult> _generateCsvReport(
     String exportId,
     String title,
     Map<String, dynamic> data,
     ExportOptions options,
     ReportType reportType,
   ) async {
-    _updateProgress(exportId, 0.5, 'Creating enhanced CSV file...');
+    _updateProgress(exportId, 0.5, 'Creating CSV file...');
 
     final csvContent = StringBuffer();
 
@@ -689,122 +764,21 @@ class HiveExportService implements ExportService {
         break;
     }
 
-    _updateProgress(exportId, 0.8, 'Saving enhanced CSV file...');
-
-    // Save to file
-    final directory = await getApplicationDocumentsDirectory();
-    final fileName =
-        '${title.replaceAll(' ', '_').toLowerCase()}_${DateTime.now().millisecondsSinceEpoch}.csv';
-    final filePath = '${directory.path}/$fileName';
-    final file = File(filePath);
-
-    await file.writeAsString(csvContent.toString());
-
-    final fileSize = await file.length();
-
-    return ExportResult(
-      id: exportId,
-      fileName: fileName,
-      filePath: filePath,
-      format: ExportFormat.csv,
-      fileSize: fileSize,
-      createdAt: DateTime.now(),
-      success: true,
-    );
-  }
-
-  Future<ExportResult> _generatePdfReport(
-    String exportId,
-    String title,
-    Map<String, dynamic> data,
-    ExportOptions options,
-  ) async {
-    _updateProgress(exportId, 0.5, 'Creating PDF document...');
-
-    late Uint8List pdfBytes;
-
-    // Determine report type and generate appropriate PDF
-    if (title.contains('Student Report')) {
-      final studentData = _mapToStudentReportData(data);
-      pdfBytes = await _pdfGenerator.generateStudentReport(studentData);
-    } else if (title.contains('Staff Report')) {
-      final staffData = _mapToStaffReportData(data);
-      pdfBytes = await _pdfGenerator.generateStaffReport(staffData);
-    } else if (title.contains('Analytics Report')) {
-      final analyticsData = _mapToAnalyticsReportData(data);
-      pdfBytes = await _pdfGenerator.generateAnalyticsReport(analyticsData);
-    } else if (title.contains('Bulk')) {
-      final bulkData = _mapToBulkRequestsReportData(data);
-      pdfBytes = await _pdfGenerator.generateBulkRequestsReport(bulkData);
-    } else {
-      // Fallback to generic PDF generation
-      pdfBytes = await _generateGenericPdf(title, data, options);
-    }
-
-    _updateProgress(exportId, 0.8, 'Saving PDF file...');
-
-    // Save to file
-    final directory = await getApplicationDocumentsDirectory();
-    final fileName =
-        '${title.replaceAll(' ', '_').toLowerCase()}_${DateTime.now().millisecondsSinceEpoch}.pdf';
-    final filePath = '${directory.path}/$fileName';
-    final file = File(filePath);
-
-    await file.writeAsBytes(pdfBytes);
-
-    return ExportResult(
-      id: exportId,
-      fileName: fileName,
-      filePath: filePath,
-      format: ExportFormat.pdf,
-      fileSize: pdfBytes.length,
-      createdAt: DateTime.now(),
-      success: true,
-    );
-  }
-
-  Future<ExportResult> _generateCsvReport(
-    String exportId,
-    String title,
-    Map<String, dynamic> data,
-    ExportOptions options,
-  ) async {
-    _updateProgress(exportId, 0.5, 'Creating CSV file...');
-
-    final csvContent = StringBuffer();
-
-    // Add metadata if requested
-    if (options.includeMetadata) {
-      csvContent.writeln('# $title');
-      csvContent.writeln('# Generated on: ${DateTime.now()}');
-      csvContent.writeln('');
-    }
-
-    // Add headers
-    csvContent.writeln('Field,Value');
-
-    // Add data
-    for (final entry in data.entries) {
-      final value = entry.value.toString().replaceAll(',', ';');
-      csvContent.writeln('${entry.key},$value');
-    }
-
     _updateProgress(exportId, 0.8, 'Saving CSV file...');
 
-    // Save to file
-    final directory = await getApplicationDocumentsDirectory();
-    final fileName =
-        '${title.replaceAll(' ', '_').toLowerCase()}_${DateTime.now().millisecondsSinceEpoch}.csv';
-    final filePath = '${directory.path}/$fileName';
-    final file = File(filePath);
+    String filePath;
+    final fileName = '${title.replaceAll(' ', '_').toLowerCase()}_${DateTime.now().millisecondsSinceEpoch}.csv';
+    filePath = await _getDownloadsPath(fileName);
 
+    // Create and write the file
+    final file = File(filePath);
     await file.writeAsString(csvContent.toString());
 
     final fileSize = await file.length();
 
     return ExportResult(
       id: exportId,
-      fileName: fileName,
+      fileName: filePath.split('/').last,
       filePath: filePath,
       format: ExportFormat.csv,
       fileSize: fileSize,
@@ -814,13 +788,23 @@ class HiveExportService implements ExportService {
   }
 
   Future<void> _loadExportHistory() async {
-    // In a real implementation, this would load from Hive storage
-    // For now, we'll keep it in memory
+    try {
+      final history = await _storageManager.getExportHistory();
+      _exportHistory.clear();
+      _exportHistory.addAll(history);
+    } catch (e) {
+      // If there's an error loading, start with empty history
+      _exportHistory.clear();
+    }
   }
 
   Future<void> _saveExportHistory() async {
-    // In a real implementation, this would save to Hive storage
-    // For now, we'll keep it in memory
+    try {
+      await _storageManager.storeExportHistory(_exportHistory);
+    } catch (e) {
+      // Log error but don't crash the app
+      Logger.root.warning('Error saving export history: $e');
+    }
   }
 
   /// Get filtered export history
@@ -1080,77 +1064,6 @@ class HiveExportService implements ExportService {
       exportedBy: (data['exportedBy'] as String?) ?? 'System',
       filterDescription: data['filterDescription'] as String?,
     );
-  }
-
-  Future<Uint8List> _generateGenericPdf(
-    String title,
-    Map<String, dynamic> data,
-    ExportOptions options,
-  ) async {
-    final pdf = pw.Document();
-
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(40),
-        build: (pw.Context context) {
-          return [
-            // Title
-            pw.Header(
-              level: 0,
-              child: pw.Text(
-                title,
-                style: pw.TextStyle(
-                  fontSize: 24,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-            ),
-
-            pw.SizedBox(height: 20),
-
-            // Metadata
-            if (options.includeMetadata) ...[
-              pw.Text(
-                'Generated on: ${DateTime.now().toString()}',
-                style: const pw.TextStyle(fontSize: 12),
-              ),
-              pw.SizedBox(height: 10),
-            ],
-
-            // Data content
-            pw.Text(
-              'Report Data:',
-              style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
-            ),
-
-            pw.SizedBox(height: 10),
-
-            // Convert data to readable format
-            ...data.entries.map(
-              (entry) => pw.Padding(
-                padding: const pw.EdgeInsets.symmetric(vertical: 2),
-                child: pw.Row(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.SizedBox(
-                      width: 150,
-                      child: pw.Text(
-                        '${entry.key}:',
-                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                      ),
-                    ),
-                    pw.Expanded(child: pw.Text(entry.value.toString())),
-                  ],
-                ),
-              ),
-            ),
-          ];
-        },
-      ),
-    );
-
-    return pdf.save();
   }
 
   // Enhanced helper methods for filtering and analytics

@@ -19,6 +19,7 @@ class ExportState {
   final List<ExportResult> filteredHistory;
   final ExportHistoryFilter currentFilter;
   final ExportStatistics? statistics;
+  final ExportOptions? globalExportOptions;
   final bool isLoading;
   final bool isLoadingHistory;
   final bool isLoadingStatistics;
@@ -30,6 +31,7 @@ class ExportState {
     this.filteredHistory = const [],
     this.currentFilter = const ExportHistoryFilter(),
     this.statistics,
+    this.globalExportOptions,
     this.isLoading = false,
     this.isLoadingHistory = false,
     this.isLoadingStatistics = false,
@@ -42,6 +44,7 @@ class ExportState {
     List<ExportResult>? filteredHistory,
     ExportHistoryFilter? currentFilter,
     ExportStatistics? statistics,
+    ExportOptions? globalExportOptions,
     bool? isLoading,
     bool? isLoadingHistory,
     bool? isLoadingStatistics,
@@ -53,6 +56,7 @@ class ExportState {
       filteredHistory: filteredHistory ?? this.filteredHistory,
       currentFilter: currentFilter ?? this.currentFilter,
       statistics: statistics ?? this.statistics,
+      globalExportOptions: globalExportOptions ?? this.globalExportOptions,
       isLoading: isLoading ?? this.isLoading,
       isLoadingHistory: isLoadingHistory ?? this.isLoadingHistory,
       isLoadingStatistics: isLoadingStatistics ?? this.isLoadingStatistics,
@@ -103,7 +107,10 @@ class ExportNotifier extends StateNotifier<ExportState> {
   Future<void> _loadExportHistory() async {
     try {
       final history = await _exportService.getExportHistory();
-      state = state.copyWith(exportHistory: history);
+      state = state.copyWith(
+        exportHistory: history,
+        filteredHistory: history, // Also update filtered history
+      );
     } catch (e) {
       state = state.copyWith(error: 'Failed to load export history: $e');
     }
@@ -113,26 +120,29 @@ class ExportNotifier extends StateNotifier<ExportState> {
   Future<ExportResult> exportStudentReport(
     String studentId,
     DateRange dateRange,
-    ExportOptions options,
+    ExportOptions? options,
   ) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
+    // Use provided options or fall back to global options or default
+    final exportOptions = options ?? state.globalExportOptions ?? const ExportOptions(format: ExportFormat.pdf);
+
     try {
       final result = await _exportService.exportStudentReport(
         studentId,
         dateRange,
-        options,
+        exportOptions,
       );
-      
+
       // Update export history
       final updatedHistory = List<ExportResult>.from(state.exportHistory);
       updatedHistory.insert(0, result);
-      
+
       state = state.copyWith(
         exportHistory: updatedHistory,
         isLoading: false,
       );
-      
+
       return result;
     } catch (e) {
       state = state.copyWith(
@@ -147,26 +157,29 @@ class ExportNotifier extends StateNotifier<ExportState> {
   Future<ExportResult> exportStaffReport(
     String staffId,
     DateRange dateRange,
-    ExportOptions options,
+    ExportOptions? options,
   ) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
+    // Use provided options or fall back to global options or default
+    final exportOptions = options ?? state.globalExportOptions ?? const ExportOptions(format: ExportFormat.pdf);
+
     try {
       final result = await _exportService.exportStaffReport(
         staffId,
         dateRange,
-        options,
+        exportOptions,
       );
-      
+
       // Update export history
       final updatedHistory = List<ExportResult>.from(state.exportHistory);
       updatedHistory.insert(0, result);
-      
+
       state = state.copyWith(
         exportHistory: updatedHistory,
         isLoading: false,
       );
-      
+
       return result;
     } catch (e) {
       state = state.copyWith(
@@ -180,22 +193,25 @@ class ExportNotifier extends StateNotifier<ExportState> {
   /// Export analytics report with charts
   Future<ExportResult> exportAnalyticsReport(
     AnalyticsData data,
-    ExportOptions options,
+    ExportOptions? options,
   ) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
+    // Use provided options or fall back to global options or default
+    final exportOptions = options ?? state.globalExportOptions ?? const ExportOptions(format: ExportFormat.pdf);
+
     try {
-      final result = await _exportService.exportAnalyticsReport(data, options);
-      
+      final result = await _exportService.exportAnalyticsReport(data, exportOptions);
+
       // Update export history
       final updatedHistory = List<ExportResult>.from(state.exportHistory);
       updatedHistory.insert(0, result);
-      
+
       state = state.copyWith(
         exportHistory: updatedHistory,
         isLoading: false,
       );
-      
+
       return result;
     } catch (e) {
       state = state.copyWith(
@@ -209,22 +225,25 @@ class ExportNotifier extends StateNotifier<ExportState> {
   /// Export bulk OD requests
   Future<ExportResult> exportBulkRequests(
     List<ODRequest> requests,
-    ExportOptions options,
+    ExportOptions? options,
   ) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
+    // Use provided options or fall back to global options or default
+    final exportOptions = options ?? state.globalExportOptions ?? const ExportOptions(format: ExportFormat.pdf);
+
     try {
-      final result = await _exportService.exportBulkRequests(requests, options);
-      
+      final result = await _exportService.exportBulkRequests(requests, exportOptions);
+
       // Update export history
       final updatedHistory = List<ExportResult>.from(state.exportHistory);
       updatedHistory.insert(0, result);
-      
+
       state = state.copyWith(
         exportHistory: updatedHistory,
         isLoading: false,
       );
-      
+
       return result;
     } catch (e) {
       state = state.copyWith(
@@ -413,6 +432,16 @@ class ExportNotifier extends StateNotifier<ExportState> {
     }
     return null;
   }
+
+  /// Set global export options
+  void setGlobalExportOptions(ExportOptions options) {
+    state = state.copyWith(globalExportOptions: options);
+  }
+
+  /// Get global export options
+  ExportOptions? getGlobalExportOptions() {
+    return state.globalExportOptions;
+  }
 }
 
 /// Provider for the export notifier
@@ -460,7 +489,13 @@ final exportProgressProvider = Provider.family<ExportProgress?, String>((ref, ex
 
 /// Provider for filtered export history
 final filteredExportHistoryProvider = Provider<List<ExportResult>>((ref) {
-  return ref.watch(exportProvider).filteredHistory;
+  final state = ref.watch(exportProvider);
+  // If no filter is applied, show all history
+  if (!state.currentFilter.hasFilters) {
+    return state.exportHistory;
+  }
+  // Otherwise return the filtered history
+  return state.filteredHistory;
 });
 
 /// Provider for current export filter

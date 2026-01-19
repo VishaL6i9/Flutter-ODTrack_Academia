@@ -293,7 +293,9 @@ class _ExportScreenState extends ConsumerState<ExportScreen>
         endDate: DateTime.now(),
       );
 
-      const options = ExportOptions(
+      // Use global options if available, otherwise use defaults
+      final globalOptions = ref.read(exportProvider).globalExportOptions;
+      final options = globalOptions ?? const ExportOptions(
         format: ExportFormat.pdf,
         includeCharts: true,
         includeMetadata: true,
@@ -333,7 +335,9 @@ class _ExportScreenState extends ConsumerState<ExportScreen>
         endDate: DateTime.now(),
       );
 
-      const options = ExportOptions(
+      // Use global options if available, otherwise use defaults
+      final globalOptions = ref.read(exportProvider).globalExportOptions;
+      final options = globalOptions ?? const ExportOptions(
         format: ExportFormat.pdf,
         includeCharts: true,
         includeMetadata: true,
@@ -419,7 +423,9 @@ class _ExportScreenState extends ConsumerState<ExportScreen>
         ],
       );
 
-      const options = ExportOptions(
+      // Use global options if available, otherwise use defaults
+      final globalOptions = ref.read(exportProvider).globalExportOptions;
+      final options = globalOptions ?? const ExportOptions(
         format: ExportFormat.pdf,
         includeCharts: true,
         includeMetadata: true,
@@ -462,10 +468,10 @@ class _ExportScreenState extends ConsumerState<ExportScreen>
           registerNumber: 'REG${(index + 1).toString().padLeft(3, '0')}',
           date: DateTime.now().subtract(Duration(days: index)),
           periods: [1, 2, 3],
-          reason: index % 3 == 0 ? 'Medical appointment' : 
+          reason: index % 3 == 0 ? 'Medical appointment' :
                   index % 3 == 1 ? 'Family function' : 'Personal work',
-          status: index % 4 == 0 ? 'pending' : 
-                  index % 4 == 1 ? 'approved' : 
+          status: index % 4 == 0 ? 'pending' :
+                  index % 4 == 1 ? 'approved' :
                   index % 4 == 2 ? 'rejected' : 'approved',
           createdAt: DateTime.now().subtract(Duration(days: index, hours: 2)),
           staffId: 'demo_staff_456',
@@ -475,7 +481,9 @@ class _ExportScreenState extends ConsumerState<ExportScreen>
         );
       });
 
-      const options = ExportOptions(
+      // Use global options if available, otherwise use defaults
+      final globalOptions = ref.read(exportProvider).globalExportOptions;
+      final options = globalOptions ?? const ExportOptions(
         format: ExportFormat.pdf,
         includeCharts: false,
         includeMetadata: true,
@@ -599,35 +607,140 @@ class _ExportScreenState extends ConsumerState<ExportScreen>
   }
 
   void _showExportOptionsDialog() {
+    final currentOptions = ref.read(exportProvider).globalExportOptions;
+
+    // Use a StatefulBuilder to allow state updates within the dialog
     showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Export Options'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Available export formats:'),
-            SizedBox(height: 8),
-            Text('• PDF - Full featured reports with charts'),
-            Text('• CSV - Data export for spreadsheets'),
-            SizedBox(height: 16),
-            Text('Features:'),
-            SizedBox(height: 8),
-            Text('• Progress tracking with cancellation'),
-            Text('• Native sharing integration'),
-            Text('• Export history management'),
-            Text('• Automatic cleanup of old files'),
-            Text('• Advanced filtering and search'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
+      builder: (context) {
+        // Get current global export options from provider or use defaults
+        var selectedFormat = currentOptions?.format ?? ExportFormat.pdf;
+        var includeCharts = currentOptions?.includeCharts ?? true;
+        var includeMetadata = currentOptions?.includeMetadata ?? true;
+        var customTitle = currentOptions?.customTitle ?? '';
+
+        // Create a text controller with the initial value
+        final titleController = TextEditingController(text: customTitle);
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Configure Export Options'),
+              content: SizedBox(
+                width: 400,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Export Format',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButton<ExportFormat>(
+                      value: selectedFormat,
+                      isExpanded: true,
+                      items: ExportFormat.values.map((format) {
+                        return DropdownMenuItem(
+                          value: format,
+                          child: Text(format.name.toUpperCase()),
+                        );
+                      }).toList(),
+                      onChanged: (ExportFormat? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            selectedFormat = newValue;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    Text(
+                      'Export Options',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    CheckboxListTile(
+                      title: const Text('Include Charts'),
+                      value: includeCharts,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          includeCharts = value ?? false;
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                    ),
+                    CheckboxListTile(
+                      title: const Text('Include Metadata'),
+                      value: includeMetadata,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          includeMetadata = value ?? false;
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Custom Title',
+                        hintText: 'Enter custom title for exports',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          customTitle = value;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    // Update customTitle with the current controller value
+                    customTitle = titleController.text;
+
+                    // Store these options globally or apply them to future exports
+                    final options = ExportOptions(
+                      format: selectedFormat,
+                      includeCharts: includeCharts,
+                      includeMetadata: includeMetadata,
+                      customTitle: customTitle.isNotEmpty ? customTitle : null,
+                    );
+
+                    // Store these options in the provider for future use
+                    ref.read(exportProvider.notifier).setGlobalExportOptions(options);
+
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Export options saved: ${selectedFormat.name.toUpperCase()}'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }
