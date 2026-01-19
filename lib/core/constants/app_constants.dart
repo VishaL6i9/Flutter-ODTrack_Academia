@@ -37,4 +37,5 @@ class AppConstants {
   static const String staffInboxRoute = '/staff-inbox';
   static const String staffAnalyticsRoute = '/staff-analytics';
   static const String exportRoute = '/export';
+  static const String permissionsRoute = '/settings/permissions';
 }

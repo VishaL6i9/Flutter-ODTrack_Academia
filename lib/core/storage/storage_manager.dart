@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:odtrack_academia/models/sync_models.dart';
+import 'package:odtrack_academia/models/export_models.dart';
 
 /// Enhanced storage manager with intelligent cache management and sync queue
 class EnhancedStorageManager {
@@ -9,6 +10,7 @@ class EnhancedStorageManager {
   static const String _cacheMetadataBox = 'cache_metadata_box';
   static const String _conflictResolutionBox = 'conflict_resolution_box';
   static const String _cacheDataBox = 'cache_data_box';
+  static const String _exportHistoryBox = 'export_history_box';
   
   // Cache configuration
   static const int _maxCacheSize = 50 * 1024 * 1024; // 50MB
@@ -27,7 +29,7 @@ class EnhancedStorageManager {
   /// Open all required Hive boxes
   Future<void> _openBoxes() async {
     final futures = <Future<void>>[];
-    
+
     // Open all required boxes
     if (!Hive.isBoxOpen(_syncQueueBox)) {
       futures.add(Hive.openLazyBox<SyncQueueItem>(_syncQueueBox));
@@ -41,7 +43,10 @@ class EnhancedStorageManager {
     if (!Hive.isBoxOpen(_cacheDataBox)) {
       futures.add(Hive.openBox<String>(_cacheDataBox));
     }
-    
+    if (!Hive.isBoxOpen(_exportHistoryBox)) {
+      futures.add(Hive.openBox<String>(_exportHistoryBox));
+    }
+
     if (futures.isNotEmpty) {
       await Future.wait(futures);
     }
@@ -361,30 +366,79 @@ class EnhancedStorageManager {
     };
   }
   
+  /// Store export history
+  Future<void> storeExportHistory(List<ExportResult> history) async {
+    final exportHistoryBox = Hive.isBoxOpen(_exportHistoryBox)
+        ? Hive.box<String>(_exportHistoryBox)
+        : await Hive.openBox<String>(_exportHistoryBox);
+
+    // Convert the list of ExportResult objects to JSON
+    final historyJson = history.map((result) => result.toJson()).toList();
+    final jsonString = jsonEncode(historyJson);
+
+    await exportHistoryBox.put('export_history', jsonString);
+  }
+
+  /// Retrieve export history
+  Future<List<ExportResult>> getExportHistory() async {
+    final exportHistoryBox = Hive.isBoxOpen(_exportHistoryBox)
+        ? Hive.box<String>(_exportHistoryBox)
+        : await Hive.openBox<String>(_exportHistoryBox);
+
+    final jsonString = exportHistoryBox.get('export_history');
+    if (jsonString == null) {
+      return [];
+    }
+
+    try {
+      final historyJson = jsonDecode(jsonString) as List<dynamic>;
+      return historyJson
+          .map((json) => ExportResult.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      // If there's an error decoding, return empty list
+      return [];
+    }
+  }
+
+  /// Clear export history
+  Future<void> clearExportHistory() async {
+    final exportHistoryBox = Hive.isBoxOpen(_exportHistoryBox)
+        ? Hive.box<String>(_exportHistoryBox)
+        : await Hive.openBox<String>(_exportHistoryBox);
+
+    await exportHistoryBox.delete('export_history');
+  }
+
   /// Optimize storage by compacting boxes
   Future<void> optimizeStorage() async {
     // Use existing boxes if open, otherwise open them
-    final syncQueueBox = Hive.isBoxOpen(_syncQueueBox) 
+    final syncQueueBox = Hive.isBoxOpen(_syncQueueBox)
         ? Hive.lazyBox<SyncQueueItem>(_syncQueueBox)
         : await Hive.openLazyBox<SyncQueueItem>(_syncQueueBox);
-    
-    final cacheMetadataBox = Hive.isBoxOpen(_cacheMetadataBox) 
+
+    final cacheMetadataBox = Hive.isBoxOpen(_cacheMetadataBox)
         ? Hive.box<CacheMetadata>(_cacheMetadataBox)
         : await Hive.openBox<CacheMetadata>(_cacheMetadataBox);
-    
-    final conflictResolutionBox = Hive.isBoxOpen(_conflictResolutionBox) 
+
+    final conflictResolutionBox = Hive.isBoxOpen(_conflictResolutionBox)
         ? Hive.box<SyncConflict>(_conflictResolutionBox)
         : await Hive.openBox<SyncConflict>(_conflictResolutionBox);
-    
-    final cacheDataBox = Hive.isBoxOpen(_cacheDataBox) 
+
+    final cacheDataBox = Hive.isBoxOpen(_cacheDataBox)
         ? Hive.box<String>(_cacheDataBox)
         : await Hive.openBox<String>(_cacheDataBox);
+
+    final exportHistoryBox = Hive.isBoxOpen(_exportHistoryBox)
+        ? Hive.box<String>(_exportHistoryBox)
+        : await Hive.openBox<String>(_exportHistoryBox);
 
     await Future.wait([
       syncQueueBox.compact(),
       cacheMetadataBox.compact(),
       conflictResolutionBox.compact(),
       cacheDataBox.compact(),
+      exportHistoryBox.compact(),
     ]);
   }
 }

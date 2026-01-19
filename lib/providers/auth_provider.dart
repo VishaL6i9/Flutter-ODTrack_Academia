@@ -1,10 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
+import 'package:logging/logging.dart';
 import 'package:odtrack_academia/core/constants/app_constants.dart';
 import 'package:odtrack_academia/features/staff_directory/data/staff_data.dart';
 import 'package:odtrack_academia/models/user.dart';
 import 'package:odtrack_academia/providers/staff_analytics_provider.dart';
 import 'package:odtrack_academia/services/analytics/staff_analytics_service.dart';
+
+final _logger = Logger('AuthProvider');
 
 class AuthState {
   final User? user;
@@ -34,6 +37,7 @@ class AuthState {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier(this._staffAnalyticsService) : super(const AuthState()) {
+    _logger.info('AuthNotifier initialized');
     // _loadUserFromStorage();
   }
 
@@ -58,6 +62,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
+      _logger.info('Student login started for: $registerNumber');
       // Demo login - simulate API call
       await Future<void>.delayed(const Duration(seconds: 1));
 
@@ -78,8 +83,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // Save to storage - store the user object directly
       await _userBox.put(user.id, user);
 
+      _logger.info('Student login successful, user set');
       state = state.copyWith(user: user, isLoading: false);
     } catch (e) {
+      _logger.severe('Student login failed: $e');
       state = state.copyWith(
         isLoading: false,
         error: 'Login failed: ${e.toString()}',
