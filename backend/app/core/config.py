@@ -7,8 +7,8 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     # Database
-    # Defaulting to SQLite for ease of setup, but compatible with PostgreSQL
-    DATABASE_URL: str = "sqlite+aiosqlite:///./odtrack.db"
+    # Defaulting to PostgreSQL
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:password@localhost/odtrack_academia_fastapi"
     
     # Security
     SECRET_KEY: str = "YOUR_SECRET_KEY_HERE_CHANGE_IN_PRODUCTION"
