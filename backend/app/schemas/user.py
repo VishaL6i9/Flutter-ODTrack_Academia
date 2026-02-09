@@ -1,11 +1,13 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
+from app.core.enums import UserRole
+
 # Shared properties
 class UserBase(BaseModel):
     email: EmailStr
     full_name: str | None = None
-    role: str = "student"
+    role: UserRole = UserRole.STUDENT
     is_active: bool = True
 
 # Properties to receive via API on creation

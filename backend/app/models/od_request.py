@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
+from app.core.enums import ODStatus
 
 class ODRequest(Base):
     __tablename__ = "od_requests"
@@ -21,7 +22,7 @@ class ODRequest(Base):
     attachment_url = Column(String, nullable=True)
     
     # Status & Approval
-    status = Column(String, default="pending", index=True) # pending, approved, rejected
+    status = Column(String, default=ODStatus.PENDING, index=True) # pending, approved, rejected
     
     approved_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     approved_by = relationship("User", foreign_keys=[approved_by_id])

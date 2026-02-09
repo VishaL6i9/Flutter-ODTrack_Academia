@@ -5,6 +5,7 @@ from app.api import deps
 from app.models.user import User
 from app.schemas.od_request import ODRequest, ODRequestCreate, ODRequestUpdate
 from app.services.od_service import od_service
+from app.core.enums import UserRole
 
 router = APIRouter()
 
@@ -18,7 +19,7 @@ async def create_od_request(
     """
     Create new OD Request (Student only).
     """
-    if current_user.role != "student":
+    if current_user.role != UserRole.STUDENT:
         raise HTTPException(status_code=403, detail="Only students can create OD requests")
     
     od_request = await od_service.create(db=db, obj_in=od_in, student_id=current_user.id)
@@ -49,7 +50,7 @@ async def read_pending_od_requests(
     """
     Get all pending OD requests (Staff/Admin only).
     """
-    if current_user.role not in ["staff", "admin", "superuser"]:
+    if current_user.role not in [UserRole.STAFF, UserRole.ADMIN, UserRole.SUPERUSER]:
         raise HTTPException(status_code=403, detail="Not authorized to view pending requests")
         
     od_requests = await od_service.get_all_pending(db=db, skip=skip, limit=limit)
@@ -66,7 +67,7 @@ async def update_od_status(
     """
     Update OD Request status (Approve/Reject) - Staff/Admin only.
     """
-    if current_user.role not in ["staff", "admin", "superuser"]:
+    if current_user.role not in [UserRole.STAFF, UserRole.ADMIN, UserRole.SUPERUSER]:
          raise HTTPException(status_code=403, detail="Not authorized to approve requests")
     
     od_request = await od_service.get(db=db, id=request_id)

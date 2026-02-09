@@ -5,6 +5,7 @@ from app.models.od_request import ODRequest
 from app.models.user import User
 from app.schemas.od_request import ODRequestCreate, ODRequestUpdate
 from datetime import datetime, timezone
+from app.core.enums import ODStatus
 
 class ODService:
     async def get(self, db: AsyncSession, id: int) -> ODRequest | None:
@@ -18,6 +19,7 @@ class ODService:
     async def get_multi_by_student(self, db: AsyncSession, student_id: int, skip: int = 0, limit: int = 100) -> list[ODRequest]:
         result = await db.execute(
             select(ODRequest)
+            .options(selectinload(ODRequest.student), selectinload(ODRequest.approved_by))
             .where(ODRequest.student_id == student_id)
             .offset(skip)
             .limit(limit)
@@ -29,19 +31,8 @@ class ODService:
         # For staff/admin to review
         result = await db.execute(
             select(ODRequest)
-            .options(selectinload(ODRequest.student))
-            .where(ODRequest.status == "pending")
-            .offset(skip)
-            .limit(limit)
-            .order_by(ODRequest.created_at.desc())
-        )
-        return result.scalars().all()
-
-    async def get_all(self, db: AsyncSession, skip: int = 0, limit: int = 100) -> list[ODRequest]:
-        # For analytics/reports
-        result = await db.execute(
-            select(ODRequest)
-            .options(selectinload(ODRequest.student))
+            .options(selectinload(ODRequest.student), selectinload(ODRequest.approved_by))
+            .where(ODRequest.status == ODStatus.PENDING)
             .offset(skip)
             .limit(limit)
             .order_by(ODRequest.created_at.desc())
@@ -52,7 +43,7 @@ class ODService:
         db_obj = ODRequest(
             **obj_in.model_dump(),
             student_id=student_id,
-            status="pending"
+            status=ODStatus.PENDING
         )
         db.add(db_obj)
         await db.commit()
@@ -63,7 +54,8 @@ class ODService:
         self, db: AsyncSession, db_obj: ODRequest, obj_in: ODRequestUpdate, approver_id: int
     ) -> ODRequest:
         update_data = obj_in.model_dump(exclude_unset=True)
-        if update_data.get("status") in ["approved", "rejected"]:
+        # Assuming status is passed as Enum in update_data
+        if update_data.get("status") in [ODStatus.APPROVED, ODStatus.REJECTED]:
             db_obj.approved_by_id = approver_id
             db_obj.approved_at = datetime.now(timezone.utc)
         
@@ -74,5 +66,16 @@ class ODService:
         await db.commit()
         await db.refresh(db_obj)
         return db_obj
+
+    async def get_all(self, db: AsyncSession, skip: int = 0, limit: int = 100) -> list[ODRequest]:
+        # For analytics/reports
+        result = await db.execute(
+            select(ODRequest)
+            .options(selectinload(ODRequest.student), selectinload(ODRequest.approved_by))
+            .offset(skip)
+            .limit(limit)
+            .order_by(ODRequest.created_at.desc())
+        )
+        return result.scalars().all()
 
 od_service = ODService()

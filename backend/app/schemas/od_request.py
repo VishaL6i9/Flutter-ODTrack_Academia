@@ -14,14 +14,16 @@ class ODRequestBase(BaseModel):
 class ODRequestCreate(ODRequestBase):
     pass
 
+from app.core.enums import ODStatus
+
 class ODRequestUpdate(BaseModel):
-    status: Optional[str] = None
+    status: Optional[ODStatus] = None
     rejection_reason: Optional[str] = None
 
 class ODRequestInDBBase(ODRequestBase):
     id: int
     student_id: int
-    status: str
+    status: ODStatus
     created_at: datetime
     updated_at: Optional[datetime] = None
     approved_at: Optional[datetime] = None

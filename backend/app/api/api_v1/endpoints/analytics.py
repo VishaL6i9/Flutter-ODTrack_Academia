@@ -6,6 +6,7 @@ from app.models.user import User
 from app.services.analytics_service import analytics_service
 from app.services.pdf_service import pdf_service
 from app.services.od_service import od_service
+from app.core.enums import UserRole
 
 router = APIRouter()
 
@@ -17,7 +18,7 @@ async def get_dashboard_stats(
     """
     Get dashboard analytics (Staff/Admin only).
     """
-    if current_user.role not in ["staff", "admin", "superuser"]:
+    if current_user.role not in [UserRole.STAFF, UserRole.ADMIN, UserRole.SUPERUSER]:
         raise HTTPException(status_code=403, detail="Not authorized to view analytics")
         
     stats = await analytics_service.get_stats(db)
@@ -31,7 +32,7 @@ async def generate_od_report_pdf(
     """
     Download OD Summary Report as PDF (Staff/Admin only).
     """
-    if current_user.role not in ["staff", "admin", "superuser"]:
+    if current_user.role not in [UserRole.STAFF, UserRole.ADMIN, UserRole.SUPERUSER]:
         raise HTTPException(status_code=403, detail="Not authorized to download reports")
     
     # Fetch data for report

@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.sql import func
 from app.core.database import Base
+from app.core.enums import UserRole
 
 class User(Base):
     __tablename__ = "users"
@@ -17,4 +18,4 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Role specific fields (can be expanded later or normalized)
-    role = Column(String, default="student") # student, staff, admin
+    role = Column(String, default=UserRole.STUDENT) # student, staff, admin
