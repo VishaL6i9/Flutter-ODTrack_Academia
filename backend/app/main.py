@@ -1,10 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.core.config import get_settings
+from app.api.api_v1.api import api_router
+
+settings = get_settings()
 
 app = FastAPI(
-    title="ODTrack Academia API",
+    title=settings.PROJECT_NAME,
     description="Backend API for ODTrack Academia Mobile App",
-    version="1.0.0",
+    version=settings.VERSION,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
 )
 
 # Configure CORS
@@ -15,6 +20,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 async def root():
