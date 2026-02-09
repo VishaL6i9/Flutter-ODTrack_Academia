@@ -1,94 +1,156 @@
-# ODTrack Academia - Backend API
+# ODTrack Academia Backend
 
-The high-performance, asynchronous REST API powering the ODTrack Academia mobile application. Built with **FastAPI**, **PostgreSQL**, and **Python 3.14**.
+![Python](https://img.shields.io/badge/python-3.14%2B-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.109%2B-009688)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-336791)
+![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)
 
-## Features
+A high-performance, asynchronous REST API service designed to power the [ODTrack Academia](../README.md) mobile application. Built with modern Python functionality, type safety, and scalability in mind.
 
-- 🚀 **FastAPI**: High performance, easy to learn, fast to code, ready for production.
-- 🐘 **PostgreSQL**: Robust relational database with `asyncpg` for high concurrency.
-- 🔐 **JWT Auth**: Secure authentication with role-based access control (Student/Staff/Admin).
-- 📊 **Analytics**: Real-time dashboard statistics using **Pandas**.
-- 📄 **PDF Reporting**: Professional OD summary reports using **ReportLab**.
-- 🧪 **Testing**: End-to-End integration tests with **Pytest**.
+---
 
-## Prerequisites
+## 📋 Table of Contents
 
-- **Python 3.14+**
-- **PostgreSQL 17+**
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Features](#features)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+  - [Database Setup](#database-setup)
+- [Usage](#usage)
+- [Testing](#testing)
+- [Project Structure](#project-structure)
 
-## Quick Start
+## 🔭 Overview
 
-### 1. Environment Setup
+The ODTrack Academia Backend serves as the central source of truth for student On-Duty (OD) requests, staff approvals, and institutional analytics. It leverages **FastAPI** for high-throughput request handling and **PostgreSQL** for robust data integrity.
 
-```bash
-# Navigate to backend directory
-cd backend
+Key design principles:
+*   **Async-First**: Fully asynchronous request processing using `asyncpg` and `AsyncIO`.
+*   **Type Safety**: Comprehensive use of Python type hints and Pydantic models.
+*   **Observability**: Structured logging and request auditing for production readiness.
 
-# Create virtual environment (Windows)
-py -m venv venv
+## 🏗 Architecture
 
-# Activate virtual environment
-venv\Scripts\activate
+The application follows a layered **Service-Repository** pattern to ensure separation of concerns:
 
-# Install dependencies
-pip install -r requirements.txt
+```mermaid
+graph TD
+    Client[Mobile Client] -->|HTTP/JSON| API[FastAPI Router]
+    API -->|Pydantic| Service[Service Layer]
+    Service -->|SQLAlchemy| DB[(PostgreSQL)]
+    Service -.->|Pandas| Analytics[Analytics Engine]
+    Service -.->|ReportLab| PDF[PDF Generator]
 ```
 
-### 2. Database Configuration
+## ✨ Features
 
-1. Ensure PostgreSQL is running.
-2. Create the project database (if manual creation is needed):
-   ```sql
-   CREATE DATABASE odtrack_academia_fastapi;
-   ```
-   *(Or run the provided script)*: `python create_db.py`
+*   **Authentication & Authorization**: OAuth2 with Password Flow, handling JWT issuance and role-based access control (RBAC) for Students, Staff, and Admins.
+*   **OD Request Management**: Complete lifecycle management for On-Duty requests (Creation -> Approval/Rejection -> History).
+*   **Analytics Engine**: High-performance data aggregation using Pandas to generate dashboard metrics and insights.
+*   **Reporting**: Native PDF generation for official OD summary reports.
+*   **Database Migrations**: Version-controlled database schema changes using Alembic.
 
-3. Configure environment:
-   - Copy `.env.example` to `.env`
-   - Update credentials in `.env`:
-     ```ini
-     DATABASE_URL=postgresql+asyncpg://postgres:YOUR_PASSWORD@localhost/odtrack_academia_fastapi
-     ```
+## 🚀 Getting Started
 
-### 3. Database Migrations
+### Prerequisites
 
-Apply the schema to the database:
+*   [Python 3.14+](https://www.python.org/downloads/)
+*   [PostgreSQL 17+](https://www.postgresql.org/download/)
 
-```bash
-alembic upgrade head
-```
+### Installation
 
-### 4. Run Server
+1.  **Navigate to the backend directory:**
+    ```bash
+    cd backend
+    ```
 
-Start the development server with hot reload:
+2.  **Create and activate a virtual environment:**
+    ```bash
+    # Windows
+    py -m venv venv
+    venv\Scripts\activate
+
+    # Linux/macOS
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
+
+3.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+### Configuration
+
+The application uses **12-Factor App** principles for configuration.
+
+1.  Copy the example configuration file:
+    ```bash
+    copy .env.example .env
+    ```
+
+2.  Edit `.env` and populate the following variables:
+    ```ini
+    DATABASE_URL=postgresql+asyncpg://user:password@localhost/dbname
+    SECRET_KEY=your_secure_generated_key
+    DEBUG=True
+    ```
+
+### Database Setup
+
+1.  **Initialize the Database:**
+    We provide a helper script to safely create the database if it doesn't exist.
+    ```bash
+    python create_db.py
+    ```
+
+2.  **Apply Migrations:**
+    Deploy the schema to the database.
+    ```bash
+    alembic upgrade head
+    ```
+
+## ⚡ Usage
+
+Start the development server with auto-reload enabled:
 
 ```bash
 python -m uvicorn app.main:app --reload
 ```
 
-- **API Root**: [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
-- **Swagger Docs**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- **ReDoc**: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+The API will be available at:
+*   **Root**: [http://127.0.0.1:8000](http://127.0.0.1:8000)
+*   **Swagger UI**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+*   **ReDoc**: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
-## Testing
+## 🧪 Testing
 
-Run the full integration test suite:
+We use **Pytest** for running integration tests. Ensure your test database environment is configured (or use the default local instance).
 
 ```bash
 pytest tests/test_main_flow.py -v
 ```
 
-## Project Structure
+## 📂 Project Structure
 
 ```
 backend/
 ├── app/
-│   ├── api/            # Route handlers (v1)
-│   ├── core/           # Configuration & Security
-│   ├── models/         # SQLAlchemy Models
-│   ├── schemas/        # Pydantic Schemas
-│   └── services/       # Business Logic (OD, Analytics, PDF)
-├── alembic/            # Database Migrations
-├── tests/              # Test Suite
-└── requirements.txt    # Python Dependencies
+│   ├── api/            # Route controllers (v1 endpoints)
+│   ├── core/           # App configuration, security, logging
+│   ├── models/         # SQLAlchemy database models
+│   ├── schemas/        # Pydantic data transfer objects (DTOs)
+│   └── services/       # Business logic layer
+├── alembic/            # Database migration scripts
+├── logs/               # Structured log storage
+├── tests/              # Integration and unit tests
+├── create_db.py        # Database initialization utility
+└── requirements.txt    # Project dependencies
 ```
+
+---
+
+_Maintained by the Office of Academic Affairs. © 2026._
