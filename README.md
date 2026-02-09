@@ -112,6 +112,9 @@ lib/
    flutter run
    ```
 
+5. Setup Backend:
+   refer to [backend/README.md](backend/README.md) for detailed instructions.
+
 ## Build Instructions
 
 ### Android
