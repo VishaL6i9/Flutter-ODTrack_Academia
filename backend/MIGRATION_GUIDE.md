@@ -6,6 +6,11 @@ This guide explains how to manage database changes in the ODTrack Academia backe
 
 When you modify your Python code (models in `app/models/`), the database doesn't automatically know about it. A **migration** is a script that tells the database how to change (e.g., "Add a `phone_number` column to `users` table") to match your code.
 
+### Coming from Spring Boot? 🍃
+- **SQLAlchemy** is like **Hibernate** (the ORM).
+- **Alembic** is like **Flyway** or **Liquibase** (Database migrations).
+- Hibernate sometimes auto-updates tables on startup (`hbm2ddl.auto`). Alembic's `--autogenerate` is similar, but it creates a python script first so you can review it before applying. This is safer for production!
+
 ## 🛠️ Prerequisites
 
 Ensure your virtual environment is activated and you are in the `backend` directory:
