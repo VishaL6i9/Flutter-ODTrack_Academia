@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api import deps
 from app.schemas.user import User, UserCreate
 from app.services.user_service import user_service
+from app.core.logging import logger
 
 router = APIRouter()
 
@@ -19,11 +20,13 @@ async def create_user(
     """
     user = await user_service.get_by_email(db, email=user_in.email)
     if user:
+        logger.warning(f"Registration attempt with existing email: {user_in.email}")
         raise HTTPException(
             status_code=400,
             detail="The user with this email already exists in the system.",
         )
     user = await user_service.create(db, user_in=user_in)
+    logger.info(f"New user registered: {user.email} with role {user.role}")
     return user
 
 @router.get("/me", response_model=User)

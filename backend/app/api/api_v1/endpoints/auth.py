@@ -8,6 +8,7 @@ from app.api import deps
 from app.schemas.token import Token
 from app.services.user_service import user_service
 from app.core.config import get_settings
+from app.core.logging import logger
 
 router = APIRouter()
 settings = get_settings()
@@ -24,10 +25,13 @@ async def login_access_token(
         db, email=form_data.username, password=form_data.password
     )
     if not user:
+        logger.warning(f"Failed login attempt for email: {form_data.username}")
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     elif not user.is_active:
+        logger.warning(f"Inactive user login attempt: {form_data.username}")
         raise HTTPException(status_code=400, detail="Inactive user")
     
+    logger.info(f"User logged in: {user.email}")
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return {
         "access_token": security.create_access_token(
