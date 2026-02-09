@@ -33,10 +33,10 @@ async def get_current_user(
         if sub is None:
             raise credentials_exception
         token_data = TokenPayload(sub=sub)
-    except JWTError:
+    except (JWTError, ValueError):
         raise credentials_exception
     
-    user = await user_service.get_by_email(db, email=token_data.sub)
+    user = await user_service.get(db, id=int(token_data.sub))
     if user is None:
         raise credentials_exception
     return user

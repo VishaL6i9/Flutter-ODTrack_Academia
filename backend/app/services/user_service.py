@@ -9,6 +9,10 @@ class UserService:
         result = await db.execute(select(User).where(User.email == email))
         return result.scalars().first()
 
+    async def get(self, db: AsyncSession, id: int) -> User | None:
+        result = await db.execute(select(User).where(User.id == id))
+        return result.scalars().first()
+
     async def authenticate(self, db: AsyncSession, email: str, password: str) -> User | None:
         user = await self.get_by_email(db, email)
         if not user:
