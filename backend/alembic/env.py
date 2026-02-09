@@ -15,7 +15,8 @@ from alembic import context
 # Import your models here
 from app.core.database import Base
 from app.core.config import get_settings
-from app.models.user import User # Ensure User model is loaded
+from app.models.user import User
+from app.models.od_request import ODRequest # Ensure ODRequest model is loaded
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
