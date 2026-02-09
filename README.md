@@ -34,6 +34,16 @@ ODTrack Academia™ is a production-ready mobile application that provides stude
 - **Accessibility**: Built-in accessibility services, keyboard navigation, screen reader support
 - **File Operations**: file_picker, image_picker, share_plus, open_file
 
+## Backend Stack
+
+- **Framework**: FastAPI (Python 3.14+)
+- **Database**: PostgreSQL 17 (Async via asyncpg)
+- **ORM**: SQLAlchemy (Async) + Alembic (Migrations)
+- **Authentication**: JWT (OAuth2 with Password Flow)
+- **Analytics**: Pandas (Data Processing)
+- **Reporting**: ReportLab (PDF Generation)
+- **Testing**: Pytest + AsyncIO
+
 ## Project Structure
 
 ```
