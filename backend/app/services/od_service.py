@@ -37,6 +37,17 @@ class ODService:
         )
         return result.scalars().all()
 
+    async def get_all(self, db: AsyncSession, skip: int = 0, limit: int = 100) -> list[ODRequest]:
+        # For analytics/reports
+        result = await db.execute(
+            select(ODRequest)
+            .options(selectinload(ODRequest.student))
+            .offset(skip)
+            .limit(limit)
+            .order_by(ODRequest.created_at.desc())
+        )
+        return result.scalars().all()
+
     async def create(self, db: AsyncSession, obj_in: ODRequestCreate, student_id: int) -> ODRequest:
         db_obj = ODRequest(
             **obj_in.model_dump(),
