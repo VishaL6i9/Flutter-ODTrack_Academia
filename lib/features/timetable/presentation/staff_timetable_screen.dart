@@ -82,7 +82,7 @@ class _StaffTimetableScreenState extends ConsumerState<StaffTimetableScreen> {
         scrolledUnderElevation: 2,
       ),
       body: Container(
-        color: theme.colorScheme.surfaceContainerLowest.withOpacity(0.5),
+        color: theme.colorScheme.surfaceContainerLowest.withValues(alpha: 0.5),
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
           children: [
@@ -104,10 +104,10 @@ class _StaffTimetableScreenState extends ConsumerState<StaffTimetableScreen> {
   Widget _buildStaffHeader(ThemeData theme) {
     return Card(
       elevation: 0,
-      color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
+        side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -115,7 +115,7 @@ class _StaffTimetableScreenState extends ConsumerState<StaffTimetableScreen> {
           children: [
             CircleAvatar(
               radius: 30,
-              backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
               child: Icon(MdiIcons.accountTie, size: 30, color: theme.colorScheme.primary),
             ),
             const SizedBox(width: 16),

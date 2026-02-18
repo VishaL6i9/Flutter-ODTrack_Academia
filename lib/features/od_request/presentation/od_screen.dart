@@ -542,7 +542,7 @@ class _EnhancedNewOdScreenState extends ConsumerState<EnhancedNewOdScreen> {
                                   Text(
                                     staff.department, 
                                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
                                     ),
                                   ),
                                   // Contextual flairs for coordinators
@@ -580,7 +580,7 @@ class _EnhancedNewOdScreenState extends ConsumerState<EnhancedNewOdScreen> {
                           trailing: Icon(
                             Icons.chevron_right,
                             size: 18,
-                            color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+                            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
                           ),
                           onTap: () => setState(() {
                             _designatedStaff = staff;

@@ -6,7 +6,7 @@ import 'package:odtrack_academia/models/period_slot.dart';
 class TimetableGrid extends StatelessWidget {
   final Map<String, List<PeriodSlot>> schedule;
   final String searchTerm;
-  final Function(String staffId)? onStaffTap;
+  final void Function(String staffId)? onStaffTap;
   final Map<String, String> subjectCodeMap;
 
   const TimetableGrid({
@@ -39,11 +39,11 @@ class TimetableGrid extends StatelessWidget {
         Expanded(
           child: Card(
             elevation: 0,
-            color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.2),
+            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
             clipBehavior: Clip.antiAlias,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
-              side: BorderSide(color: theme.dividerColor.withOpacity(0.05)),
+              side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.05)),
             ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -58,7 +58,7 @@ class TimetableGrid extends StatelessWidget {
                   columnSpacing: 16,
                   horizontalMargin: 16,
                   headingRowColor: WidgetStateProperty.all(
-                    theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                    theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                   ),
                   columns: [
                     const DataColumn(
@@ -84,7 +84,7 @@ class TimetableGrid extends StatelessWidget {
                               day.substring(0, 3).toUpperCase(),
                               style: TextStyle(
                                 fontWeight: FontWeight.w900,
-                                color: theme.colorScheme.primary.withOpacity(0.8),
+                                color: theme.colorScheme.primary.withValues(alpha: 0.8),
                                 fontSize: 12,
                               ),
                             ),
@@ -161,13 +161,13 @@ class TimetableGrid extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       width: 110,
       decoration: BoxDecoration(
-        color: isActive ? color.withOpacity(0.15) : color.withOpacity(isHighlighted ? 0.25 : 0.05),
+        color: isActive ? color.withValues(alpha: 0.15) : color.withValues(alpha: isHighlighted ? 0.25 : 0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isActive ? color : color.withOpacity(isHighlighted ? 0.8 : 0.2),
+          color: isActive ? color : color.withValues(alpha: isHighlighted ? 0.8 : 0.2),
           width: isActive ? 2 : 1,
         ),
-        boxShadow: isActive ? [BoxShadow(color: color.withOpacity(0.3), blurRadius: 8, spreadRadius: 1)] : [],
+        boxShadow: isActive ? [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 8, spreadRadius: 1)] : [],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -175,7 +175,7 @@ class TimetableGrid extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 14, color: color.withOpacity(0.8)),
+              Icon(icon, size: 14, color: color.withValues(alpha: 0.8)),
               if (isActive) ...[
                 const SizedBox(width: 4),
                 _LiveIndicator(color: color),
@@ -198,7 +198,7 @@ class TimetableGrid extends StatelessWidget {
             Text(
               slot.staffId!,
               style: TextStyle(
-                color: color.withOpacity(0.6),
+                color: color.withValues(alpha: 0.6),
                 fontSize: 9,
                 fontWeight: FontWeight.w600,
               ),

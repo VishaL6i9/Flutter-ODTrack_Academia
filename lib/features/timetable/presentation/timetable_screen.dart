@@ -5,7 +5,6 @@ import 'package:odtrack_academia/features/staff_directory/data/staff_data.dart';
 import 'package:odtrack_academia/features/timetable/data/timetable_data.dart';
 import 'package:odtrack_academia/features/timetable/presentation/staff_timetable_screen.dart';
 import 'package:odtrack_academia/features/timetable/presentation/widgets/timetable_grid.dart';
-import 'package:odtrack_academia/models/period_slot.dart';
 
 class TimetableScreen extends ConsumerStatefulWidget {
   const TimetableScreen({super.key});
@@ -54,7 +53,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
           _buildFilterHeader(theme),
           Expanded(
             child: Container(
-              color: theme.colorScheme.surfaceContainerLowest.withOpacity(0.5),
+              color: theme.colorScheme.surfaceContainerLowest.withValues(alpha: 0.5),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
               child: _buildTimetableDisplay(theme),
             ),
@@ -70,7 +69,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         border: Border(
-          bottom: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
+          bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1)),
         ),
       ),
       child: Column(
@@ -133,7 +132,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
   }) {
     final theme = Theme.of(context);
     return Material(
-      color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       borderRadius: BorderRadius.circular(12),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -141,7 +140,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
+            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -184,7 +183,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
     required ValueChanged<String> onSelected,
   }) {
     final theme = Theme.of(context);
-    final dialogBg = theme.colorScheme.surfaceContainerHighest.withOpacity(0.3);
+    final dialogBg = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3);
 
     showDialog<void>(
       context: context,
@@ -240,14 +239,14 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
         hintText: 'Search by Subject Name or Code...',
         prefixIcon: const Icon(Icons.search),
         filled: true,
-        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+          borderSide: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+          borderSide: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
         ),
         contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
       ),
@@ -285,14 +284,14 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.05),
+                  color: color.withValues(alpha: 0.05),
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                 ),
                 child: Row(
                   children: [
                     CircleAvatar(
                       radius: 30,
-                      backgroundColor: color.withOpacity(0.1),
+                      backgroundColor: color.withValues(alpha: 0.1),
                       child: Text(
                         staffMember.name[0],
                         style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color),
