@@ -36,10 +36,6 @@ subprojects {
     project.layout.buildDirectory.set(customBuildDir.resolve(project.name))
 }
 
-subprojects {
-    project.evaluationDependsOn(":app")
-}
-
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
