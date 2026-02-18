@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from typing import List, Optional
 from app.schemas.user import User
@@ -30,8 +30,7 @@ class ODRequestInDBBase(ODRequestBase):
     approved_by_id: Optional[int] = None
     rejection_reason: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ODRequest(ODRequestInDBBase):
     student: Optional[User] = None
