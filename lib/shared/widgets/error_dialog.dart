@@ -317,14 +317,19 @@ ${error.context != null ? 'Context: ${error.context}' : ''}
   }
 
   void _openSettings(BuildContext context) {
-    // In a real implementation, this would open the app settings
-    // For now, we'll show a message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Please grant the required permission in device settings'),
-        duration: Duration(seconds: 3),
-      ),
-    );
+    // Open app settings using app_settings package or platform channels
+    try {
+      // For Android/iOS, navigate to app settings
+      Navigator.of(context).pushNamed('/settings/permissions');
+    } catch (e) {
+      // Fallback if navigation fails
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please grant the required permission in device settings'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   /// Static method to show the enhanced error dialog

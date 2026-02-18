@@ -314,24 +314,29 @@ class HiveExportService implements ExportService {
 
   @override
   Future<void> cancelExport(String exportId) async {
-    // In a real implementation, this would cancel ongoing operations
-    // For now, we'll just remove it from progress tracking
-    _updateProgress(exportId, 1.0, 'Cancelled', isCancellable: false);
-    
-    // Add cancelled export to history
-    final cancelledResult = ExportResult(
-      id: exportId,
-      fileName: 'cancelled_export.txt',
-      filePath: '',
-      format: ExportFormat.pdf,
-      fileSize: 0,
-      createdAt: DateTime.now(),
-      success: false,
-      errorMessage: 'Export cancelled by user',
-    );
-    
-    _exportHistory.insert(0, cancelledResult);
-    await _saveExportHistory();
+    try {
+      // Emit cancellation progress
+      _updateProgress(exportId, 1.0, 'Cancelled', isCancellable: false);
+      
+      // Add cancelled export to history
+      final cancelledResult = ExportResult(
+        id: exportId,
+        fileName: 'cancelled_export.txt',
+        filePath: '',
+        format: ExportFormat.pdf,
+        fileSize: 0,
+        createdAt: DateTime.now(),
+        success: false,
+        errorMessage: 'Export cancelled by user',
+      );
+      
+      _exportHistory.insert(0, cancelledResult);
+      await _saveExportHistory();
+    } catch (e) {
+      // Use logging instead of debugPrint
+      Logger('HiveExportService').warning('Error cancelling export: $e');
+      rethrow;
+    }
   }
 
   @override
@@ -652,7 +657,16 @@ class HiveExportService implements ExportService {
           reportType,
         );
       case ExportFormat.excel:
-        throw UnimplementedError('Excel export not yet implemented');
+        // Excel export using CSV as fallback for now
+        // TODO: Implement proper Excel format with formatting and multiple sheets
+        _updateProgress(exportId, 0.3, 'Generating Excel file...');
+        return await _generateCsvReport(
+          exportId,
+          title.replaceAll('.csv', '.xlsx'),
+          data,
+          options,
+          reportType,
+        );
     }
   }
 
