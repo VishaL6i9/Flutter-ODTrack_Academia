@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:odtrack_academia/core/errors/base_error.dart';
@@ -12,6 +11,8 @@ import 'package:odtrack_academia/models/user.dart';
 import 'package:odtrack_academia/services/sync/sync_service.dart';
 import 'package:odtrack_academia/services/sync/background_sync_worker.dart';
 import 'package:odtrack_academia/services/sync/offline_operation_queue.dart';
+import 'package:odtrack_academia/services/api/api_client.dart';
+import 'package:odtrack_academia/core/constants/app_constants.dart';
 
 /// Concrete implementation of SyncService using Hive storage
 /// Handles offline synchronization with automatic conflict resolution
@@ -19,6 +20,7 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
   final EnhancedStorageManager _storageManager;
   final SyncQueueManager _queueManager;
   final Connectivity _connectivity;
+  final ApiClient _apiClient;
   
   // Enhanced sync components
   late final BackgroundSyncWorker _backgroundWorker;
@@ -42,9 +44,11 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
     required EnhancedStorageManager storageManager,
     required SyncQueueManager queueManager,
     Connectivity? connectivity,
+    ApiClient? apiClient,
   }) : _storageManager = storageManager,
        _queueManager = queueManager,
-       _connectivity = connectivity ?? Connectivity() {
+       _connectivity = connectivity ?? Connectivity(),
+       _apiClient = apiClient ?? ApiClient(baseUrl: AppConstants.baseUrl) {
     // Initialize enhanced sync components
     _backgroundWorker = BackgroundSyncWorker(
       syncService: this,
@@ -409,79 +413,76 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
     }
   }
 
-  /// Simulate creating OD request on server
+  /// Create OD request on server via API
   Future<bool> _createODRequestOnServer(SyncQueueItem queueItem) async {
-    // Simulate network delay
-    await Future<void>.delayed(Duration(milliseconds: 100 + Random().nextInt(400)));
-    
-    // Simulate occasional conflicts (5% chance)
-    if (Random().nextDouble() < 0.05) {
-      throw SyncError.conflictDetected(queueItem.itemId, queueItem.itemType);
+    try {
+      final response = await _apiClient.post(
+        '/api/v1/od-requests/',
+        body: queueItem.data,
+      );
+      
+      debugPrint('Created OD request ${queueItem.itemId} on server');
+      return response['id'] != null;
+    } on NetworkError catch (e) {
+      if (e.code == 'SERVER_ERROR' && e.statusCode == 409) {
+        throw SyncError.conflictDetected(queueItem.itemId, queueItem.itemType);
+      }
+      rethrow;
     }
-    
-    // Simulate occasional failures (10% chance)
-    if (Random().nextDouble() < 0.10) {
-      throw NetworkError.serverError(500);
-    }
-    
-    // Success - in real implementation, this would make actual HTTP request
-    debugPrint('Created OD request ${queueItem.itemId} on server');
-    return true;
   }
 
-  /// Simulate updating OD request on server
+  /// Update OD request on server via API
   Future<bool> _updateODRequestOnServer(SyncQueueItem queueItem) async {
-    // Simulate network delay
-    await Future<void>.delayed(Duration(milliseconds: 100 + Random().nextInt(400)));
-    
-    // Simulate occasional conflicts (8% chance for updates)
-    if (Random().nextDouble() < 0.08) {
-      throw SyncError.conflictDetected(queueItem.itemId, queueItem.itemType);
+    try {
+      await _apiClient.put(
+        '/api/v1/od-requests/${queueItem.itemId}',
+        body: queueItem.data,
+      );
+      
+      debugPrint('Updated OD request ${queueItem.itemId} on server');
+      return true;
+    } on NetworkError catch (e) {
+      if (e.code == 'SERVER_ERROR' && e.statusCode == 409) {
+        throw SyncError.conflictDetected(queueItem.itemId, queueItem.itemType);
+      }
+      rethrow;
     }
-    
-    // Simulate occasional failures (5% chance)
-    if (Random().nextDouble() < 0.05) {
-      throw NetworkError.serverError(500);
-    }
-    
-    // Success - in real implementation, this would make actual HTTP request
-    debugPrint('Updated OD request ${queueItem.itemId} on server');
-    return true;
   }
 
-  /// Simulate deleting OD request on server
+  /// Delete OD request on server via API
   Future<bool> _deleteODRequestOnServer(SyncQueueItem queueItem) async {
-    // Simulate network delay
-    await Future<void>.delayed(Duration(milliseconds: 50 + Random().nextInt(200)));
-    
-    // Simulate occasional failures (3% chance)
-    if (Random().nextDouble() < 0.03) {
-      throw NetworkError.serverError(500);
+    try {
+      await _apiClient.delete('/api/v1/od-requests/${queueItem.itemId}');
+      
+      debugPrint('Deleted OD request ${queueItem.itemId} on server');
+      return true;
+    } catch (e) {
+      debugPrint('Error deleting OD request: $e');
+      rethrow;
     }
-    
-    // Success - in real implementation, this would make actual HTTP request
-    debugPrint('Deleted OD request ${queueItem.itemId} on server');
-    return true;
   }
 
-  /// Simulate updating user data on server
+  /// Update user data on server via API
   Future<bool> _updateUserDataOnServer(SyncQueueItem queueItem) async {
-    // Simulate network delay
-    await Future<void>.delayed(Duration(milliseconds: 100 + Random().nextInt(300)));
-    
-    // Simulate occasional conflicts (3% chance)
-    if (Random().nextDouble() < 0.03) {
-      throw SyncError.conflictDetected(queueItem.itemId, queueItem.itemType);
+    try {
+      await _apiClient.put(
+        '/api/v1/users/${queueItem.itemId}',
+        body: queueItem.data,
+      );
+      
+      debugPrint('Updated user data ${queueItem.itemId} on server');
+      return true;
+    } on NetworkError catch (e) {
+      if (e.code == 'SERVER_ERROR' && e.statusCode == 409) {
+        throw SyncError.conflictDetected(queueItem.itemId, queueItem.itemType);
+      }
+      rethrow;
     }
-    
-    // Success - in real implementation, this would make actual HTTP request
-    debugPrint('Updated user data ${queueItem.itemId} on server');
-    return true;
   }
 
   /// Handle sync conflict by storing it for resolution
   Future<void> _handleSyncConflict(SyncQueueItem queueItem, SyncError error) async {
-    // In a real implementation, we would fetch server data to compare
+    // Fetch server data to compare
     final serverData = await _fetchServerData(queueItem.itemId, queueItem.itemType);
     
     final conflict = SyncConflict(
@@ -490,29 +491,36 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
       localData: queueItem.data,
       serverData: serverData,
       localTimestamp: queueItem.queuedAt,
-      serverTimestamp: DateTime.now(), // Would be actual server timestamp
+      serverTimestamp: DateTime.parse(
+        (serverData['updated_at'] as String?) ?? DateTime.now().toIso8601String()
+      ),
     );
     
     await _storageManager.storeSyncConflict(conflict);
     await _queueManager.markAsConflicted(queueItem.id, error.message);
   }
 
-  /// Simulate fetching server data for conflict resolution
+  /// Fetch server data for conflict resolution
   Future<Map<String, dynamic>> _fetchServerData(String itemId, String itemType) async {
-    // Simulate network delay
-    await Future<void>.delayed(Duration(milliseconds: 200 + Random().nextInt(300)));
-    
-    // Return mock server data - in real implementation, this would be actual server data
-    return {
-      'id': itemId,
-      'type': itemType,
-      'lastModified': DateTime.now().toIso8601String(),
-      'version': Random().nextInt(10) + 1,
-      'data': {
-        'serverField': 'server_value',
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
-      },
-    };
+    try {
+      String endpoint;
+      switch (itemType) {
+        case 'od_request':
+          endpoint = '/api/v1/od-requests/$itemId';
+          break;
+        case 'user':
+          endpoint = '/api/v1/users/$itemId';
+          break;
+        default:
+          throw ArgumentError('Unknown item type: $itemType');
+      }
+      
+      final response = await _apiClient.get(endpoint);
+      return response;
+    } catch (e) {
+      debugPrint('Error fetching server data: $e');
+      rethrow;
+    }
   }
 
   @override
@@ -609,7 +617,7 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
   }
 
   @override
-  Future<SyncResult> forcSync() async {
+  Future<SyncResult> forceSync() async {
     // Reset any failed items and force sync
     await _queueManager.resetFailedItems();
     return await syncAll();

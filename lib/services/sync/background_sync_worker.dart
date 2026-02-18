@@ -263,7 +263,7 @@ class BackgroundSyncWorker {
     
     try {
       _emitEvent(BackgroundSyncEvent.syncStarted());
-      final result = await _syncService.forcSync();
+      final result = await _syncService.forceSync();
       
       if (result.success) {
         _handleSyncSuccess(result);

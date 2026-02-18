@@ -386,7 +386,7 @@ void main() {
       test('should reset failed items and force sync', () async {
         when(mockQueueManager.resetFailedItems()).thenAnswer((_) async => 5);
 
-        final result = await syncService.forcSync();
+        final result = await syncService.forceSync();
 
         expect(result.success, isTrue);
         verify(mockQueueManager.resetFailedItems()).called(1);

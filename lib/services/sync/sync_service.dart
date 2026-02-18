@@ -32,7 +32,7 @@ abstract class SyncService {
   DateTime? get lastSyncTime;
   
   /// Force sync even if not needed
-  Future<SyncResult> forcSync();
+  Future<SyncResult> forceSync();
   
   /// Cancel ongoing sync operation
   Future<void> cancelSync();
