@@ -33,6 +33,13 @@ migrate_working_dir/
 .pub/
 /build/
 
+# Generated plugin registrants
+**/GeneratedPluginRegistrant.java
+**/generated_plugin_registrant.cc
+**/generated_plugin_registrant.h
+**/generated_plugins.cmake
+macos/Flutter/GeneratedPluginRegistrant.swift
+
 # Symbolication related
 app.*.symbols
 
