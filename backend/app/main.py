@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
@@ -6,11 +7,22 @@ from app.core.logging import logger
 
 settings = get_settings()
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    logger.info("Starting up ODTrack Academia API...")
+    logger.info(f"Debug mode: {settings.DEBUG}")
+    logger.info(f"CORS origins: {settings.BACKEND_CORS_ORIGINS}")
+    yield
+    # Shutdown
+    logger.info("Shutting down ODTrack Academia API...")
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="Backend API for ODTrack Academia Mobile App",
     version=settings.VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    lifespan=lifespan,
 )
 
 # Configure CORS
@@ -23,14 +35,6 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
-
-@app.on_event("startup")
-async def startup_event():
-    logger.info("Starting up ODTrack Academia API...")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    logger.info("Shutting down ODTrack Academia API...")
 
 @app.get("/")
 async def root():
