@@ -50,14 +50,11 @@ class AnalyticsService:
                 "status_distribution": status_distribution,
                 "top_student_ids": top_students # Returns ID:Count mapping
             }
+        except pd.errors.EmptyDataError as e:
+            logger.error(f"No data available for analytics: {e}")
+            raise ValueError("No OD request data available for analytics")
         except Exception as e:
-            logger.error(f"Error generating analytics: {e}")
-            raise e
-        
-        return {
-            "total_requests": total_requests,
-            "status_distribution": status_distribution,
-            "top_student_ids": top_students # Returns ID:Count mapping
-        }
+            logger.error(f"Error generating analytics: {e}", exc_info=True)
+            raise
 
 analytics_service = AnalyticsService()

@@ -4,9 +4,16 @@ from io import BytesIO
 from datetime import datetime
 from app.core.logging import logger
 
+class PDFGenerationError(Exception):
+    """Custom exception for PDF generation errors"""
+    pass
+
 class PDFService:
     def generate_od_report(self, od_data: list[dict]) -> bytes:
         try:
+            if not od_data:
+                raise PDFGenerationError("No data provided for PDF generation")
+                
             buffer = BytesIO()
             c = canvas.Canvas(buffer, pagesize=letter)
             width, height = letter
@@ -35,18 +42,20 @@ class PDFService:
                     c.showPage()
                     y = height - 50
                     
-                c.drawString(50, y, str(item['id']))
-                c.drawString(100, y, str(item['student_id']))
-                c.drawString(200, y, str(item['date']))
-                c.drawString(350, y, item['status'])
+                c.drawString(50, y, str(item.get('id', 'N/A')))
+                c.drawString(100, y, str(item.get('student_id', 'N/A')))
+                c.drawString(200, y, str(item.get('date', 'N/A')))
+                c.drawString(350, y, item.get('status', 'N/A'))
                 y -= 15
                 
             c.save()
             buffer.seek(0)
             logger.info(f"Generated PDF report for {len(od_data)} records")
             return buffer.getvalue()
+        except PDFGenerationError:
+            raise
         except Exception as e:
-            logger.error(f"Error generating PDF report: {e}")
-            raise e
+            logger.error(f"Error generating PDF report: {e}", exc_info=True)
+            raise PDFGenerationError(f"Failed to generate PDF report: {str(e)}")
 
 pdf_service = PDFService()
