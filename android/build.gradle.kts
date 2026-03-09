@@ -28,7 +28,6 @@ subprojects {
         }
     }
 }
-
 val customBuildDir = file("C:/GradleBuilds/ODTrack")
 rootProject.layout.buildDirectory.set(customBuildDir)
 
