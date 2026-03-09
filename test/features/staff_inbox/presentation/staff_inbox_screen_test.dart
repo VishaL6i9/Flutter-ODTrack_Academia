@@ -8,10 +8,11 @@ import 'package:odtrack_academia/providers/od_request_provider.dart';
 import 'package:odtrack_academia/providers/bulk_operation_provider.dart';
 import 'package:odtrack_academia/services/bulk_operations/bulk_operation_service.dart';
 import 'package:odtrack_academia/models/od_request.dart';
+import 'package:odtrack_academia/services/api/od_api_service.dart';
 
 import 'staff_inbox_screen_test.mocks.dart';
 
-@GenerateMocks([BulkOperationService])
+@GenerateMocks([BulkOperationService, ODApiService])
 void main() {
   group('StaffInboxScreen Widget Tests', () {
     late MockBulkOperationService mockBulkService;
@@ -62,7 +63,7 @@ void main() {
     Widget createTestWidget() {
       return ProviderScope(
         overrides: [
-          odRequestProvider.overrideWith((ref) => ODRequestNotifier()..state = mockRequests),
+          odRequestProvider.overrideWith((ref) => ODRequestNotifier(MockODApiService())..state = mockRequests),
           bulkOperationServiceProvider.overrideWithValue(mockBulkService),
         ],
         child: const MaterialApp(
@@ -413,7 +414,7 @@ void main() {
       testWidgets('should handle empty request list gracefully', (tester) async {
         final emptyWidget = ProviderScope(
           overrides: [
-            odRequestProvider.overrideWith((ref) => ODRequestNotifier()..state = <ODRequest>[]),
+            odRequestProvider.overrideWith((ref) => ODRequestNotifier(MockODApiService())..state = <ODRequest>[]),
             bulkOperationServiceProvider.overrideWithValue(mockBulkService),
           ],
           child: const MaterialApp(
@@ -445,7 +446,7 @@ void main() {
 
         final widget = ProviderScope(
           overrides: [
-            odRequestProvider.overrideWith((ref) => ODRequestNotifier()..state = approvedOnlyRequests),
+            odRequestProvider.overrideWith((ref) => ODRequestNotifier(MockODApiService())..state = approvedOnlyRequests),
             bulkOperationServiceProvider.overrideWithValue(mockBulkService),
           ],
           child: const MaterialApp(
