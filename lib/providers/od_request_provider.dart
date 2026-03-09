@@ -23,7 +23,6 @@ class ODRequestNotifier extends StateNotifier<List<ODRequest>> {
   }
 
   Future<void> createRequest(ODRequest request) async {
-    // REPLACED: Real API Call
     try {
       final newRequest = await _apiService.createODRequest({
         'date': request.date.toIso8601String().split('T')[0],
@@ -38,14 +37,17 @@ class ODRequestNotifier extends StateNotifier<List<ODRequest>> {
       
       state = [newRequest, ...state];
     
-    // Sync with calendar if service is available
-    if (_calendarSyncService != null) {
-      try {
-        await _calendarSyncService.handleODRequestCreation(request);
-      } catch (e) {
-        // Log error but don't fail the request creation
-        debugPrint('Calendar sync error during request creation: $e');
+      // Sync with calendar if service is available
+      if (_calendarSyncService != null) {
+        try {
+          await _calendarSyncService.handleODRequestCreation(newRequest);
+        } catch (e) {
+          // Log error but don't fail the request creation
+          debugPrint('Calendar sync error during request creation: $e');
+        }
       }
+    } catch (e) {
+      debugPrint('Error creating OD request: $e');
     }
   }
 
@@ -74,20 +76,21 @@ class ODRequestNotifier extends StateNotifier<List<ODRequest>> {
 
   Future<void> deleteRequest(String requestId) async {
     try {
+      final requestToDelete = state.firstWhere((request) => request.id == requestId);
       await _apiService.deleteODRequest(requestId);
       state = state.where((request) => request.id != requestId).toList();
+      
+      // Sync with calendar if service is available
+      if (_calendarSyncService != null) {
+        try {
+          await _calendarSyncService.handleODRequestDeletion(requestToDelete);
+        } catch (e) {
+          // Log error but don't fail the deletion
+          debugPrint('Calendar sync error during request deletion: $e');
+        }
+      }
     } catch (e) {
       debugPrint('Error deleting OD request: $e');
-    }
-    
-    // Sync with calendar if service is available
-    if (_calendarSyncService != null) {
-      try {
-        await _calendarSyncService.handleODRequestDeletion(requestToDelete);
-      } catch (e) {
-        // Log error but don't fail the deletion
-        debugPrint('Calendar sync error during request deletion: $e');
-      }
     }
   }
 
