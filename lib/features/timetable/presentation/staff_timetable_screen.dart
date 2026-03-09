@@ -16,92 +16,72 @@ class StaffTimetableScreen extends ConsumerStatefulWidget {
   ConsumerState<StaffTimetableScreen> createState() => _StaffTimetableScreenState();
 }
 
+  // Manual schedule generation removed in favor of provider
+
 class _StaffTimetableScreenState extends ConsumerState<StaffTimetableScreen> {
-  StaffMember? _staffMember;
-  late Map<String, List<PeriodSlot>> _staffSchedule;
-
-  @override
-  void initState() {
-    super.initState();
-    try {
-      _staffMember = StaffData.allStaff.firstWhere((staff) => staff.id == widget.staffId);
-    } catch (e) {
-      _staffMember = StaffData.allStaff.isNotEmpty ? StaffData.allStaff.first : null;
-    }
-    _generateStaffSchedule();
-  }
-
-  void _generateStaffSchedule() {
-    _staffSchedule = {};
-    if (_staffMember == null) return;
-
-    for (final day in TimetableData.days) {
-      final List<PeriodSlot> daySlots = List.generate(
-        TimetableData.periods.length,
-        (index) => const PeriodSlot(subject: 'Free'),
-      );
-
-      for (final timetable in TimetableData.allTimetables) {
-        final schedule = timetable.schedule[day];
-        if (schedule != null) {
-          for (int i = 0; i < schedule.length; i++) {
-            if (i < daySlots.length && schedule[i].staffId == _staffMember!.id) {
-              // Create a modified subject string to show Year/Section in the grid
-              daySlots[i] = PeriodSlot(
-                subject: schedule[i].subject,
-                staffId: '${timetable.year} ${timetable.section}',
-              );
-            }
-          }
-        }
-      }
-      _staffSchedule[day] = daySlots;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final staffAsync = ref.watch(staffProvider);
+    final timetableAsync = ref.watch(staffTimetableProvider(widget.staffId));
     
-    if (_staffMember == null) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Staff Timetable'),
-          backgroundColor: theme.colorScheme.surface,
-        ),
-        body: const Center(
-          child: Text('Staff member not found'),
-        ),
-      );
-    }
-    
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('${_staffMember!.name}\'s Timetable'),
-        backgroundColor: theme.colorScheme.surface,
-        scrolledUnderElevation: 2,
-      ),
-      body: Container(
-        color: theme.colorScheme.surfaceContainerLowest.withValues(alpha: 0.5),
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-          children: [
-            _buildStaffHeader(theme),
-            const SizedBox(height: 24),
-            SizedBox(
-              height: 600, // Constrain height for the scrollable grid
-              child: TimetableGrid(
-                schedule: _staffSchedule,
-                subjectCodeMap: TimetableData.subjectCodeMap,
+    return staffAsync.when(
+      data: (staffList) {
+        final staffMember = staffList.firstWhere(
+          (s) => s.id == widget.staffId,
+          orElse: () => staffList.first,
+        );
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('${staffMember.name}\'s Timetable'),
+            backgroundColor: theme.colorScheme.surface,
+            scrolledUnderElevation: 2,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () {
+                  ref.invalidate(staffTimetableProvider(widget.staffId));
+                  ref.read(staffProvider.notifier).fetchStaff();
+                },
+              ),
+            ],
+          ),
+          body: timetableAsync.when(
+            data: (schedule) => Container(
+              color: theme.colorScheme.surfaceContainerLowest.withValues(alpha: 0.5),
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                children: [
+                  _buildStaffHeader(theme, staffMember),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    height: 600,
+                    child: TimetableGrid(
+                      schedule: schedule,
+                      subjectCodeMap: TimetableData.subjectCodeMap,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, stack) => Center(child: Text('Error loading timetable: $err')),
+          ),
+        );
+      },
+      loading: () => Scaffold(
+        appBar: AppBar(title: const Text('Staff Timetable')),
+        body: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, stack) => Scaffold(
+        appBar: AppBar(title: const Text('Staff Timetable')),
+        body: Center(child: Text('Error loading staff: $err')),
       ),
     );
   }
 
-  Widget _buildStaffHeader(ThemeData theme) {
+  Widget _buildStaffHeader(ThemeData theme, StaffMember staffMember) {
     return Card(
       elevation: 0,
       color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
@@ -124,11 +104,11 @@ class _StaffTimetableScreenState extends ConsumerState<StaffTimetableScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _staffMember!.name,
+                    staffMember.name,
                     style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    _staffMember!.designation ?? 'Staff Member',
+                    staffMember.designation ?? 'Staff Member',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.secondary,
                       fontWeight: FontWeight.w500,
