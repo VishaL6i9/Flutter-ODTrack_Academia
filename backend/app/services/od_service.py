@@ -62,6 +62,15 @@ class ODService:
         
         if student_obj:
              await email_service.send_od_submission_email(student=student_obj, od_request=db_obj, staff=staff_list)
+             
+             for staff_member in staff_list:
+                 if staff_member.fcm_token:
+                     await fcm_service.send_notification(
+                         token=staff_member.fcm_token,
+                         title="New OD Request Submitted",
+                         body=f"{student_obj.name} ({student_obj.register_number}) submitted an OD request for {db_obj.from_date.strftime('%Y-%m-%d')}.",
+                         data={"type": "new_request", "id": str(db_obj.id)}
+                     )
         
         return db_obj
 
