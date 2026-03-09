@@ -12,7 +12,7 @@ class ApiClient {
   String? _refreshToken; // Track refresh token
 
   // Dependency injection callback for seamlessly notifying Provider of new token chains
-  final Future<void> Function(String accessToken, String refreshToken)? onTokensRefreshed;
+  Future<void> Function(String accessToken, String refreshToken)? onTokensRefreshed;
   
   // Track refresh state to prevent multiple simultaneous refresh calls
   bool _isRefreshing = false;
