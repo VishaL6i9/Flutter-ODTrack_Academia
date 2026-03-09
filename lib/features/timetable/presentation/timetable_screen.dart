@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-import 'package:odtrack_academia/features/staff_directory/data/staff_data.dart';
 import 'package:odtrack_academia/features/timetable/data/timetable_data.dart';
 import 'package:odtrack_academia/features/timetable/presentation/staff_timetable_screen.dart';
 import 'package:odtrack_academia/features/timetable/presentation/widgets/timetable_grid.dart';
+import 'package:odtrack_academia/models/timetable.dart';
+import 'package:odtrack_academia/providers/auth_provider.dart';
+import 'package:odtrack_academia/providers/staff_provider.dart';
+import 'package:odtrack_academia/providers/timetable_provider.dart';
 
 class TimetableScreen extends ConsumerStatefulWidget {
   const TimetableScreen({super.key});
@@ -21,8 +24,9 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedYear = TimetableData.allTimetables[0].year;
-    _selectedSection = TimetableData.allTimetables[0].section;
+    final user = ref.read(authProvider).user;
+    _selectedYear = user?.year ?? "3rd Year";
+    _selectedSection = user?.section ?? "A";
     _searchController = TextEditingController();
   }
 
@@ -42,9 +46,12 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
         scrolledUnderElevation: 2,
         actions: [
           IconButton(
-            onPressed: () => setState(() {}), // Refresh current time status
+            onPressed: () {
+              ref.invalidate(timetableProvider((section: _selectedSection, year: _selectedYear)));
+              ref.read(staffProvider.notifier).fetchStaff();
+            },
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh Status',
+            tooltip: 'Refresh',
           ),
         ],
       ),
@@ -84,13 +91,10 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                   onTap: () => _showSelectionDialog(
                     title: 'Select Year',
                     currentValue: _selectedYear,
-                    items: TimetableData.allTimetables.map((t) => t.year).toSet().toList(),
+                    items: ["1st Year", "2nd Year", "3rd Year", "4th Year"],
                     onSelected: (newValue) {
                       setState(() {
                         _selectedYear = newValue;
-                        _selectedSection = TimetableData.allTimetables
-                            .firstWhere((t) => t.year == _selectedYear)
-                            .section;
                       });
                     },
                   ),
@@ -105,10 +109,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                   onTap: () => _showSelectionDialog(
                     title: 'Select Section',
                     currentValue: _selectedSection,
-                    items: TimetableData.allTimetables
-                        .where((t) => t.year == _selectedYear)
-                        .map((t) => t.section)
-                        .toList(),
+                    items: ["A", "B", "C"],
                     onSelected: (newValue) {
                       setState(() => _selectedSection = newValue);
                     },
@@ -255,20 +256,28 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
   }
 
   Widget _buildTimetableDisplay(ThemeData theme) {
-    final selectedTimetable = TimetableData.allTimetables.firstWhere(
-      (t) => t.year == _selectedYear && t.section == _selectedSection,
-    );
+    final timetableAsync = ref.watch(timetableProvider((section: _selectedSection, year: _selectedYear)));
 
-    return TimetableGrid(
-      schedule: selectedTimetable.schedule,
-      searchTerm: _searchController.text,
-      subjectCodeMap: TimetableData.subjectCodeMap,
-      onStaffTap: (staffId) => _showStaffInfoDialog(context, staffId),
+    return timetableAsync.when(
+      data: (timetable) => TimetableGrid(
+        schedule: timetable.schedule,
+        searchTerm: _searchController.text,
+        subjectCodeMap: TimetableData.subjectCodeMap,
+        onStaffTap: (staffId) => _showStaffInfoDialog(context, staffId),
+      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) => Center(child: Text('Error loading timetable: $err')),
     );
   }
 
   void _showStaffInfoDialog(BuildContext context, String staffId) {
-    final staffMember = StaffData.allStaff.firstWhere((s) => s.id == staffId);
+    final staffAsync = ref.read(staffProvider);
+    
+    staffAsync.whenData((staffList) {
+      final staffMember = staffList.firstWhere(
+        (s) => s.id == staffId,
+        orElse: () => staffList.firstWhere((s) => s.name.contains(staffId), orElse: () => staffList.first),
+      );
     final theme = Theme.of(context);
     final color = theme.colorScheme.primary;
 
@@ -363,6 +372,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
         );
       },
     );
+    });
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
