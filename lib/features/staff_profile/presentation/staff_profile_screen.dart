@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:odtrack_academia/providers/auth_provider.dart';
+import 'package:odtrack_academia/services/api/api_client.dart';
 
 class StaffProfileScreen extends ConsumerStatefulWidget {
   const StaffProfileScreen({super.key});
@@ -17,6 +20,8 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
   late TextEditingController _phoneController;
   late TextEditingController _departmentController;
   bool _isEditing = false;
+  bool _isUploadingSignature = false;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -281,10 +286,61 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
                 );
               },
             ),
+            ListTile(
+              leading: Icon(MdiIcons.pen, color: Colors.purple),
+              title: const Text('Update Digital Signature'),
+              subtitle: const Text('Used for authenticating OD approvals'),
+              trailing: _isUploadingSignature 
+                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: _updateSignature,
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _updateSignature() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+
+      if (image != null) {
+        setState(() => _isUploadingSignature = true);
+        
+        final file = File(image.path);
+        final apiClient = ApiClient(baseUrl: 'http://10.0.2.2:8000/api/v1'); // Emulating local URL
+        
+        // 1. Upload the image file
+        final uploadResponse = await apiClient.upload('/upload/', file);
+        final signatureUrl = uploadResponse['url'] as String;
+
+        // 2. Set the signature to the user's profile
+        apiClient.setAuthToken(ref.read(authProvider).token ?? '');
+        await apiClient.put('/users/me/signature', body: {'signature_url': signatureUrl});
+
+        // 3. Refresh user profile (a full implementation would refresh the authProvider)
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Signature updated successfully!'), backgroundColor: Colors.green),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update signature: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingSignature = false);
+      }
+    }
   }
 
   void _saveProfile() {
