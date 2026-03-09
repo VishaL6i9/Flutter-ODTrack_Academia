@@ -7,6 +7,7 @@ import 'package:odtrack_academia/models/user.dart';
 import 'package:odtrack_academia/features/staff_directory/data/staff_data.dart';
 import 'package:odtrack_academia/features/timetable/data/timetable_data.dart' as t_data;
 import 'package:odtrack_academia/core/constants/app_constants.dart';
+import 'package:logging/logging.dart';
 
 /// Service to populate sample data for analytics dashboard
 class SampleDataService {
@@ -16,13 +17,16 @@ class SampleDataService {
   static String get _usersBoxName => AppConstants.userBox;
 
   final Random _random = Random();
+  final _logger = Logger('SampleDataService');
 
   /// Initialize and populate sample data
   Future<void> initializeSampleData() async {
+    _logger.info('Initializing sample data population...');
     await clearSampleData(); // Clear existing data to ensure fresh population
     await _populateStaffMembers();
     await _populateWorkloadData();
     await _populateODRequests();
+    _logger.info('Sample data population completed.');
     // await _populateUsers();
   }
 
@@ -154,7 +158,15 @@ class SampleDataService {
     
     if (box.isNotEmpty) return; // Data already exists
 
-    final staffIds = StaffData.allStaff.map((s) => s.id).toList();
+    final staff = StaffData.allStaff;
+    print('SampleDataService: Detected ${staff.length} staff members');
+    
+    if (staff.isEmpty) {
+      print('SampleDataService: ERROR - StaffData.allStaff is empty. Aborting OD population.');
+      return;
+    }
+
+    final staffIds = staff.map((s) => s.id).toList();
     final statuses = ['pending', 'approved', 'rejected'];
     final reasons = [
       'Medical appointment',
@@ -169,13 +181,11 @@ class SampleDataService {
 
     // Generate 50-100 OD requests over the last 6 months
     final requestCount = 50 + _random.nextInt(51);
+    _logger.info('Generating $requestCount random OD requests...');
     
-    if (staffIds.isEmpty) {
-      // No staff members found to populate OD requests.
-      return;
-    }
-
     for (int i = 0; i < requestCount; i++) {
+      if (staffIds.isEmpty) break; // Final safety check
+      
       final staffId = staffIds[_random.nextInt(staffIds.length)];
       final status = statuses[_random.nextInt(statuses.length)];
       final reason = reasons[_random.nextInt(reasons.length)];
