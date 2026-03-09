@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:odtrack_academia/models/timetable.dart';
+import 'package:odtrack_academia/models/period_slot.dart';
 
 class TimetableData {
   static final Map<String, String> subjectCodeMap = {
@@ -33,7 +34,90 @@ class TimetableData {
     '14:15-15:15'
   ];
 
-  static final List<Timetable> allTimetables = [];
+  static final List<Timetable> allTimetables = [
+    const Timetable(
+      year: '2nd Year',
+      section: 'A',
+      schedule: {
+        'Monday': [
+          PeriodSlot(subject: 'DSA', staffId: 'S001'),
+          PeriodSlot(subject: 'Math'),
+          PeriodSlot(subject: 'Free'),
+          PeriodSlot(subject: 'Physics'),
+          PeriodSlot(subject: 'LUNCH'),
+        ],
+        'Tuesday': [
+          PeriodSlot(subject: 'DSA', staffId: 'S001'),
+          PeriodSlot(subject: 'OS'),
+          PeriodSlot(subject: 'Free'),
+          PeriodSlot(subject: 'Lab'),
+          PeriodSlot(subject: 'LUNCH'),
+        ],
+        'Wednesday': [
+          PeriodSlot(subject: 'Math'),
+          PeriodSlot(subject: 'DSA', staffId: 'S001'),
+          PeriodSlot(subject: 'Free'),
+          PeriodSlot(subject: 'SE'),
+          PeriodSlot(subject: 'LUNCH'),
+        ],
+        'Thursday': [
+          PeriodSlot(subject: 'OS'),
+          PeriodSlot(subject: 'DBMS', staffId: 'S002'),
+          PeriodSlot(subject: 'Free'),
+          PeriodSlot(subject: 'DSA', staffId: 'S001'),
+          PeriodSlot(subject: 'LUNCH'),
+        ],
+        'Friday': [
+          PeriodSlot(subject: 'Free'),
+          PeriodSlot(subject: 'DSA', staffId: 'S001'),
+          PeriodSlot(subject: 'Math'),
+          PeriodSlot(subject: 'SE'),
+          PeriodSlot(subject: 'LUNCH'),
+        ],
+      },
+    ),
+    const Timetable(
+      year: '3rd Year',
+      section: 'A',
+      schedule: {
+        'Monday': [
+          PeriodSlot(subject: 'CN', staffId: 'S003'),
+          PeriodSlot(subject: 'DBMS', staffId: 'S002'),
+          PeriodSlot(subject: 'Free'),
+          PeriodSlot(subject: 'AI'),
+          PeriodSlot(subject: 'LUNCH'),
+        ],
+        'Tuesday': [
+          PeriodSlot(subject: 'DBMS', staffId: 'S002'),
+          PeriodSlot(subject: 'CN', staffId: 'S003'),
+          PeriodSlot(subject: 'Free'),
+          PeriodSlot(subject: 'ML'),
+          PeriodSlot(subject: 'LUNCH'),
+        ],
+        'Wednesday': [
+          PeriodSlot(subject: 'AI'),
+          PeriodSlot(subject: 'DBMS', staffId: 'S002'),
+          PeriodSlot(subject: 'Free'),
+          PeriodSlot(subject: 'Cyber'),
+          PeriodSlot(subject: 'LUNCH'),
+        ],
+        'Thursday': [
+          PeriodSlot(subject: 'ML'),
+          PeriodSlot(subject: 'Cyber'),
+          PeriodSlot(subject: 'Free'),
+          PeriodSlot(subject: 'CN', staffId: 'S003'),
+          PeriodSlot(subject: 'LUNCH'),
+        ],
+        'Friday': [
+          PeriodSlot(subject: 'Cyber'),
+          PeriodSlot(subject: 'ML'),
+          PeriodSlot(subject: 'Cloud', staffId: 'S004'),
+          PeriodSlot(subject: 'DevOps', staffId: 'S005'),
+          PeriodSlot(subject: 'LUNCH'),
+        ],
+      },
+    ),
+  ];
 
   static Color getSubjectColor(String subject) {
     final Map<String, Color> colors = {
