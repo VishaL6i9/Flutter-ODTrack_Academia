@@ -4,7 +4,6 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import 'package:odtrack_academia/features/timetable/data/timetable_data.dart';
 import 'package:odtrack_academia/features/timetable/presentation/staff_timetable_screen.dart';
 import 'package:odtrack_academia/features/timetable/presentation/widgets/timetable_grid.dart';
-import 'package:odtrack_academia/models/timetable.dart';
 import 'package:odtrack_academia/providers/auth_provider.dart';
 import 'package:odtrack_academia/providers/staff_provider.dart';
 import 'package:odtrack_academia/providers/timetable_provider.dart';
@@ -25,8 +24,8 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
   void initState() {
     super.initState();
     final user = ref.read(authProvider).user;
-    _selectedYear = user?.year ?? "3rd Year";
-    _selectedSection = user?.section ?? "A";
+    _selectedYear = user?.year ?? '3rd Year';
+    _selectedSection = user?.section ?? 'A';
     _searchController = TextEditingController();
   }
 
@@ -91,7 +90,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                   onTap: () => _showSelectionDialog(
                     title: 'Select Year',
                     currentValue: _selectedYear,
-                    items: ["1st Year", "2nd Year", "3rd Year", "4th Year"],
+                    items: ['1st Year', '2nd Year', '3rd Year', '4th Year'],
                     onSelected: (newValue) {
                       setState(() {
                         _selectedYear = newValue;
@@ -109,7 +108,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                   onTap: () => _showSelectionDialog(
                     title: 'Select Section',
                     currentValue: _selectedSection,
-                    items: ["A", "B", "C"],
+                    items: ['A', 'B', 'C'],
                     onSelected: (newValue) {
                       setState(() => _selectedSection = newValue);
                     },
