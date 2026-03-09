@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter/foundation.dart';
 import 'package:odtrack_academia/models/sync_models.dart';
 import 'package:odtrack_academia/models/export_models.dart';
 
@@ -16,7 +17,6 @@ class EnhancedStorageManager {
   static const int _maxCacheSize = 50 * 1024 * 1024; // 50MB
   static const int _maxCacheItems = 1000;
   static const Duration _defaultTTL = Duration(hours: 24);
-  static const Duration _cleanupInterval = Duration(minutes: 30);
   
   Timer? _cleanupTimer;
   
@@ -55,7 +55,8 @@ class EnhancedStorageManager {
   /// Start automatic cache cleanup timer
   void _startCleanupTimer() {
     _cleanupTimer?.cancel();
-    _cleanupTimer = Timer.periodic(_cleanupInterval, (_) => cleanupExpiredCache());
+    // _cleanupTimer = Timer.periodic(_cleanupInterval, (_) => cleanupExpiredCache());
+    debugPrint('EnhancedStorageManager: Periodic cleanup disabled to save battery');
   }
   
   /// Stop cleanup timer

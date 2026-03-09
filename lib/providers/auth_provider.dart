@@ -9,6 +9,8 @@ import 'package:odtrack_academia/providers/staff_analytics_provider.dart';
 import 'package:odtrack_academia/services/analytics/staff_analytics_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:odtrack_academia/services/api/api_client.dart';
+import 'dart:convert';
+import 'dart:math';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter/services.dart';
 
@@ -65,6 +67,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Box<User> get _userBox => Hive.box<User>(AppConstants.userBox);
   final StaffAnalyticsService _staffAnalyticsService;
+
+  String _generateSecureToken() {
+    final random = Random.secure();
+    final values = List<int>.generate(32, (i) => random.nextInt(256));
+    return base64UrlEncode(values);
+  }
 
   // Future<void> _loadUserFromStorage() async {
   //   try {
@@ -145,7 +153,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         if (fcmToken != null) {
           final apiClient = ApiClient(baseUrl: AppConstants.baseUrl);
           // In real API, these tokens would be dynamically injected by the return mapping
-          apiClient.setAuthTokens('student_access_mock', 'student_refresh_mock');
+          apiClient.setAuthTokens(_generateSecureToken(), _generateSecureToken());
           await apiClient.patch('/users/me/fcm-token', body: {'fcm_token': fcmToken});
         }
       } catch (e) {
@@ -202,9 +210,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       await _userBox.put(user.id, user);
 
       // NOTE: Normally these would be set through ApiClient return formats, but 
-      // injecting static placeholders to satisfy Dart mappings without API refactoring here.
-      final mockAccessToken = 'staff_access_mock';
-      final mockRefreshToken = 'staff_refresh_mock';
+      // injecting secure placeholders to satisfy Dart mappings without API refactoring here.
+      final mockAccessToken = _generateSecureToken();
+      final mockRefreshToken = _generateSecureToken();
       
       await _secureStorage.write(key: _tokenKey, value: mockAccessToken);
       await _secureStorage.write(key: _refreshTokenKey, value: mockRefreshToken);

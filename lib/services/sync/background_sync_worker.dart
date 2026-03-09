@@ -20,7 +20,6 @@ class BackgroundSyncWorker {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   
   // Sync configuration
-  static const Duration _syncInterval = Duration(minutes: 5);
   static const Duration _retryBaseDelay = Duration(seconds: 30);
   static const int _maxRetryAttempts = 5;
   static const double _retryMultiplier = 2.0;
@@ -138,13 +137,13 @@ class BackgroundSyncWorker {
   /// Start periodic sync timer
   void _startPeriodicSync() {
     _syncTimer?.cancel();
-    _syncTimer = Timer.periodic(_syncInterval, (_) {
-      if (_isRunning && _isConnected && !_syncService.isSyncing) {
-        _triggerSync();
-      }
-    });
+    // _syncTimer = Timer.periodic(_syncInterval, (_) {
+    //   if (_isRunning && _isConnected && !_syncService.isSyncing) {
+    //     _triggerSync();
+    //   }
+    // });
     
-    debugPrint('BackgroundSyncWorker: Periodic sync started (${_syncInterval.inMinutes} min intervals)');
+    debugPrint('BackgroundSyncWorker: Periodic sync disabled to save battery');
   }
 
   /// Trigger immediate sync
@@ -288,7 +287,6 @@ class BackgroundSyncWorker {
       'isConnected': _isConnected,
       'consecutiveFailures': _consecutiveFailures,
       'lastFailureTime': _lastFailureTime?.toIso8601String(),
-      'syncInterval': _syncInterval.inMinutes,
       'maxRetryAttempts': _maxRetryAttempts,
       'nextRetryIn': _retryTimer?.isActive == true 
           ? 'scheduled' 

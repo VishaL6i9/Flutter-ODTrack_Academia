@@ -37,7 +37,6 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
   bool _isConnected = false;
   
   // Auto-sync configuration
-  static const Duration _autoSyncInterval = Duration(minutes: 5);
   Timer? _autoSyncTimer;
   
   HiveSyncService({
@@ -155,11 +154,12 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
   /// Start automatic sync timer
   void _startAutoSync() {
     _autoSyncTimer?.cancel();
-    _autoSyncTimer = Timer.periodic(_autoSyncInterval, (_) {
-      if (_isConnected && !_isSyncing) {
-        _triggerAutoSync();
-      }
-    });
+    // _autoSyncTimer = Timer.periodic(_autoSyncInterval, (_) {
+    //   if (_isConnected && !_isSyncing) {
+    //     _triggerAutoSync();
+    //   }
+    // });
+    debugPrint('HiveSyncService: Periodic auto-sync disabled to save battery');
   }
 
   /// Trigger automatic sync
