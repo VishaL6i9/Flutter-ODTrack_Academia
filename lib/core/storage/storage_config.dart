@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:odtrack_academia/models/sync_models.dart';
 import 'package:odtrack_academia/models/analytics_models.dart';
@@ -20,13 +22,36 @@ class EnhancedStorageConfig {
   static const String performanceMetricsBox = 'performance_metrics_box';
   static const String cacheMetadataBox = 'cache_metadata_box';
   
+  static const _secureStorage = FlutterSecureStorage();
+  static const String _encryptionKeyString = 'hive_encryption_key_v1';
+  static List<int>? _encryptionKey;
+  
   /// Initialize enhanced storage with new adapters and boxes
   static Future<void> initialize() async {
+    // Generate or fetch the encryption cipher key first
+    await _initializeEncryption();
+    
     // Register type adapters for M5 models
     _registerTypeAdapters();
     
-    // Open all required boxes
+    // Open all required boxes securely
     await _openBoxes();
+  }
+  
+  static Future<void> _initializeEncryption() async {
+    final containsEncryptionKey = await _secureStorage.containsKey(key: _encryptionKeyString);
+    if (!containsEncryptionKey) {
+      // Securely generate a new cryptographically random 32 byte base64 encoded sequence
+      final key = Hive.generateSecureKey();
+      await _secureStorage.write(
+        key: _encryptionKeyString,
+        value: base64UrlEncode(key),
+      );
+    }
+    final encodedKey = await _secureStorage.read(key: _encryptionKeyString);
+    if (encodedKey != null) {
+      _encryptionKey = base64Url.decode(encodedKey);
+    }
   }
   
   /// Register Hive type adapters for M5 models
@@ -138,14 +163,36 @@ class EnhancedStorageConfig {
   
   /// Open all required Hive boxes
   static Future<void> _openBoxes() async {
+    final cipher = _encryptionKey != null ? HiveAesCipher(_encryptionKey!) : null;
+    
+    // Safely attempt to open a box. If corrupted or missing encryption parity, 
+    // it zeroes the box preventing complete startup failure gracefully.
+    Future<Box<T>> openBoxSafely<T>(String boxName) async {
+      try {
+        return await Hive.openBox<T>(boxName, encryptionCipher: cipher);
+      } catch (e) {
+        await Hive.deleteBoxFromDisk(boxName);
+        return await Hive.openBox<T>(boxName, encryptionCipher: cipher);
+      }
+    }
+
+    Future<LazyBox<T>> openLazyBoxSafely<T>(String boxName) async {
+      try {
+        return await Hive.openLazyBox<T>(boxName, encryptionCipher: cipher);
+      } catch (e) {
+        await Hive.deleteBoxFromDisk(boxName);
+        return await Hive.openLazyBox<T>(boxName, encryptionCipher: cipher);
+      }
+    }
+
     await Future.wait([
-      Hive.openLazyBox<SyncQueueItem>(syncQueueBox), // Now using proper SyncQueueItem type
-      Hive.openLazyBox<Map<String, dynamic>>(analyticsBox), // Still Map until other adapters are ready
-      Hive.openLazyBox<Map<String, dynamic>>(exportHistoryBox), // Still Map until adapters ready
-      Hive.openLazyBox<Map<String, dynamic>>(calendarEventsBox), // Still Map until adapters ready
-      Hive.openLazyBox<Map<String, dynamic>>(bulkOperationsBox), // Still Map until adapters ready
-      Hive.openLazyBox<Map<String, dynamic>>(performanceMetricsBox), // Still Map until adapters ready
-      Hive.openBox<CacheMetadata>(cacheMetadataBox), // Now using proper CacheMetadata type
+      openLazyBoxSafely<SyncQueueItem>(syncQueueBox),
+      openLazyBoxSafely<Map<String, dynamic>>(analyticsBox),
+      openLazyBoxSafely<Map<String, dynamic>>(exportHistoryBox),
+      openLazyBoxSafely<Map<String, dynamic>>(calendarEventsBox),
+      openLazyBoxSafely<Map<String, dynamic>>(bulkOperationsBox),
+      openLazyBoxSafely<Map<String, dynamic>>(performanceMetricsBox),
+      openBoxSafely<CacheMetadata>(cacheMetadataBox),
     ]);
   }
   
