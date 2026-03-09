@@ -471,26 +471,20 @@ All core features are fully implemented and tested. The application is productio
   - Built Python `fcm_service` dispatch wrapper connecting natively to Android systems
 
 #### 🔄 In Progress
-- Biometric authentication mappings
-
-#### 📋 Planned
-- Security audit & penetration testing
-- JWT token refresh mechanism
-- Data encryption at rest
-- Performance optimization and memory leak detection
-- Multi-language support (i18n)
-- Biometric authentication
-- QR code scanning for quick actions
 - Play Store & App Store submissions
 - CI/CD pipeline setup
+
+#### 📋 Planned
+- Multi-language support (i18n)
 - Monitoring & crash reporting
+- User feedback system
+- Beta testing program
+- Production Deployment
 
 ### 6.4. Future Work / Roadmap
 
 - **M7 Additions: Future Polish**
   - Multi-language support (i18n)
-  - Biometric authentication
-  - QR code scanning for quick actions
 
 - **M8: Production Deployment**
   - Play Store & App Store submissions
