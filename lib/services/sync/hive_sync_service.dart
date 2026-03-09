@@ -417,7 +417,7 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
   Future<bool> _createODRequestOnServer(SyncQueueItem queueItem) async {
     try {
       final response = await _apiClient.post(
-        '/api/v1/od-requests/',
+        '/od-requests/',
         body: queueItem.data,
       );
       
@@ -435,7 +435,7 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
   Future<bool> _updateODRequestOnServer(SyncQueueItem queueItem) async {
     try {
       await _apiClient.put(
-        '/api/v1/od-requests/${queueItem.itemId}',
+        '/od-requests/${queueItem.itemId}',
         body: queueItem.data,
       );
       
@@ -452,7 +452,7 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
   /// Delete OD request on server via API
   Future<bool> _deleteODRequestOnServer(SyncQueueItem queueItem) async {
     try {
-      await _apiClient.delete('/api/v1/od-requests/${queueItem.itemId}');
+      await _apiClient.delete('/od-requests/${queueItem.itemId}');
       
       debugPrint('Deleted OD request ${queueItem.itemId} on server');
       return true;
@@ -466,7 +466,7 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
   Future<bool> _updateUserDataOnServer(SyncQueueItem queueItem) async {
     try {
       await _apiClient.put(
-        '/api/v1/users/${queueItem.itemId}',
+        '/users/${queueItem.itemId}',
         body: queueItem.data,
       );
       
@@ -506,10 +506,10 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
       String endpoint;
       switch (itemType) {
         case 'od_request':
-          endpoint = '/api/v1/od-requests/$itemId';
+          endpoint = '/od-requests/$itemId';
           break;
         case 'user':
-          endpoint = '/api/v1/users/$itemId';
+          endpoint = '/users/$itemId';
           break;
         default:
           throw ArgumentError('Unknown item type: $itemType');
