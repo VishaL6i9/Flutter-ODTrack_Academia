@@ -19,6 +19,7 @@ class StaffMember {
   final String department;
 
   @HiveField(4)
+  @JsonKey(name: 'subjects', fromJson: _subjectFromJson)
   final String subject;
 
   @HiveField(5)
@@ -29,6 +30,18 @@ class StaffMember {
 
   @HiveField(7)
   final String? designation;
+
+  @HiveField(12)
+  final String? office;
+
+  @HiveField(13)
+  final String? specialization;
+
+  @HiveField(14)
+  final int? experienceYears;
+
+  @HiveField(15)
+  final String? qualification;
 
   @HiveField(8)
   final bool isClassCoordinator;
@@ -42,15 +55,25 @@ class StaffMember {
   @HiveField(11)
   final List<String> coordinatedYears;
 
+  static String _subjectFromJson(dynamic value) {
+    if (value is String) return value;
+    if (value is List && value.isNotEmpty) return value.first.toString();
+    return 'General';
+  }
+
   const StaffMember({
     required this.id,
     required this.name,
     required this.email,
     required this.department,
     required this.subject,
-    required this.years,
+    this.years = const ['1st Year', '2nd Year', '3rd Year', '4th Year'],
     this.phone,
     this.designation,
+    this.office,
+    this.specialization,
+    this.experienceYears,
+    this.qualification,
     this.isClassCoordinator = false,
     this.coordinatedSections = const [],
     this.isYearCoordinator = false,
