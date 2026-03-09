@@ -1,8 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:odtrack_academia/core/errors/base_error.dart';
+import 'package:odtrack_academia/services/api/api_client.dart';
 import 'package:odtrack_academia/features/staff_directory/data/staff_data.dart';
 import 'package:odtrack_academia/features/staff_directory/presentation/staff_directory_screen.dart';
 import 'package:odtrack_academia/features/timetable/data/timetable_data.dart';
@@ -31,6 +34,8 @@ class _EnhancedNewOdScreenState extends ConsumerState<EnhancedNewOdScreen> {
   DateTime? _selectedDate;
   int? _selectedPeriod;
   StaffMember? _designatedStaff;
+  PlatformFile? _selectedAttachment;
+  bool _isUploadingAttachment = false;
   bool _isSubmitting = false;
   BaseError? _formError;
   final List<String> _validationErrors = [];
@@ -247,6 +252,20 @@ class _EnhancedNewOdScreenState extends ConsumerState<EnhancedNewOdScreen> {
         return;
       }
 
+      String? attachmentUrl;
+
+      // First upload the file if it exists
+      if (_selectedAttachment != null) {
+        setState(() => _isUploadingAttachment = true);
+        final file = File(_selectedAttachment!.path!);
+        
+        // This is a minimal placeholder instantiation showing intent, 
+        // ideally ApiClient is injected or grabbed from Riverpod.
+        final apiClient = ApiClient(baseUrl: 'http://10.0.2.2:8000/api/v1'); // Emulating local testing URL
+        final uploadResponse = await apiClient.upload('/upload/', file);
+        attachmentUrl = uploadResponse['url'] as String?;
+      }
+
       final user = ref.read(authProvider).user!;
       final request = ODRequest(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -258,6 +277,7 @@ class _EnhancedNewOdScreenState extends ConsumerState<EnhancedNewOdScreen> {
         reason: _reasonController.text.trim(),
         status: 'pending',
         staffId: _designatedStaff?.id,
+        attachmentUrl: attachmentUrl,
         createdAt: DateTime.now(),
       );
 
@@ -297,7 +317,10 @@ class _EnhancedNewOdScreenState extends ConsumerState<EnhancedNewOdScreen> {
       });
     } finally {
       if (mounted) {
-        setState(() => _isSubmitting = false);
+        setState(() {
+          _isSubmitting = false;
+          _isUploadingAttachment = false;
+        });
       }
     }
   }
@@ -674,48 +697,112 @@ class _EnhancedNewOdScreenState extends ConsumerState<EnhancedNewOdScreen> {
 
   Widget _buildAttachmentSection() {
     return InkWell(
-      onTap: () {
-        // TODO: Implement file picker
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('File upload feature coming soon'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      },
+      onTap: _pickFile,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+            color: _selectedAttachment != null 
+                ? Theme.of(context).colorScheme.primary 
+                : Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+            width: _selectedAttachment != null ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Column(
-          children: [
-            Icon(
-              MdiIcons.fileUploadOutline,
-              size: 48,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Tap to upload supporting document',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'PDF, JPG, PNG (Max 2MB)',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-              ),
-            ),
-          ],
-        ),
+        child: _isUploadingAttachment
+            ? const Center(child: CircularProgressIndicator())
+            : _selectedAttachment != null
+                ? Row(
+                    children: [
+                      Icon(MdiIcons.fileDocumentOutline, color: Theme.of(context).colorScheme.primary, size: 36),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _selectedAttachment!.name,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              '${(_selectedAttachment!.size / 1024).toStringAsFixed(0)} KB',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => setState(() => _selectedAttachment = null),
+                      ),
+                    ],
+                  )
+                : Column(
+                    children: [
+                      Icon(
+                        MdiIcons.fileUploadOutline,
+                        size: 48,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Tap to upload supporting document',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'PDF, JPG, PNG (Max 5MB)',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ],
+                  ),
       ),
     );
+  }
+
+  Future<void> _pickFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+      );
+
+      if (result != null) {
+        final file = result.files.first;
+        final sizeInMb = file.size / (1024 * 1024);
+        
+        if (sizeInMb > 5) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('File size exceeds 5MB limit.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+
+        setState(() {
+          _selectedAttachment = file;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error picking file: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
