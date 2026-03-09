@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-import 'package:odtrack_academia/features/staff_directory/data/staff_data.dart';
 import 'package:odtrack_academia/features/timetable/data/timetable_data.dart';
 import 'package:odtrack_academia/features/timetable/presentation/widgets/timetable_grid.dart';
-import 'package:odtrack_academia/models/period_slot.dart';
 import 'package:odtrack_academia/models/staff_member.dart';
+import 'package:odtrack_academia/providers/staff_provider.dart';
 
 class StaffTimetableScreen extends ConsumerStatefulWidget {
   final String staffId;
