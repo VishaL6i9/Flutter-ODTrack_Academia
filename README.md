@@ -107,7 +107,8 @@ flutter build appbundle --release
 - [x] **M2: Identity Management**: JWT mapping, dual authentication routing
 - [x] **M3: OD Connectivity**: FastAPI file uploads, SMTP Mocking, Digital Signatures
 - [x] **M4 & M5: System Polishing**: Offline queues, Visual Analytics, Walkthroughs
-- [ ] **M6: Hardening**: Upcoming: Security Pentests, Payload Encrypts, Automatic Tokens
+- [x] **M6: Hardening**: Security Audits, AES-256 Storage Encyptions, Automatic JWT Tokens Refresh
+- [x] **M7: Advanced Features**: FCM Push Notifications properly piped to Staff devices and Student tracking
 
 ## Support & Contributing
 We welcome patches formatting under standard [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). Please submit feature branches mapped against active GitHub Issues. 
