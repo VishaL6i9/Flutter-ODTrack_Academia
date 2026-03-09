@@ -10,7 +10,10 @@ import 'package:logging/logging.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:odtrack_academia/firebase_options.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:odtrack_academia/services/sample_data_service.dart';
 import 'package:odtrack_academia/models/staff_member.dart';
@@ -42,6 +45,17 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  
+  // Initialize Crashlytics
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
+
+  // Initialize Analytics
+  FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
+
   logger.info('Firebase initialized');
 
   await Hive.initFlutter();
