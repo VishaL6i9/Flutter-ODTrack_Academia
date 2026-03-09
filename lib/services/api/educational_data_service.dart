@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:odtrack_academia/models/staff_member.dart';
 import 'package:odtrack_academia/models/timetable.dart';
+import 'package:odtrack_academia/models/period_slot.dart';
 import 'package:odtrack_academia/services/api/api_client.dart';
+import 'package:odtrack_academia/providers/auth_provider.dart';
 
 final educationalDataServiceProvider = Provider<EducationalDataService>((ref) {
   return EducationalDataService(ref.watch(apiClientProvider));
@@ -15,8 +17,8 @@ class EducationalDataService {
   /// Get comprehensive list of all staff members
   Future<List<StaffMember>> getStaff() async {
     final response = await _apiClient.get('/dummy-data/staff');
-    final List<dynamic> staffList = response['staff'] ?? [];
-    return staffList.map((json) => StaffMember.fromJson(json)).toList();
+    final List<dynamic> staffList = (response['staff'] as List? ?? []);
+    return staffList.map((json) => StaffMember.fromJson(json as Map<String, dynamic>)).toList();
   }
 
   /// Get specific staff member by ID
@@ -32,7 +34,7 @@ class EducationalDataService {
     final Map<String, List<PeriodSlot>> schedule = {};
     response.forEach((day, slots) {
       if (slots is List) {
-        schedule[day] = slots.map((s) => PeriodSlot.fromJson(s)).toList();
+        schedule[day] = slots.map((s) => PeriodSlot.fromJson(s as Map<String, dynamic>)).toList();
       }
     });
     return schedule;
@@ -56,7 +58,7 @@ class EducationalDataService {
   /// Get comprehensive list of all departments
   Future<List<dynamic>> getDepartments() async {
     final response = await _apiClient.get('/dummy-data/departments');
-    return response['departments'] ?? [];
+    return (response['departments'] as List? ?? []);
   }
 
   /// Get subjects for a department and year
@@ -71,7 +73,7 @@ class EducationalDataService {
         'year': year.toString(),
       },
     );
-    return response['subjects'] ?? [];
+    return (response['subjects'] as List? ?? []);
   }
 
   /// Get comprehensive academic calendar
