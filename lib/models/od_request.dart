@@ -7,8 +7,11 @@ part 'od_request.g.dart';
 @JsonSerializable()
 class ODRequest {
   @HiveField(0)
+  @JsonKey(name: 'id', fromJson: _idFromJson)
   final String id;
   
+  static String _idFromJson(dynamic id) => id.toString();
+
   @HiveField(1)
   final String studentId;
   
