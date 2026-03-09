@@ -34,4 +34,11 @@ class UserService:
         await db.refresh(db_user)
         return db_user
 
+    async def update_signature(self, db: AsyncSession, user_obj: User, signature_url: str) -> User:
+        user_obj.signature_url = signature_url
+        db.add(user_obj)
+        await db.commit()
+        await db.refresh(user_obj)
+        return user_obj
+
 user_service = UserService()
