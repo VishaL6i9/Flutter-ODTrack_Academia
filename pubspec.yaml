@@ -40,8 +40,8 @@ dependencies:
   dio_smart_retry: ^7.0.1
 
   # File Handling
-  file_picker: ^8.1.2
-  image_picker: ^1.1.2
+  file_picker: ^10.3.10
+  image_picker: ^1.2.1
   path_provider: ^2.1.4
 
   # UI Components
@@ -81,6 +81,7 @@ dependencies:
 
   # Device Information
   device_info_plus: ^10.1.0
+  http_parser: ^4.1.2
 
 
 
