@@ -1,11 +1,12 @@
 from datetime import timedelta
-from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Annotated, Any
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core import security
 from app.api import deps
-from app.schemas.token import Token
+from app.schemas.token import Token, TokenPayload
+from app.schemas.user import User
 from app.services.user_service import user_service
 from app.core.config import get_settings
 from app.core.logging import logger
@@ -33,9 +34,63 @@ async def login_access_token(
     
     logger.info(f"User logged in: {user.email}")
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    
     return {
         "access_token": security.create_access_token(
             user.id, expires_delta=access_token_expires
+        ),
+        "refresh_token": security.create_refresh_token(
+            user.id, expires_delta=refresh_token_expires
+        ),
+        "token_type": "bearer",
+    }
+
+@router.post("/refresh", response_model=Token)
+async def refresh_access_token(
+    db: Annotated[AsyncSession, Depends(deps.get_db)],
+    refresh_token: Annotated[str, Body(embed=True)]
+) -> Any:
+    """
+    Refresh an access token using a valid refresh token.
+    """
+    from jose import jwt, JWTError
+    from app.core.security import ALGORITHM
+    
+    try:
+        payload = jwt.decode(
+            refresh_token, settings.SECRET_KEY, algorithms=[ALGORITHM]
+        )
+        token_data = TokenPayload(**payload)
+        
+        # Verify it's actually a refresh token
+        if not payload.get("refresh"):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token type",
+            )
+            
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+        )
+        
+    user = await user_service.get(db, id=token_data.sub)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    new_refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+
+    return {
+        "access_token": security.create_access_token(
+            user.id, expires_delta=access_token_expires
+        ),
+        "refresh_token": security.create_refresh_token(
+            user.id, expires_delta=new_refresh_token_expires
         ),
         "token_type": "bearer",
     }
