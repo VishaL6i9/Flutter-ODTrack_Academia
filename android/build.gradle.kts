@@ -35,6 +35,19 @@ subprojects {
     project.layout.buildDirectory.set(customBuildDir.resolve(project.name))
 }
 
+// Automatically recreate the build/app junction if it's missing (e.g. after flutter clean)
+val localBuild = file("${project.rootDir}/../build")
+val localAppLink = file("${localBuild.absolutePath}/app")
+if (!localAppLink.exists()) {
+    if (!localBuild.exists()) localBuild.mkdirs()
+    val targetAppDir = file("${customBuildDir.absolutePath}/app")
+    if (!targetAppDir.exists()) targetAppDir.mkdirs()
+    
+    val cmd = arrayOf("cmd", "/c", "mklink /j \"${localAppLink.absolutePath}\" \"${targetAppDir.absolutePath}\"")
+    println("Recreating build/app junction: ${cmd.joinToString(" ")}")
+    ProcessBuilder(*cmd).start().waitFor()
+}
+
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
