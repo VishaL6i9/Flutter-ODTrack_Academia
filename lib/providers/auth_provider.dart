@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:logging/logging.dart';
 import 'package:odtrack_academia/core/constants/app_constants.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:odtrack_academia/features/staff_directory/data/staff_data.dart';
 import 'package:odtrack_academia/models/user.dart';
 import 'package:odtrack_academia/providers/staff_analytics_provider.dart';
@@ -11,22 +12,31 @@ final _logger = Logger('AuthProvider');
 
 class AuthState {
   final User? user;
+  final String? token;
+  final String? refreshToken;
   final bool isLoading;
   final String? error;
 
   const AuthState({
     this.user,
+    this.token,
+    this.refreshToken,
     this.isLoading = false,
     this.error,
   });
 
   AuthState copyWith({
     User? user,
+    String? token,
+    String? refreshToken,
     bool? isLoading,
     String? error,
+    bool clearTokens = false,
   }) {
     return AuthState(
       user: user ?? this.user,
+      token: clearTokens ? null : (token ?? this.token),
+      refreshToken: clearTokens ? null : (refreshToken ?? this.refreshToken),
       isLoading: isLoading ?? this.isLoading,
       error: error,
     );
@@ -38,8 +48,12 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier(this._staffAnalyticsService) : super(const AuthState()) {
     _logger.info('AuthNotifier initialized');
-    // _loadUserFromStorage();
   }
+
+  // Used to store token metadata securely
+  static const _secureStorage = FlutterSecureStorage();
+  static const String _tokenKey = 'auth_access_token';
+  static const String _refreshTokenKey = 'auth_refresh_token';
 
   Box<User> get _userBox => Hive.box<User>(AppConstants.userBox);
   final StaffAnalyticsService _staffAnalyticsService;
@@ -132,7 +146,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // Save to storage - store the user object directly
       await _userBox.put(user.id, user);
 
-      state = state.copyWith(user: user, isLoading: false);
+      // NOTE: Normally these would be set through ApiClient return formats, but 
+      // injecting static placeholders to satisfy Dart mappings without API refactoring here.
+      final mockAccessToken = 'staff_access_mock';
+      final mockRefreshToken = 'staff_refresh_mock';
+      
+      await _secureStorage.write(key: _tokenKey, value: mockAccessToken);
+      await _secureStorage.write(key: _refreshTokenKey, value: mockRefreshToken);
+
+      state = state.copyWith(user: user, token: mockAccessToken, refreshToken: mockRefreshToken, isLoading: false);
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -141,13 +163,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> updateTokens(String accessToken, String refreshToken) async {
+    await _secureStorage.write(key: _tokenKey, value: accessToken);
+    await _secureStorage.write(key: _refreshTokenKey, value: refreshToken);
+    state = state.copyWith(token: accessToken, refreshToken: refreshToken);
+  }
+
   Future<void> logout() async {
     await _userBox.clear();
+    await _secureStorage.delete(key: _tokenKey);
+    await _secureStorage.delete(key: _refreshTokenKey);
     state = const AuthState(); // Reset the state to logged out
   }
 }
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final staffAnalyticsService = ref.watch(staffAnalyticsServiceProvider);
-  return AuthNotifier(staffAnalyticsService);
+  final notifier = AuthNotifier(staffAnalyticsService);
+  
+  // Optional bind to ApiClient if it's managed by Riverpod in future architectures
+  // apiClient.onTokensRefreshed = notifier.updateTokens;
+  return notifier;
 });

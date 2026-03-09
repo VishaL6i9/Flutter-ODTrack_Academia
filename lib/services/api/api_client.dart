@@ -9,20 +9,30 @@ class ApiClient {
   final String baseUrl;
   final Duration timeout;
   String? _authToken;
+  String? _refreshToken; // Track refresh token
 
+  // Dependency injection callback for seamlessly notifying Provider of new token chains
+  final Future<void> Function(String accessToken, String refreshToken)? onTokensRefreshed;
+  
+  // Track refresh state to prevent multiple simultaneous refresh calls
+  bool _isRefreshing = false;
+  
   ApiClient({
     required this.baseUrl,
     this.timeout = const Duration(seconds: 30),
+    this.onTokensRefreshed,
   });
 
-  /// Set authentication token
-  void setAuthToken(String token) {
-    _authToken = token;
+  /// Set authentication tokens
+  void setAuthTokens(String accessToken, String refreshToken) {
+    _authToken = accessToken;
+    _refreshToken = refreshToken;
   }
 
-  /// Clear authentication token
-  void clearAuthToken() {
+  /// Clear authentication tokens
+  void clearAuthTokens() {
     _authToken = null;
+    _refreshToken = null;
   }
 
   /// Get common headers
@@ -49,17 +59,12 @@ class ApiClient {
     Map<String, String>? queryParams,
     Map<String, String>? headers,
   }) async {
-    try {
-      final uri = Uri.parse('$baseUrl$endpoint').replace(queryParameters: queryParams);
-      
-      final response = await http
-          .get(uri, headers: _getHeaders(additionalHeaders: headers))
-          .timeout(timeout);
-
-      return _handleResponse(response);
-    } catch (e) {
-      throw _handleError(e);
-    }
+    final uri = Uri.parse('$baseUrl$endpoint').replace(queryParameters: queryParams);
+    
+    return _executeWithTokenRefresh((resolvedHeaders) async {
+      if (headers != null) resolvedHeaders.addAll(headers);
+      return await http.get(uri, headers: resolvedHeaders).timeout(timeout);
+    });
   }
 
   /// POST request
@@ -68,21 +73,16 @@ class ApiClient {
     Map<String, dynamic>? body,
     Map<String, String>? headers,
   }) async {
-    try {
-      final uri = Uri.parse('$baseUrl$endpoint');
-      
-      final response = await http
-          .post(
-            uri,
-            headers: _getHeaders(additionalHeaders: headers),
-            body: body != null ? jsonEncode(body) : null,
-          )
-          .timeout(timeout);
-
-      return _handleResponse(response);
-    } catch (e) {
-      throw _handleError(e);
-    }
+    final uri = Uri.parse('$baseUrl$endpoint');
+    
+    return _executeWithTokenRefresh((resolvedHeaders) async {
+      if (headers != null) resolvedHeaders.addAll(headers);
+      return await http.post(
+        uri, 
+        headers: resolvedHeaders,
+        body: body != null ? jsonEncode(body) : null,
+      ).timeout(timeout);
+    });
   }
 
   /// PUT request
@@ -91,21 +91,16 @@ class ApiClient {
     Map<String, dynamic>? body,
     Map<String, String>? headers,
   }) async {
-    try {
-      final uri = Uri.parse('$baseUrl$endpoint');
-      
-      final response = await http
-          .put(
-            uri,
-            headers: _getHeaders(additionalHeaders: headers),
-            body: body != null ? jsonEncode(body) : null,
-          )
-          .timeout(timeout);
-
-      return _handleResponse(response);
-    } catch (e) {
-      throw _handleError(e);
-    }
+    final uri = Uri.parse('$baseUrl$endpoint');
+    
+    return _executeWithTokenRefresh((resolvedHeaders) async {
+      if (headers != null) resolvedHeaders.addAll(headers);
+      return await http.put(
+        uri, 
+        headers: resolvedHeaders,
+        body: body != null ? jsonEncode(body) : null,
+      ).timeout(timeout);
+    });
   }
 
   /// DELETE request
@@ -113,17 +108,12 @@ class ApiClient {
     String endpoint, {
     Map<String, String>? headers,
   }) async {
-    try {
-      final uri = Uri.parse('$baseUrl$endpoint');
-      
-      final response = await http
-          .delete(uri, headers: _getHeaders(additionalHeaders: headers))
-          .timeout(timeout);
-
-      return _handleResponse(response);
-    } catch (e) {
-      throw _handleError(e);
-    }
+    final uri = Uri.parse('$baseUrl$endpoint');
+    
+    return _executeWithTokenRefresh((resolvedHeaders) async {
+      if (headers != null) resolvedHeaders.addAll(headers);
+      return await http.delete(uri, headers: resolvedHeaders).timeout(timeout);
+    });
   }
 
   /// Multipart File Upload Form request
@@ -157,6 +147,56 @@ class ApiClient {
       final streamedResponse = await request.send().timeout(timeout);
       final response = await http.Response.fromStream(streamedResponse);
 
+      return _handleResponse(response);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> _executeWithTokenRefresh(
+    Future<http.Response> Function(Map<String, String> headers) requestCall
+  ) async {
+    try {
+      final response = await requestCall(_getHeaders());
+      
+      // If unauthorized and we have a refresh token, try refreshing
+      if (response.statusCode == 401 && _refreshToken != null && !_isRefreshing) {
+        _isRefreshing = true;
+        
+        try {
+          final refreshUri = Uri.parse('$baseUrl/auth/refresh');
+          final refreshResponse = await http.post(
+            refreshUri,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'refresh_token': _refreshToken}),
+          ).timeout(timeout);
+          
+          if (refreshResponse.statusCode == 200) {
+            final data = jsonDecode(refreshResponse.body);
+            final newAccessToken = data['access_token'] as String;
+            final newRefreshToken = data['refresh_token'] as String;
+            
+            // Save the new tokens locally in memory
+            setAuthTokens(newAccessToken, newRefreshToken);
+            
+            // Notify external providers (AuthProvider)
+            if (onTokensRefreshed != null) {
+              await onTokensRefreshed!(newAccessToken, newRefreshToken);
+            }
+            
+            // Re-execute original request with new token
+            final retryResponse = await requestCall(_getHeaders());
+            return _handleResponse(retryResponse);
+          } else {
+            // Refresh token failed/expired
+            clearAuthTokens();
+            throw NetworkError.serverError(401, endpoint: 'Token Expired');
+          }
+        } finally {
+          _isRefreshing = false;
+        }
+      }
+      
       return _handleResponse(response);
     } catch (e) {
       throw _handleError(e);

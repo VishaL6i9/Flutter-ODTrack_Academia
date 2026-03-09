@@ -320,7 +320,7 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
         final signatureUrl = uploadResponse['url'] as String;
 
         // 2. Set the signature to the user's profile
-        apiClient.setAuthToken(ref.read(authProvider).token ?? '');
+        apiClient.setAuthTokens(ref.read(authProvider).token ?? '', ref.read(authProvider).refreshToken ?? '');
         await apiClient.put('/users/me/signature', body: {'signature_url': signatureUrl});
 
         // 3. Refresh user profile (a full implementation would refresh the authProvider)
