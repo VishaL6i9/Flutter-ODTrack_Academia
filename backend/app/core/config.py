@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
+    # Uploads
+    UPLOAD_DIR: str = "uploads"
+    
     # CORS - Specific origins only, no wildcards
     BACKEND_CORS_ORIGINS: list[str] = [
         "http://localhost",
