@@ -8,11 +8,9 @@ import 'package:odtrack_academia/models/user.dart';
 import 'package:odtrack_academia/providers/staff_analytics_provider.dart';
 import 'package:odtrack_academia/services/analytics/staff_analytics_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:odtrack_academia/services/api/api_client.dart';
-import 'dart:convert';
-import 'dart:math';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter/services.dart';
+import 'package:odtrack_academia/services/api/auth_service.dart';
 
 final _logger = Logger('AuthProvider');
 
@@ -56,7 +54,10 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier(this._staffAnalyticsService) : super(const AuthState()) {
+  final AuthService _authService;
+  final StaffAnalyticsService _staffAnalyticsService;
+
+  AuthNotifier(this._authService, this._staffAnalyticsService) : super(const AuthState()) {
     _logger.info('AuthNotifier initialized');
   }
 
@@ -125,22 +126,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     try {
       _logger.info('Student login started for: $registerNumber');
-      // Demo login - simulate API call
-      await Future<void>.delayed(const Duration(seconds: 1));
-
-      // Demo student data - assign section based on register number
-      final sectionSuffix = (registerNumber.hashCode % 2 == 0) ? 'A' : 'B';
-      final user = User(
-        id: 'student_$registerNumber',
-        name: 'Demo Student',
-        email: '$registerNumber@student.edu',
-        role: AppConstants.studentRole,
-        registerNumber: registerNumber,
-        year: '3rd Year',
-        section: 'Computer Science - Section $sectionSuffix',
-        department: 'Computer Science',
-        phone: '+91 9876543210',
-      );
+      // REPLACED: Real API Login
+      final tokens = await _authService.login(registerNumber, dateOfBirth.toIso8601String());
+      final accessToken = tokens['access_token'];
+      final refreshToken = tokens['refresh_token'];
+      
+      // Update tokens in storage and state
+      await updateTokens(accessToken, refreshToken);
+      
+      // Fetch user profile from backend
+      final user = await _authService.getCurrentUser();
 
       // Save to storage - store the user object directly
       await _userBox.put(user.id, user);
@@ -151,17 +146,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
         await messaging.requestPermission();
         final fcmToken = await messaging.getToken();
         if (fcmToken != null) {
-          final apiClient = ApiClient(baseUrl: AppConstants.baseUrl);
-          // In real API, these tokens would be dynamically injected by the return mapping
-          apiClient.setAuthTokens(_generateSecureToken(), _generateSecureToken());
-          await apiClient.patch('/users/me/fcm-token', body: {'fcm_token': fcmToken});
+          await _authService.updateFcmToken(fcmToken);
         }
       } catch (e) {
         _logger.warning('Failed to register FCM token dynamically: $e');
       }
 
       _logger.info('Student login successful, user set');
-      state = state.copyWith(user: user, isLoading: false, isBiometricVerified: true);
+      state = state.copyWith(user: user, token: accessToken, refreshToken: refreshToken, isLoading: false, isBiometricVerified: true);
     } catch (e) {
       _logger.severe('Student login failed: $e');
       state = state.copyWith(
@@ -175,63 +167,37 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      // Demo login - simulate API call
-      await Future<void>.delayed(const Duration(seconds: 1));
-      await _staffAnalyticsService.initialize();
-
-      // Find staff by email
-      final staffMember = await _staffAnalyticsService.findStaffByEmail(email);
-
-      User user;
-      if (staffMember != null) {
-        // Use existing staff data
-        user = User(
-          id: staffMember.id,
-          name: staffMember.name,
-          email: staffMember.email,
-          role: AppConstants.staffRole,
-          department: staffMember.department,
-          phone: staffMember.phone,
-        );
-      } else {
-        // Fallback to the first staff member in the hardcoded list
-        final fallbackStaff = StaffData.allStaff.first;
-        user = User(
-          id: fallbackStaff.id,
-          name: fallbackStaff.name,
-          email: email, // Keep the entered email
-          role: AppConstants.staffRole,
-          department: fallbackStaff.department,
-          phone: fallbackStaff.phone,
-        );
-      }
+      // REPLACED: Real API Login
+      final tokens = await _authService.login(email, password);
+      final accessToken = tokens['access_token'];
+      final refreshToken = tokens['refresh_token'];
+      
+      // Update tokens in storage and state
+      await updateTokens(accessToken, refreshToken);
+      
+      // Fetch user profile from backend
+      final user = await _authService.getCurrentUser();
 
       // Save to storage - store the user object directly
       await _userBox.put(user.id, user);
 
       // NOTE: Normally these would be set through ApiClient return formats, but 
       // injecting secure placeholders to satisfy Dart mappings without API refactoring here.
-      final mockAccessToken = _generateSecureToken();
-      final mockRefreshToken = _generateSecureToken();
+      // Removed mock token generation as real tokens are now used.
       
-      await _secureStorage.write(key: _tokenKey, value: mockAccessToken);
-      await _secureStorage.write(key: _refreshTokenKey, value: mockRefreshToken);
-
       // FCM Token Registration
       try {
         final messaging = FirebaseMessaging.instance;
         await messaging.requestPermission();
         final fcmToken = await messaging.getToken();
         if (fcmToken != null) {
-          final apiClient = ApiClient(baseUrl: AppConstants.baseUrl);
-          apiClient.setAuthTokens(mockAccessToken, mockRefreshToken);
-          await apiClient.patch('/users/me/fcm-token', body: {'fcm_token': fcmToken});
+          await _authService.updateFcmToken(fcmToken);
         }
       } catch (e) {
         _logger.warning('Failed to register FCM token dynamically: $e');
       }
 
-      state = state.copyWith(user: user, token: mockAccessToken, refreshToken: mockRefreshToken, isLoading: false, isBiometricVerified: true);
+      state = state.copyWith(user: user, token: accessToken, refreshToken: refreshToken, isLoading: false, isBiometricVerified: true);
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -254,11 +220,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 }
 
+final apiClientProvider = Provider<ApiClient>((ref) {
+  return ApiClient(baseUrl: AppConstants.baseUrl);
+});
+
+final authServiceProvider = Provider<AuthService>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return AuthService(apiClient);
+});
+
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+  final authService = ref.watch(authServiceProvider);
   final staffAnalyticsService = ref.watch(staffAnalyticsServiceProvider);
-  final notifier = AuthNotifier(staffAnalyticsService);
+  final notifier = AuthNotifier(authService, staffAnalyticsService);
   
-  // Optional bind to ApiClient if it's managed by Riverpod in future architectures
-  // apiClient.onTokensRefreshed = notifier.updateTokens;
+  // Bind token refresh
+  ref.watch(apiClientProvider).onTokensRefreshed = notifier.updateTokens;
   return notifier;
 });
