@@ -11,10 +11,11 @@ import 'package:odtrack_academia/providers/calendar_provider.dart';
 import 'package:odtrack_academia/providers/od_request_provider.dart';
 import 'package:odtrack_academia/services/calendar/calendar_service.dart';
 import 'package:odtrack_academia/services/calendar/calendar_sync_service.dart';
+import 'package:odtrack_academia/services/api/od_api_service.dart';
 
 import 'calendar_integration_test.mocks.dart';
 
-@GenerateMocks([CalendarService])
+@GenerateMocks([CalendarService, ODApiService])
 void main() {
   group('Calendar Integration Tests', () {
     late MockCalendarService mockCalendarService;
@@ -149,7 +150,7 @@ void main() {
             overrides: [
               calendarServiceProvider.overrideWithValue(mockCalendarService),
               odRequestProvider.overrideWith((ref) {
-                final notifier = ODRequestNotifier();
+                final notifier = ODRequestNotifier(MockODApiService());
                 notifier.state = [
                   _createTestODRequest('req1', true),
                   _createTestODRequest('req2', true),
