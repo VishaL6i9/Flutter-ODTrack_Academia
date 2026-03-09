@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:odtrack_academia/core/errors/base_error.dart';
 
 /// HTTP client for API communication
@@ -117,6 +119,43 @@ class ApiClient {
       final response = await http
           .delete(uri, headers: _getHeaders(additionalHeaders: headers))
           .timeout(timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Multipart File Upload Form request
+  Future<Map<String, dynamic>> upload(
+    String endpoint, 
+    File file, {
+    String fileField = 'file',
+    String? mediaType,
+    Map<String, String>? headers,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl$endpoint');
+      
+      final request = http.MultipartRequest('POST', uri)
+        ..headers.addAll(_getHeaders(additionalHeaders: headers));
+
+      // Remove content-type to let framework set boundary correctly for multipart
+      request.headers.remove('Content-Type');
+
+      final mimeTypeData = mediaType != null ? mediaType.split('/') : ['application', 'octet-stream'];
+      var type = MediaType(mimeTypeData[0], mimeTypeData.length > 1 ? mimeTypeData[1] : 'octet-stream');
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          fileField,
+          file.path,
+          contentType: type,
+        ),
+      );
+
+      final streamedResponse = await request.send().timeout(timeout);
+      final response = await http.Response.fromStream(streamedResponse);
 
       return _handleResponse(response);
     } catch (e) {
