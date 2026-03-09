@@ -8,6 +8,9 @@ import 'package:odtrack_academia/core/services/service_registry.dart';
 import 'dart:io';
 import 'package:logging/logging.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:odtrack_academia/firebase_options.dart';
 
 import 'package:odtrack_academia/services/sample_data_service.dart';
 import 'package:odtrack_academia/models/staff_member.dart';
@@ -34,6 +37,12 @@ void main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
   logger.info('WidgetsFlutterBinding initialized');
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  logger.info('Firebase initialized');
 
   await Hive.initFlutter();
   logger.info('Hive initialized');
@@ -86,4 +95,14 @@ Future<void> _logAndroidVersion() async {
   } else {
     logger.info('Not running on Android platform');
   }
+}
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // If you're going to use other Firebase services in the background, such as Firestore,
+  // make sure you call `initializeApp` before using other Firebase services.
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  debugPrint("Handling a background message: ${message.messageId}");
 }

@@ -103,6 +103,24 @@ class ApiClient {
     });
   }
 
+  /// PATCH request
+  Future<Map<String, dynamic>> patch(
+    String endpoint, {
+    Map<String, dynamic>? body,
+    Map<String, String>? headers,
+  }) async {
+    final uri = Uri.parse('$baseUrl$endpoint');
+    
+    return _executeWithTokenRefresh((resolvedHeaders) async {
+      if (headers != null) resolvedHeaders.addAll(headers);
+      return await http.patch(
+        uri, 
+        headers: resolvedHeaders,
+        body: body != null ? jsonEncode(body) : null,
+      ).timeout(timeout);
+    });
+  }
+
   /// DELETE request
   Future<Map<String, dynamic>> delete(
     String endpoint, {

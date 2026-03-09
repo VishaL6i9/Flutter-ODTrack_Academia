@@ -7,6 +7,8 @@ import 'package:odtrack_academia/features/staff_directory/data/staff_data.dart';
 import 'package:odtrack_academia/models/user.dart';
 import 'package:odtrack_academia/providers/staff_analytics_provider.dart';
 import 'package:odtrack_academia/services/analytics/staff_analytics_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:odtrack_academia/services/api/api_client.dart';
 
 final _logger = Logger('AuthProvider');
 
@@ -97,6 +99,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // Save to storage - store the user object directly
       await _userBox.put(user.id, user);
 
+      // FCM Token Registration
+      try {
+        final messaging = FirebaseMessaging.instance;
+        await messaging.requestPermission();
+        final fcmToken = await messaging.getToken();
+        if (fcmToken != null) {
+          final apiClient = ApiClient(baseUrl: AppConstants.baseUrl);
+          // In real API, these tokens would be dynamically injected by the return mapping
+          apiClient.setAuthTokens('student_access_mock', 'student_refresh_mock');
+          await apiClient.patch('/users/me/fcm-token', body: {'fcm_token': fcmToken});
+        }
+      } catch (e) {
+        _logger.warning('Failed to register FCM token dynamically: $e');
+      }
+
       _logger.info('Student login successful, user set');
       state = state.copyWith(user: user, isLoading: false);
     } catch (e) {
@@ -153,6 +170,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
       
       await _secureStorage.write(key: _tokenKey, value: mockAccessToken);
       await _secureStorage.write(key: _refreshTokenKey, value: mockRefreshToken);
+
+      // FCM Token Registration
+      try {
+        final messaging = FirebaseMessaging.instance;
+        await messaging.requestPermission();
+        final fcmToken = await messaging.getToken();
+        if (fcmToken != null) {
+          final apiClient = ApiClient(baseUrl: AppConstants.baseUrl);
+          apiClient.setAuthTokens(mockAccessToken, mockRefreshToken);
+          await apiClient.patch('/users/me/fcm-token', body: {'fcm_token': fcmToken});
+        }
+      } catch (e) {
+        _logger.warning('Failed to register FCM token dynamically: $e');
+      }
 
       state = state.copyWith(user: user, token: mockAccessToken, refreshToken: mockRefreshToken, isLoading: false);
     } catch (e) {
