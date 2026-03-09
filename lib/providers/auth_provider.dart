@@ -3,13 +3,12 @@ import 'package:hive/hive.dart';
 import 'package:logging/logging.dart';
 import 'package:odtrack_academia/core/constants/app_constants.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:odtrack_academia/features/staff_directory/data/staff_data.dart';
 import 'package:odtrack_academia/models/user.dart';
 import 'package:odtrack_academia/providers/staff_analytics_provider.dart';
-import 'package:odtrack_academia/services/analytics/staff_analytics_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter/services.dart';
+import 'package:odtrack_academia/services/api/api_client.dart';
 import 'package:odtrack_academia/services/api/auth_service.dart';
 
 final _logger = Logger('AuthProvider');
@@ -55,9 +54,7 @@ class AuthState {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
-  final StaffAnalyticsService _staffAnalyticsService;
-
-  AuthNotifier(this._authService, this._staffAnalyticsService) : super(const AuthState()) {
+  AuthNotifier(this._authService, _) : super(const AuthState()) {
     _logger.info('AuthNotifier initialized');
   }
 
@@ -67,13 +64,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   static const String _refreshTokenKey = 'auth_refresh_token';
 
   Box<User> get _userBox => Hive.box<User>(AppConstants.userBox);
-  final StaffAnalyticsService _staffAnalyticsService;
 
-  String _generateSecureToken() {
-    final random = Random.secure();
-    final values = List<int>.generate(32, (i) => random.nextInt(256));
-    return base64UrlEncode(values);
-  }
+  // Placeholder removed as real tokens are now used.
 
   // Future<void> _loadUserFromStorage() async {
   //   try {
@@ -128,8 +120,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       _logger.info('Student login started for: $registerNumber');
       // REPLACED: Real API Login
       final tokens = await _authService.login(registerNumber, dateOfBirth.toIso8601String());
-      final accessToken = tokens['access_token'];
-      final refreshToken = tokens['refresh_token'];
+      final accessToken = tokens['access_token'] as String;
+      final refreshToken = tokens['refresh_token'] as String;
       
       // Update tokens in storage and state
       await updateTokens(accessToken, refreshToken);
@@ -153,7 +145,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
 
       _logger.info('Student login successful, user set');
-      state = state.copyWith(user: user, token: accessToken, refreshToken: refreshToken, isLoading: false, isBiometricVerified: true);
+      state = state.copyWith(user: user, token: accessToken as String?, refreshToken: refreshToken as String?, isLoading: false, isBiometricVerified: true);
     } catch (e) {
       _logger.severe('Student login failed: $e');
       state = state.copyWith(
@@ -169,8 +161,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       // REPLACED: Real API Login
       final tokens = await _authService.login(email, password);
-      final accessToken = tokens['access_token'];
-      final refreshToken = tokens['refresh_token'];
+      final accessToken = tokens['access_token'] as String;
+      final refreshToken = tokens['refresh_token'] as String;
       
       // Update tokens in storage and state
       await updateTokens(accessToken, refreshToken);
@@ -197,7 +189,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         _logger.warning('Failed to register FCM token dynamically: $e');
       }
 
-      state = state.copyWith(user: user, token: accessToken, refreshToken: refreshToken, isLoading: false, isBiometricVerified: true);
+      state = state.copyWith(user: user, token: accessToken as String?, refreshToken: refreshToken as String?, isLoading: false, isBiometricVerified: true);
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -235,6 +227,6 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final notifier = AuthNotifier(authService, staffAnalyticsService);
   
   // Bind token refresh
-  ref.watch(apiClientProvider).onTokensRefreshed = notifier.updateTokens;
+  ref.watch(apiClientProvider).onTokensRefreshed = (access, refresh) => notifier.updateTokens(access, refresh);
   return notifier;
 });
