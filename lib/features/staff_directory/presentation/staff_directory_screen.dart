@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-import 'package:odtrack_academia/features/staff_directory/data/staff_data.dart';
 import 'package:odtrack_academia/features/timetable/presentation/staff_timetable_screen.dart';
 import 'package:odtrack_academia/models/staff_member.dart';
+import 'package:odtrack_academia/providers/staff_provider.dart';
 
 class StaffDirectoryScreen extends ConsumerStatefulWidget {
   final String? preFilterStaffId; // Optional parameter to pre-filter to specific staff
@@ -20,8 +20,9 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
   bool _isPreFiltered = false;
   late TextEditingController _searchController;
 
-  List<String> get _departments {
-    final departments = StaffData.allStaff.map((staff) => staff.department).toSet().toList();
+  List<String> getDepartments(List<StaffMember> staffList) {
+    final departments = staffList.map((staff) => staff.department).toSet().toList();
+    departments.sort();
     departments.insert(0, 'All');
     return departments;
   }
@@ -31,20 +32,7 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
     super.initState();
     _searchController = TextEditingController();
     
-    // If pre-filtering to a specific staff member, set up the search
-    if (widget.preFilterStaffId != null) {
-      try {
-        final staff = StaffData.allStaff.firstWhere(
-          (s) => s.id == widget.preFilterStaffId,
-        );
-        _searchQuery = staff.name;
-        _searchController.text = staff.name;
-        _selectedDepartment = staff.department;
-        _isPreFiltered = true;
-      } catch (e) {
-        _isPreFiltered = false;
-      }
-    }
+    // Pre-filtering logic moved to build or data handling
   }
 
   @override
@@ -53,13 +41,13 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
     super.dispose();
   }
 
-  List<StaffMember> get _filteredStaff {
+  List<StaffMember> getFilteredStaff(List<StaffMember> staffList) {
     // If pre-filtered, show only the specific staff member initially
     if (_isPreFiltered && widget.preFilterStaffId != null) {
-      return StaffData.allStaff.where((staff) => staff.id == widget.preFilterStaffId).toList();
+      return staffList.where((staff) => staff.id == widget.preFilterStaffId).toList();
     }
     
-    return StaffData.allStaff.where((staff) {
+    return staffList.where((staff) {
       final matchesSearch = staff.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           staff.subject.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           staff.department.toLowerCase().contains(_searchQuery.toLowerCase());
@@ -73,6 +61,8 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final staffAsync = ref.watch(staffProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Staff Directory'),
@@ -92,20 +82,64 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
               style: TextStyle(color: Colors.white),
             ),
           ),
-        ] : null,
-      ),
-      body: Column(
-        children: [
-          _buildSearchAndFilter(),
-          Expanded(
-            child: _buildStaffList(),
+        ] : [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => ref.read(staffProvider.notifier).fetchStaff(),
           ),
         ],
+      ),
+      body: staffAsync.when(
+        data: (staffList) {
+          // Initialize pre-filter if needed and not already done
+          if (widget.preFilterStaffId != null && _searchQuery.isEmpty && !_isPreFiltered && _selectedDepartment == 'All') {
+            try {
+              final staff = staffList.firstWhere((s) => s.id == widget.preFilterStaffId);
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  setState(() {
+                    _searchQuery = staff.name;
+                    _searchController.text = staff.name;
+                    _selectedDepartment = staff.department;
+                    _isPreFiltered = true;
+                  });
+                }
+              });
+            } catch (_) {}
+          }
+
+          final filteredStaff = getFilteredStaff(staffList);
+          final departments = getDepartments(staffList);
+
+          return Column(
+            children: [
+              _buildSearchAndFilter(departments),
+              Expanded(
+                child: _buildStaffList(filteredStaff),
+              ),
+            ],
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              Text('Error: $err'),
+              ElevatedButton(
+                onPressed: () => ref.read(staffProvider.notifier).fetchStaff(),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildSearchAndFilter() {
+  Widget _buildSearchAndFilter(List<String> departments) {
     return Container(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -135,9 +169,9 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
               const Text('Department: ', style: TextStyle(fontWeight: FontWeight.w500)),
               Expanded(
                 child: DropdownButton<String>(
-                  value: _selectedDepartment,
+                  value: departments.contains(_selectedDepartment) ? _selectedDepartment : 'All',
                   isExpanded: true,
-                  items: _departments.map((dept) {
+                  items: departments.map((dept) {
                     return DropdownMenuItem(
                       value: dept,
                       child: Text(dept),
@@ -161,9 +195,7 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
     );
   }
 
-  Widget _buildStaffList() {
-    final filteredStaff = _filteredStaff;
-
+  Widget _buildStaffList(List<StaffMember> filteredStaff) {
     if (filteredStaff.isEmpty) {
       return const Center(
         child: Column(
