@@ -6,6 +6,8 @@ from app.models.user import User
 from app.schemas.od_request import ODRequestCreate, ODRequestUpdate
 from datetime import datetime, timezone
 from app.core.enums import ODStatus
+from app.services.email_service import email_service
+from app.core.enums import UserRole
 
 class ODService:
     async def get(self, db: AsyncSession, id: int) -> ODRequest | None:
@@ -48,6 +50,18 @@ class ODService:
         db.add(db_obj)
         await db.commit()
         await db.refresh(db_obj)
+        
+        # Load the student to get the name/details for email
+        student = await db.execute(select(User).where(User.id == student_id))
+        student_obj = student.scalars().first()
+        
+        # Get appropriate staff to notify (simplification: all staff/admins, this should be scoped in prod to coordinators/mentors)
+        staff_query = await db.execute(select(User).where(User.role.in_([UserRole.STAFF, UserRole.ADMIN, UserRole.SUPERUSER])))
+        staff_list = staff_query.scalars().all()
+        
+        if student_obj:
+             await email_service.send_od_submission_email(student=student_obj, od_request=db_obj, staff=staff_list)
+        
         return db_obj
 
     async def update_status(
@@ -65,6 +79,14 @@ class ODService:
         db.add(db_obj)
         await db.commit()
         await db.refresh(db_obj)
+        
+        # Reload relation if needed
+        full_obj_result = await db.execute(select(ODRequest).options(selectinload(ODRequest.student)).where(ODRequest.id == db_obj.id))
+        full_obj = full_obj_result.scalars().first()
+        
+        if full_obj.student:
+            await email_service.send_od_status_update_email(student=full_obj.student, od_request=full_obj)
+            
         return db_obj
 
     async def get_all(self, db: AsyncSession, skip: int = 0, limit: int = 100) -> list[ODRequest]:
