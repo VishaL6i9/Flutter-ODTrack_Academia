@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:odtrack_academia/models/staff_member.dart';
 import 'package:odtrack_academia/services/api/educational_data_service.dart';
+import 'package:odtrack_academia/models/period_slot.dart';
 
 final staffProvider = StateNotifierProvider<StaffNotifier, AsyncValue<List<StaffMember>>>((ref) {
   return StaffNotifier(ref.watch(educationalDataServiceProvider));
