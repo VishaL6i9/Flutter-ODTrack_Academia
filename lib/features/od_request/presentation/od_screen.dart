@@ -11,8 +11,11 @@ import 'package:odtrack_academia/features/staff_directory/presentation/staff_dir
 import 'package:odtrack_academia/features/timetable/data/timetable_data.dart';
 import 'package:odtrack_academia/models/od_request.dart';
 import 'package:odtrack_academia/models/staff_member.dart';
+import 'package:odtrack_academia/models/timetable.dart';
 import 'package:odtrack_academia/providers/od_request_provider.dart';
 import 'package:odtrack_academia/providers/auth_provider.dart';
+import 'package:odtrack_academia/providers/staff_provider.dart';
+import 'package:odtrack_academia/providers/timetable_provider.dart';
 import 'package:odtrack_academia/shared/widgets/form.dart';
 import 'package:odtrack_academia/shared/widgets/form_field.dart';
 import 'package:odtrack_academia/shared/widgets/error_dialog.dart';
@@ -58,7 +61,7 @@ class _EnhancedNewOdScreenState extends ConsumerState<EnhancedNewOdScreen> {
     super.dispose();
   }
 
-  void _updateDesignatedStaff() {
+  Future<void> _updateDesignatedStaff() async {
     if (_selectedDate == null || _selectedPeriod == null) {
       setState(() => _designatedStaff = null);
       return;
@@ -72,40 +75,46 @@ class _EnhancedNewOdScreenState extends ConsumerState<EnhancedNewOdScreen> {
       return;
     }
 
-    final day = TimetableData.days[_selectedDate!.weekday - 1];
+    final staffAsync = ref.read(staffProvider);
     final user = ref.read(authProvider).user!;
     
-    // Find the student's exact timetable by matching both year and section
-    final studentTimetable = TimetableData.allTimetables.firstWhere(
-      (t) => t.year == user.year && t.section == user.section,
-      orElse: () => TimetableData.allTimetables.firstWhere(
-        (t) => t.year == user.year,
-        orElse: () => TimetableData.allTimetables.first,
-      ),
-    );
+    if (user.section == null || user.year == null) return;
 
-    final schedule = studentTimetable.schedule[day];
-    if (schedule != null && schedule.length >= _selectedPeriod!) {
-      final slot = schedule[_selectedPeriod! - 1];
-      if (slot.staffId != null) {
-        try {
-          final staff = StaffData.allStaff.firstWhere((s) => s.id == slot.staffId);
-          setState(() {
-            _designatedStaff = staff;
-          });
-          
-          _showStaffFoundSuccess(staff, slot.subject);
-        } catch (e) {
+    try {
+      // Fetch student's timetable from API
+      final Timetable studentTimetable = await ref.read(
+        timetableProvider((section: user.section!, year: user.year!)).future
+      );
+
+      staffAsync.whenData((staffList) {
+        final day = TimetableData.days[_selectedDate!.weekday - 1];
+        final schedule = studentTimetable.schedule[day];
+        
+        if (schedule != null && schedule.length >= _selectedPeriod!) {
+          final slot = schedule[_selectedPeriod! - 1];
+          if (slot.staffId != null) {
+            try {
+              final staff = staffList.firstWhere((s) => s.id == slot.staffId);
+              setState(() {
+                _designatedStaff = staff;
+              });
+              _showStaffFoundSuccess(staff, slot.subject);
+            } catch (e) {
+              setState(() => _designatedStaff = null);
+              _showNoStaffWarning(slot.subject);
+            }
+          } else {
+            setState(() => _designatedStaff = null);
+            _showNoStaffWarning(slot.subject);
+          }
+        } else {
           setState(() => _designatedStaff = null);
-          _showNoStaffWarning(slot.subject);
+          _showNoStaffWarning('Free');
         }
-      } else {
-        setState(() => _designatedStaff = null);
-        _showNoStaffWarning(slot.subject);
-      }
-    } else {
+      });
+    } catch (e) {
+      debugPrint('Error fetching timetable in ODScreen: $e');
       setState(() => _designatedStaff = null);
-      _showNoStaffWarning('Free');
     }
   }
 
@@ -464,157 +473,164 @@ class _EnhancedNewOdScreenState extends ConsumerState<EnhancedNewOdScreen> {
   Widget _buildStaffSelection() {
     final user = ref.read(authProvider).user!;
     final studentYear = user.year;
-    
-    final filteredStaff = StaffData.allStaff.where((s) {
-      final matchesYear = studentYear == null || s.years.contains(studentYear);
-      final matchesSearch = s.name.toLowerCase().contains(_staffSearchQuery.toLowerCase()) ||
-          s.subject.toLowerCase().contains(_staffSearchQuery.toLowerCase());
-      return matchesYear && matchesSearch;
-    }).toList();
+    final staffAsync = ref.watch(staffProvider);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (_designatedStaff != null) ...[
-          _buildStaffInfoCard(),
-          const SizedBox(height: 12),
-          Center(
-            child: TextButton.icon(
-              onPressed: () => setState(() {
-                _designatedStaff = null;
-                _staffSearchQuery = '';
-                _staffSearchController.clear();
-              }),
-              icon: const Icon(Icons.refresh, size: 16),
-              label: const Text('Change Staff'),
-            ),
-          ),
-        ] else ...[
-          TextField(
-            controller: _staffSearchController,
-            decoration: InputDecoration(
-              hintText: 'Search staff by name or subject...',
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              suffixIcon: _staffSearchQuery.isNotEmpty 
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _staffSearchController.clear();
-                        setState(() => _staffSearchQuery = '');
-                      },
-                    )
-                  : null,
-            ),
-            onChanged: (value) => setState(() => _staffSearchQuery = value),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Showing staff for Grade: ${studentYear ?? "All"}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 8),
-          Material(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-            clipBehavior: Clip.antiAlias,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Theme.of(context).dividerColor),
-            ),
-            child: SizedBox(
-              height: 200,
-              child: filteredStaff.isEmpty
-                  ? const Center(child: Text('No matching staff found'))
-                  : ListView.separated(
-                      padding: EdgeInsets.zero,
-                      physics: const ClampingScrollPhysics(),
-                      itemCount: filteredStaff.length,
-                      separatorBuilder: (context, index) => Divider(
-                        height: 1,
-                        indent: 56,
-                        color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
-                      ),
-                      itemBuilder: (context, index) {
-                        final staff = filteredStaff[index];
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                          leading: CircleAvatar(
-                            radius: 20,
-                            backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                            child: Text(
-                              staff.name[0],
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+    return staffAsync.when(
+      data: (staffList) {
+        final filteredStaff = staffList.where((s) {
+          final matchesYear = studentYear == null || s.years.contains(studentYear);
+          final matchesSearch = s.name.toLowerCase().contains(_staffSearchQuery.toLowerCase()) ||
+              s.subject.toLowerCase().contains(_staffSearchQuery.toLowerCase());
+          return matchesYear && matchesSearch;
+        }).toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (_designatedStaff != null) ...[
+              _buildStaffInfoCard(),
+              const SizedBox(height: 12),
+              Center(
+                child: TextButton.icon(
+                  onPressed: () => setState(() {
+                    _designatedStaff = null;
+                    _staffSearchQuery = '';
+                    _staffSearchController.clear();
+                  }),
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Change Staff'),
+                ),
+              ),
+            ] else ...[
+              TextField(
+                controller: _staffSearchController,
+                decoration: InputDecoration(
+                  hintText: 'Search staff by name or subject...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  suffixIcon: _staffSearchQuery.isNotEmpty 
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _staffSearchController.clear();
+                            setState(() => _staffSearchQuery = '');
+                          },
+                        )
+                      : null,
+                ),
+                onChanged: (value) => setState(() => _staffSearchQuery = value),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Showing staff for Grade: ${studentYear ?? "All"}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 8),
+              Material(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                clipBehavior: Clip.antiAlias,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Theme.of(context).dividerColor),
+                ),
+                child: SizedBox(
+                  height: 200,
+                  child: filteredStaff.isEmpty
+                      ? const Center(child: Text('No matching staff found'))
+                      : ListView.separated(
+                          padding: EdgeInsets.zero,
+                          physics: const ClampingScrollPhysics(),
+                          itemCount: filteredStaff.length,
+                          separatorBuilder: (context, index) => Divider(
+                            height: 1,
+                            indent: 56,
+                            color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                           ),
-                          title: Text(
-                            staff.name,
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(staff.subject, style: Theme.of(context).textTheme.bodySmall),
-                              const SizedBox(height: 2),
-                              Row(
-                                children: [
-                                  Text(
-                                    staff.department, 
-                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
-                                    ),
+                          itemBuilder: (context, index) {
+                            final staff = filteredStaff[index];
+                            return ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                              leading: CircleAvatar(
+                                radius: 20,
+                                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                                child: Text(
+                                  staff.name[0],
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  // Contextual flairs for coordinators
-                                  Builder(
-                                    builder: (context) {
-                                      final isStudentYC = staff.isYearCoordinator && 
-                                          staff.coordinatedYears.contains(studentYear);
-                                      final isStudentCC = staff.isClassCoordinator && 
-                                          staff.coordinatedSections.any((s) => 
-                                              s.contains(user.department ?? '') && 
-                                              s.contains('Section ${user.section ?? ''}')
-                                          );
+                                ),
+                              ),
+                              title: Text(
+                                staff.name,
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(staff.subject, style: Theme.of(context).textTheme.bodySmall),
+                                  const SizedBox(height: 2),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        staff.department, 
+                                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+                                        ),
+                                      ),
+                                      // Contextual flairs for coordinators
+                                      Builder(
+                                        builder: (context) {
+                                          final isStudentYC = staff.isYearCoordinator && 
+                                              staff.coordinatedYears.contains(studentYear);
+                                          final isStudentCC = staff.isClassCoordinator && 
+                                              staff.coordinatedSections.any((s) => 
+                                                  s.contains(user.department ?? '') && 
+                                                  s.contains('Section ${user.section ?? ''}')
+                                              );
 
-                                      if (isStudentYC || isStudentCC) {
-                                        return Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const SizedBox(width: 8),
-                                            if (isStudentYC)
-                                              _buildFlair('YC', Colors.orange, 'Year Coordinator'),
-                                            if (isStudentYC && isStudentCC)
-                                              const SizedBox(width: 4),
-                                            if (isStudentCC)
-                                              _buildFlair('CC', Colors.blue, 'Class Coordinator'),
-                                          ],
-                                        );
-                                      }
-                                      return const SizedBox.shrink();
-                                    },
+                                          if (isStudentYC || isStudentCC) {
+                                            return Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const SizedBox(width: 8),
+                                                if (isStudentYC)
+                                                  _buildFlair('YC', Colors.orange, 'Year Coordinator'),
+                                                if (isStudentYC && isStudentCC)
+                                                  const SizedBox(width: 4),
+                                                if (isStudentCC)
+                                                  _buildFlair('CC', Colors.blue, 'Class Coordinator'),
+                                              ],
+                                            );
+                                          }
+                                          return const SizedBox.shrink();
+                                        },
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                          trailing: Icon(
-                            Icons.chevron_right,
-                            size: 18,
-                            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
-                          ),
-                          onTap: () => setState(() {
-                            _designatedStaff = staff;
-                          }),
-                        );
-                      },
-                    ),
-            ),
-          ),
-        ],
-      ],
+                              trailing: Icon(
+                                Icons.chevron_right,
+                                size: 18,
+                                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+                              ),
+                              onTap: () => setState(() {
+                                _designatedStaff = staff;
+                              }),
+                            );
+                          },
+                        ),
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) => Center(child: Text('Error loading staff: $err')),
     );
   }
 
