@@ -77,10 +77,18 @@ class ApiClient {
     
     return _executeWithTokenRefresh((resolvedHeaders) async {
       if (headers != null) resolvedHeaders.addAll(headers);
+      
+      Object? finalBody;
+      if (resolvedHeaders['Content-Type'] == 'application/json' && body != null) {
+        finalBody = jsonEncode(body);
+      } else {
+        finalBody = body;
+      }
+
       return await http.post(
         uri, 
         headers: resolvedHeaders,
-        body: body != null ? jsonEncode(body) : null,
+        body: finalBody,
       ).timeout(timeout);
     });
   }
@@ -95,10 +103,18 @@ class ApiClient {
     
     return _executeWithTokenRefresh((resolvedHeaders) async {
       if (headers != null) resolvedHeaders.addAll(headers);
+      
+      Object? finalBody;
+      if (resolvedHeaders['Content-Type'] == 'application/json' && body != null) {
+        finalBody = jsonEncode(body);
+      } else {
+        finalBody = body;
+      }
+
       return await http.put(
         uri, 
         headers: resolvedHeaders,
-        body: body != null ? jsonEncode(body) : null,
+        body: finalBody,
       ).timeout(timeout);
     });
   }
@@ -113,10 +129,18 @@ class ApiClient {
     
     return _executeWithTokenRefresh((resolvedHeaders) async {
       if (headers != null) resolvedHeaders.addAll(headers);
+      
+      Object? finalBody;
+      if (resolvedHeaders['Content-Type'] == 'application/json' && body != null) {
+        finalBody = jsonEncode(body);
+      } else {
+        finalBody = body;
+      }
+
       return await http.patch(
         uri, 
         headers: resolvedHeaders,
-        body: body != null ? jsonEncode(body) : null,
+        body: finalBody,
       ).timeout(timeout);
     });
   }
