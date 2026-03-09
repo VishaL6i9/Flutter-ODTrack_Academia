@@ -5,6 +5,7 @@ import 'package:logging/logging.dart';
 import 'package:odtrack_academia/core/constants/app_constants.dart';
 import 'package:odtrack_academia/core/navigation/navigation_service.dart';
 import 'package:odtrack_academia/features/auth/presentation/login_screen.dart';
+import 'package:odtrack_academia/features/auth/presentation/biometric_unlock_screen.dart';
 import 'package:odtrack_academia/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:odtrack_academia/features/od_request/presentation/od_screen.dart';
 import 'package:odtrack_academia/features/od_request/presentation/student_od_management_screen.dart';
@@ -224,8 +225,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: AppConstants.permissionsRoute,
     redirect: (context, state) {
       final isAuthenticated = authState.isAuthenticated;
+      final isBiometricVerified = authState.isBiometricVerified;
+      
       final isLoginRoute = state.matchedLocation == AppConstants.loginRoute;
       final isPermissionsRoute = state.matchedLocation == AppConstants.permissionsRoute;
+      final isBiometricRoute = state.matchedLocation == AppConstants.biometricRoute;
       
       _logger.info('=== REDIRECT CHECK ===');
       _logger.info('Current Location: ${state.matchedLocation}');
@@ -257,6 +261,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (isPermissionsRoute) {
         _logger.info('ACTION: On permissions route and permissions granted');
         if (isAuthenticated) {
+          if (!isBiometricVerified) {
+             _logger.info('ACTION: Authenticated but Biometric locked -> redirect to /biometric');
+             return AppConstants.biometricRoute;
+          }
           _logger.info('ACTION: Authenticated -> redirect to /dashboard');
           return AppConstants.dashboardRoute;
         } else {
@@ -270,10 +278,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         _logger.info('ACTION: Not authenticated -> redirect to /login');
         return AppConstants.loginRoute;
       }
+
+      // If authenticated but missing biometric validation, redirect to biometric screen
+      if (isAuthenticated && !isBiometricVerified && !isBiometricRoute) {
+        _logger.info('ACTION: Authenticated but missing Biometrics -> redirect to /biometric');
+        return AppConstants.biometricRoute;
+      }
       
-      // If authenticated and on login page, redirect to dashboard
-      if (isAuthenticated && isLoginRoute) {
-        _logger.info('ACTION: Authenticated on login page -> redirect to /dashboard');
+      // If authenticated, biometrics cleared, and on login/biometric page, push to dashboard
+      if (isAuthenticated && isBiometricVerified && (isLoginRoute || isBiometricRoute)) {
+        _logger.info('ACTION: Authenticated on boot pages -> redirect to /dashboard');
         return AppConstants.dashboardRoute;
       }
       
@@ -294,6 +308,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           context,
           state,
           const LoginScreen(),
+          PageTransitionType.fade,
+        ),
+      ),
+      GoRoute(
+        path: AppConstants.biometricRoute,
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const BiometricUnlockScreen(),
           PageTransitionType.fade,
         ),
       ),

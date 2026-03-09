@@ -29,6 +29,7 @@ class AppConstants {
   
   // Routes
   static const String loginRoute = '/login';
+  static const String biometricRoute = '/biometric';
   static const String dashboardRoute = '/dashboard';
   static const String newOdRoute = '/new-od';
   static const String myOdRequestsRoute = '/my-od-requests';

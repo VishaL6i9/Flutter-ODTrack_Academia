@@ -9,6 +9,8 @@ import 'package:odtrack_academia/providers/staff_analytics_provider.dart';
 import 'package:odtrack_academia/services/analytics/staff_analytics_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:odtrack_academia/services/api/api_client.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:flutter/services.dart';
 
 final _logger = Logger('AuthProvider');
 
@@ -18,6 +20,7 @@ class AuthState {
   final String? refreshToken;
   final bool isLoading;
   final String? error;
+  final bool isBiometricVerified;
 
   const AuthState({
     this.user,
@@ -25,6 +28,7 @@ class AuthState {
     this.refreshToken,
     this.isLoading = false,
     this.error,
+    this.isBiometricVerified = false,
   });
 
   AuthState copyWith({
@@ -33,6 +37,7 @@ class AuthState {
     String? refreshToken,
     bool? isLoading,
     String? error,
+    bool? isBiometricVerified,
     bool clearTokens = false,
   }) {
     return AuthState(
@@ -41,6 +46,7 @@ class AuthState {
       refreshToken: clearTokens ? null : (refreshToken ?? this.refreshToken),
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      isBiometricVerified: isBiometricVerified ?? this.isBiometricVerified,
     );
   }
 
@@ -73,6 +79,38 @@ class AuthNotifier extends StateNotifier<AuthState> {
   //     await _userBox.clear();
   //   }
   // }
+
+  Future<bool> verifyBiometrics() async {
+    final LocalAuthentication auth = LocalAuthentication();
+    try {
+      final bool canAuthenticateWithBiometrics = await auth.canCheckBiometrics;
+      final bool canAuthenticate =
+          canAuthenticateWithBiometrics || await auth.isDeviceSupported();
+
+      if (!canAuthenticate) {
+        _logger.warning('Biometrics not supported on this device. Bypassing lock.');
+        state = state.copyWith(isBiometricVerified: true);
+        return true;
+      }
+
+      final bool didAuthenticate = await auth.authenticate(
+        localizedReason: 'Please verify your identity to access ODTrack',
+        options: const AuthenticationOptions(
+          biometricOnly: false,
+          stickyAuth: true,
+        ),
+      );
+
+      if (didAuthenticate) {
+        state = state.copyWith(isBiometricVerified: true);
+        return true;
+      }
+      return false;
+    } on PlatformException catch (e) {
+      _logger.severe('Biometric authentication failed structure check: $e');
+      return false;
+    }
+  }
 
   Future<void> loginStudent(String registerNumber, DateTime dateOfBirth) async {
     state = state.copyWith(isLoading: true, error: null);
@@ -115,7 +153,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
 
       _logger.info('Student login successful, user set');
-      state = state.copyWith(user: user, isLoading: false);
+      state = state.copyWith(user: user, isLoading: false, isBiometricVerified: true);
     } catch (e) {
       _logger.severe('Student login failed: $e');
       state = state.copyWith(
@@ -185,7 +223,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         _logger.warning('Failed to register FCM token dynamically: $e');
       }
 
-      state = state.copyWith(user: user, token: mockAccessToken, refreshToken: mockRefreshToken, isLoading: false);
+      state = state.copyWith(user: user, token: mockAccessToken, refreshToken: mockRefreshToken, isLoading: false, isBiometricVerified: true);
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
