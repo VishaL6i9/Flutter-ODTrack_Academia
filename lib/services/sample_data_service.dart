@@ -170,6 +170,11 @@ class SampleDataService {
     // Generate 50-100 OD requests over the last 6 months
     final requestCount = 50 + _random.nextInt(51);
     
+    if (staffIds.isEmpty) {
+      // No staff members found to populate OD requests.
+      return;
+    }
+
     for (int i = 0; i < requestCount; i++) {
       final staffId = staffIds[_random.nextInt(staffIds.length)];
       final status = statuses[_random.nextInt(statuses.length)];
