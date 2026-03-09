@@ -1,36 +1,26 @@
 {
   "project_info": {
-    "project_number": "123456789012",
-    "project_id": "odtrack-academia",
-    "storage_bucket": "odtrack-academia.appspot.com"
+    "project_number": "99145683637",
+    "project_id": "device-streaming-1bb9e6dd",
+    "storage_bucket": "device-streaming-1bb9e6dd.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:123456789012:android:abcdef123456789",
+        "mobilesdk_app_id": "1:99145683637:android:03faace3f1a8af320e64fc",
         "android_client_info": {
-          "package_name": "com.odtrack.academia"
+          "package_name": "com.vishal.odtrack_academia"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "123456789012-abcdefghijklmnopqrstuvwxyz123456.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyABCDEFGHIJKLMNOPQRSTUVWXYZ1234567"
+          "current_key": "AIzaSyDtRigq-ie17e0zWGH8plXTakDOTjflI6E"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "123456789012-abcdefghijklmnopqrstuvwxyz123456.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }
