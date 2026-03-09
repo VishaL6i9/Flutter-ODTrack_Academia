@@ -53,3 +53,16 @@ async def update_signature(
          
     updated_user = await user_service.update_signature(db, user_obj=current_user, signature_url=signature_url)
     return updated_user
+
+@router.patch("/me/fcm-token", response_model=User)
+async def update_fcm_token(
+    *,
+    db: Annotated[AsyncSession, Depends(deps.get_db)],
+    current_user: Annotated[User, Depends(deps.get_current_active_user)],
+    fcm_token: Annotated[str, Body(embed=True)]
+) -> Any:
+    """
+    Update FCM device token.
+    """
+    updated_user = await user_service.update_fcm_token(db, user_obj=current_user, fcm_token=fcm_token)
+    return updated_user

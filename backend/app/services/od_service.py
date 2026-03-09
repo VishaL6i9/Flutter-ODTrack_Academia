@@ -7,6 +7,7 @@ from app.schemas.od_request import ODRequestCreate, ODRequestUpdate
 from datetime import datetime, timezone
 from app.core.enums import ODStatus
 from app.services.email_service import email_service
+from app.services.fcm_service import fcm_service
 from app.core.enums import UserRole
 
 class ODService:
@@ -86,6 +87,15 @@ class ODService:
         
         if full_obj.student:
             await email_service.send_od_status_update_email(student=full_obj.student, od_request=full_obj)
+            
+            if full_obj.student.fcm_token:
+                status_str = "Approved" if full_obj.status == ODStatus.APPROVED else "Rejected"
+                await fcm_service.send_notification(
+                    token=full_obj.student.fcm_token,
+                    title=f"OD Request {status_str}",
+                    body=f"Your On-Duty request from {full_obj.from_date.strftime('%Y-%m-%d')} has been {status_str.lower()}.",
+                    data={"type": "status_update", "id": str(full_obj.id)}
+                )
             
         return db_obj
 

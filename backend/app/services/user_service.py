@@ -41,4 +41,11 @@ class UserService:
         await db.refresh(user_obj)
         return user_obj
 
+    async def update_fcm_token(self, db: AsyncSession, user_obj: User, fcm_token: str) -> User:
+        user_obj.fcm_token = fcm_token
+        db.add(user_obj)
+        await db.commit()
+        await db.refresh(user_obj)
+        return user_obj
+
 user_service = UserService()

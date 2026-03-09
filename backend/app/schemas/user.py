@@ -10,6 +10,7 @@ class UserBase(BaseModel):
     role: UserRole = UserRole.STUDENT
     is_active: bool = True
     signature_url: str | None = None
+    fcm_token: str | None = None
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):
@@ -19,6 +20,7 @@ class UserCreate(UserBase):
 class UserUpdate(UserBase):
     password: str | None = None
     signature_url: str | None = None
+    fcm_token: str | None = None
 
 class UserInDBBase(UserBase):
     id: int

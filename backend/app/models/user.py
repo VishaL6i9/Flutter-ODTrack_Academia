@@ -19,3 +19,4 @@ class User(Base):
 
     # Role specific fields (can be expanded later or normalized)
     role = Column(String, default=UserRole.STUDENT) # student, staff, admin
+    fcm_token = Column(String, nullable=True)
