@@ -7,10 +7,14 @@ part 'user.g.dart';
 @JsonSerializable()
 class User {
   @HiveField(0)
+  @JsonKey(name: 'id', fromJson: _idFromJson)
   final String id;
   
   @HiveField(1)
+  @JsonKey(name: 'full_name')
   final String name;
+  
+  static String _idFromJson(dynamic id) => id.toString();
   
   @HiveField(2)
   final String email;
