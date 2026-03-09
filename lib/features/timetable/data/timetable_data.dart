@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:odtrack_academia/models/period_slot.dart';
 import 'package:odtrack_academia/models/timetable.dart';
 
 class TimetableData {
