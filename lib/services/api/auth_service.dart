@@ -1,4 +1,3 @@
-import 'package:odtrack_academia/core/constants/app_constants.dart';
 import 'package:odtrack_academia/models/user.dart';
 import 'package:odtrack_academia/services/api/api_client.dart';
 
