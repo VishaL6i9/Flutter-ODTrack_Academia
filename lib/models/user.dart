@@ -32,6 +32,9 @@ class User {
   
   @HiveField(8)
   final String? phone;
+  
+  @HiveField(9)
+  final String? signatureUrl; // For staff
 
   const User({
     required this.id,
@@ -43,6 +46,7 @@ class User {
     this.year,
     this.section,
     this.phone,
+    this.signatureUrl,
   });
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
