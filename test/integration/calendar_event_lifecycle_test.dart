@@ -9,9 +9,10 @@ import 'package:odtrack_academia/services/calendar/calendar_service.dart';
 import 'package:odtrack_academia/services/calendar/calendar_sync_service.dart';
 import 'package:odtrack_academia/providers/od_request_provider.dart';
 
+import 'package:odtrack_academia/services/api/od_api_service.dart';
 import 'calendar_event_lifecycle_test.mocks.dart';
 
-@GenerateMocks([CalendarService])
+@GenerateMocks([CalendarService, ODApiService])
 void main() {
   group('Calendar Event Lifecycle Integration Tests', () {
     late MockCalendarService mockCalendarService;
@@ -26,7 +27,7 @@ void main() {
     setUp(() async {
       mockCalendarService = MockCalendarService();
       calendarSyncService = CalendarSyncService(mockCalendarService);
-      odRequestNotifier = ODRequestNotifier(calendarSyncService: calendarSyncService);
+      odRequestNotifier = ODRequestNotifier(MockODApiService(), calendarSyncService: calendarSyncService);
 
       // Setup mock responses
       when(mockCalendarService.isAutoSyncEnabled()).thenAnswer((_) async => true);
