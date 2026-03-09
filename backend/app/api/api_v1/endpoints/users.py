@@ -37,3 +37,19 @@ async def read_user_me(
     Get current user.
     """
     return current_user
+
+@router.put("/me/signature", response_model=User)
+async def update_signature(
+    *,
+    db: Annotated[AsyncSession, Depends(deps.get_db)],
+    current_user: Annotated[User, Depends(deps.get_current_active_user)],
+    signature_url: Annotated[str, Body(embed=True)]
+) -> Any:
+    """
+    Update signature URL for staff.
+    """
+    if current_user.role not in [UserRole.STAFF, UserRole.ADMIN, UserRole.SUPERUSER]:
+         raise HTTPException(status_code=403, detail="Only staff can add signatures")
+         
+    updated_user = await user_service.update_signature(db, user_obj=current_user, signature_url=signature_url)
+    return updated_user
