@@ -11,7 +11,7 @@ class AppConstants {
   static const String userDataKey = 'user_data';
   
   // API Configuration
-  static const String baseUrl = 'https://api.odtrack.edu';
+  static const String baseUrl = 'http://192.168.1.2:8000';
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
   
