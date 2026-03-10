@@ -11,7 +11,7 @@ class AppConstants {
   static const String userDataKey = 'user_data';
   
   // API Configuration
-  static const String baseUrl = 'http://10.0.2.2:8000/api/v1';
+  static const String baseUrl = 'http://192.168.1.2:8000/api/v1';
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
   

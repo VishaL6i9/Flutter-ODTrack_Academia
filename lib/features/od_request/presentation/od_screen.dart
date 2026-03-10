@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:odtrack_academia/core/constants/app_constants.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -269,7 +270,7 @@ class _EnhancedNewOdScreenState extends ConsumerState<EnhancedNewOdScreen> {
         
         // This is a minimal placeholder instantiation showing intent, 
         // ideally ApiClient is injected or grabbed from Riverpod.
-        final apiClient = ApiClient(baseUrl: 'http://10.0.2.2:8000/api/v1'); // Emulating local testing URL
+        final apiClient = ApiClient(baseUrl: AppConstants.baseUrl);
         final uploadResponse = await apiClient.upload('/upload/', file);
         attachmentUrl = uploadResponse['url'] as String?;
       }

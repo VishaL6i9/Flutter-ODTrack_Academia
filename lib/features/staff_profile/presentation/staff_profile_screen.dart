@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:odtrack_academia/core/constants/app_constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -313,7 +314,7 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
         setState(() => _isUploadingSignature = true);
         
         final file = File(image.path);
-        final apiClient = ApiClient(baseUrl: 'http://10.0.2.2:8000/api/v1'); // Emulating local URL
+        final apiClient = ApiClient(baseUrl: AppConstants.baseUrl);
         
         // 1. Upload the image file
         final uploadResponse = await apiClient.upload('/upload/', file);
