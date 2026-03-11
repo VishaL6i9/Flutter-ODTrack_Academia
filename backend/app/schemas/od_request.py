@@ -10,6 +10,7 @@ class ODRequestBase(BaseModel):
     attachment_url: Optional[str] = None
     register_number: str
     student_name: str
+    staff_id: Optional[int] = None
 
 class ODRequestCreate(ODRequestBase):
     pass
@@ -19,6 +20,10 @@ from app.core.enums import ODStatus
 class ODRequestUpdate(BaseModel):
     status: Optional[ODStatus] = None
     rejection_reason: Optional[str] = None
+    staff_id: Optional[int] = None
+    date: Optional[datetime] = None
+    periods: Optional[List[int]] = None
+    reason: Optional[str] = None
 
 class ODRequestInDBBase(ODRequestBase):
     id: int
@@ -35,6 +40,7 @@ class ODRequestInDBBase(ODRequestBase):
 class ODRequest(ODRequestInDBBase):
     student: Optional[User] = None
     approved_by: Optional[User] = None
+    staff: Optional[User] = None
 
 class ODRequestList(BaseModel):
     requests: List[ODRequest]

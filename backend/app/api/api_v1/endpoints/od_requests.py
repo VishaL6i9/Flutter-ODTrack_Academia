@@ -78,6 +78,34 @@ async def read_pending_od_requests(
     od_requests = await od_service.get_all_pending(db=db, skip=skip, limit=limit)
     return od_requests
 
+@router.put("/{request_id}", response_model=ODRequest)
+async def update_od_request(
+    *,
+    db: Annotated[AsyncSession, Depends(deps.get_db)],
+    request_id: int,
+    od_in: ODRequestUpdate,
+    current_user: Annotated[User, Depends(deps.get_current_active_user)],
+) -> Any:
+    """
+    Update OD Request (Owner only, only if pending).
+    """
+    from app.core.enums import ODStatus
+    od_request = await od_service.get(db=db, id=request_id)
+    if not od_request:
+        raise HTTPException(status_code=404, detail="OD Request not found")
+    
+    if od_request.student_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this request")
+    
+    if od_request.status != ODStatus.PENDING:
+        raise HTTPException(status_code=400, detail="Cannot update request that is no longer pending")
+    
+    # Don't allow students to change status via this endpoint
+    od_in.status = None
+    
+    od_request = await od_service.update(db=db, db_obj=od_request, obj_in=od_in)
+    return od_request
+
 @router.put("/{request_id}/status", response_model=ODRequest)
 async def update_od_status(
     *,

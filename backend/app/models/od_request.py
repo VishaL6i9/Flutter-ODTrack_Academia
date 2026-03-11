@@ -21,6 +21,10 @@ class ODRequest(Base):
     reason = Column(Text, nullable=False)
     attachment_url = Column(String, nullable=True)
     
+    # The designated staff authority (different from the final approver)
+    staff_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    staff = relationship("User", foreign_keys=[staff_id])
+    
     # Status & Approval
     status = Column(String, default=ODStatus.PENDING, index=True) # pending, approved, rejected
     

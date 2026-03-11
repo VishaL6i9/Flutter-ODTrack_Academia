@@ -14,7 +14,11 @@ class ODService:
     async def get(self, db: AsyncSession, id: int) -> ODRequest | None:
         result = await db.execute(
             select(ODRequest)
-            .options(selectinload(ODRequest.student), selectinload(ODRequest.approved_by))
+            .options(
+                selectinload(ODRequest.student), 
+                selectinload(ODRequest.approved_by),
+                selectinload(ODRequest.staff)
+            )
             .where(ODRequest.id == id)
         )
         return result.scalars().first()
@@ -22,7 +26,11 @@ class ODService:
     async def get_multi_by_student(self, db: AsyncSession, student_id: int, skip: int = 0, limit: int = 100) -> list[ODRequest]:
         result = await db.execute(
             select(ODRequest)
-            .options(selectinload(ODRequest.student), selectinload(ODRequest.approved_by))
+            .options(
+                selectinload(ODRequest.student), 
+                selectinload(ODRequest.approved_by),
+                selectinload(ODRequest.staff)
+            )
             .where(ODRequest.student_id == student_id)
             .offset(skip)
             .limit(limit)
@@ -34,7 +42,11 @@ class ODService:
         # For staff/admin to review
         result = await db.execute(
             select(ODRequest)
-            .options(selectinload(ODRequest.student), selectinload(ODRequest.approved_by))
+            .options(
+                selectinload(ODRequest.student), 
+                selectinload(ODRequest.approved_by),
+                selectinload(ODRequest.staff)
+            )
             .where(ODRequest.status == ODStatus.PENDING)
             .offset(skip)
             .limit(limit)
@@ -50,17 +62,17 @@ class ODService:
         )
         db.add(db_obj)
         await db.commit()
-        await db.refresh(db_obj)
         
-        # Load the student to get the name/details for email
-        student = await db.execute(select(User).where(User.id == student_id))
-        student_obj = student.scalars().first()
+        # Re-fetch with all relationships loaded to avoid async serialization errors
+        db_obj = await self.get(db, db_obj.id)
         
-        # Get appropriate staff to notify
-        staff_query = await db.execute(select(User).where(User.role.in_([UserRole.STAFF, UserRole.ADMIN, UserRole.SUPERUSER])))
-        staff_list = staff_query.scalars().all()
-        
-        if student_obj:
+        if db_obj and db_obj.student:
+            student_obj = db_obj.student
+            
+            # Get appropriate staff to notify
+            staff_query = await db.execute(select(User).where(User.role.in_([UserRole.STAFF, UserRole.ADMIN, UserRole.SUPERUSER])))
+            staff_list = staff_query.scalars().all()
+            
             try:
                 await email_service.send_od_submission_email(student=student_obj, od_request=db_obj, staff=staff_list)
             except Exception as e:
@@ -80,6 +92,17 @@ class ODService:
         
         return db_obj
 
+    async def update(
+        self, db: AsyncSession, *, db_obj: ODRequest, obj_in: ODRequestUpdate
+    ) -> ODRequest:
+        update_data = obj_in.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_obj, field, value)
+            
+        db.add(db_obj)
+        await db.commit()
+        return await self.get(db, db_obj.id)
+
     async def update_status(
         self, db: AsyncSession, db_obj: ODRequest, obj_in: ODRequestUpdate, approver_id: int
     ) -> ODRequest:
@@ -89,18 +112,12 @@ class ODService:
             db_obj.approved_by_id = approver_id
             db_obj.approved_at = datetime.now(timezone.utc)
         
-        for field, value in update_data.items():
-            setattr(db_obj, field, value)
-            
-        db.add(db_obj)
-        await db.commit()
-        await db.refresh(db_obj)
+        db_obj = await self.update(db=db, db_obj=db_obj, obj_in=obj_in)
         
-        # Reload relation if needed
-        full_obj_result = await db.execute(select(ODRequest).options(selectinload(ODRequest.student)).where(ODRequest.id == db_obj.id))
-        full_obj = full_obj_result.scalars().first()
+        # Reload relation if needed for notifications
+        full_obj = await self.get(db, db_obj.id)
         
-        if full_obj.student:
+        if full_obj and full_obj.student:
             try:
                 await email_service.send_od_status_update_email(student=full_obj.student, od_request=full_obj)
             except Exception as e:
@@ -124,7 +141,11 @@ class ODService:
         # For analytics/reports
         result = await db.execute(
             select(ODRequest)
-            .options(selectinload(ODRequest.student), selectinload(ODRequest.approved_by))
+            .options(
+                selectinload(ODRequest.student), 
+                selectinload(ODRequest.approved_by),
+                selectinload(ODRequest.staff)
+            )
             .offset(skip)
             .limit(limit)
             .order_by(ODRequest.created_at.desc())
