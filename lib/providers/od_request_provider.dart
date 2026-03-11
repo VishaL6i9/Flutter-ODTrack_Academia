@@ -13,9 +13,9 @@ class ODRequestNotifier extends StateNotifier<List<ODRequest>> {
     : _calendarSyncService = calendarSyncService,
       super([]);
 
-  Future<void> fetchRequests() async {
+  Future<void> fetchRequests({DateTime? dateFrom, DateTime? dateTo}) async {
     try {
-      final requests = await _apiService.getODRequests();
+      final requests = await _apiService.getODRequests(dateFrom: dateFrom, dateTo: dateTo);
       state = requests;
     } catch (e) {
       debugPrint('Error fetching OD requests: $e');
@@ -147,4 +147,27 @@ final odRequestProvider = StateNotifierProvider<ODRequestNotifier, List<ODReques
 final odStatsProvider = FutureProvider<Map<String, int>>((ref) async {
   final apiService = ref.watch(odApiServiceProvider);
   return apiService.getODStats();
+});
+
+/// Represents a filter for date ranges.
+class DateRangeFilter {
+  final DateTime? start;
+  final DateTime? end;
+  
+  const DateRangeFilter({this.start, this.end});
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is DateRangeFilter && other.start == start && other.end == end;
+  }
+
+  @override
+  int get hashCode => start.hashCode ^ end.hashCode;
+}
+
+/// Provides archived OD requests based on an optional date range.
+final odArchiveProvider = FutureProvider.family<List<ODRequest>, DateRangeFilter>((ref, filter) async {
+  final apiService = ref.watch(odApiServiceProvider);
+  return apiService.getArchivedODRequests(dateFrom: filter.start, dateTo: filter.end);
 });
