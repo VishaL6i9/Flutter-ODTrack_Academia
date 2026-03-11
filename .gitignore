@@ -74,3 +74,9 @@ android/app/build/
 android/app/.cxx/
 android/local.properties
 
+COMMIT_STYLE.txt
+project_description.txt
+*.svg
+*.png
+
+.kiro/
