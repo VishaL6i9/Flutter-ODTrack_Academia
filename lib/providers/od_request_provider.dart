@@ -23,13 +23,16 @@ class ODRequestNotifier extends StateNotifier<List<ODRequest>> {
   }
 
   Future<void> createRequest(ODRequest request) async {
+    // Send full ISO string to ensure UTC consistency if possible, 
+    // though backend currently expects date part for some logic.
     final newRequest = await _apiService.createODRequest({
-      'date': request.date.toIso8601String().split('T')[0],
+      'date': request.date.toIso8601String(),
       'periods': request.periods,
       'reason': request.reason,
       'attachment_url': request.attachmentUrl,
       'register_number': request.registerNumber,
       'student_name': request.studentName,
+      'staff_id': int.tryParse(request.staffId ?? ''),
     });
     
     state = [newRequest, ...state];
@@ -42,6 +45,23 @@ class ODRequestNotifier extends StateNotifier<List<ODRequest>> {
         // Log error but don't fail the request creation
         debugPrint('Calendar sync error during request creation: $e');
       }
+    }
+  }
+
+  Future<void> editRequest(String id, Map<String, dynamic> updates) async {
+    try {
+      // Ensure staff_id is an integer if present
+      if (updates.containsKey('staff_id') && updates['staff_id'] is String) {
+        updates['staff_id'] = int.tryParse(updates['staff_id'] as String);
+      }
+      
+      final updatedRequest = await _apiService.updateODRequest(id, updates);
+      state = state.map((request) => request.id == id ? updatedRequest : request).toList();
+      
+      // Note: Calendar sync for edits could be added here if needed
+    } catch (e) {
+      debugPrint('Error editing OD request: $e');
+      rethrow;
     }
   }
 
