@@ -56,3 +56,7 @@ app.*.map.json
 **/generated_plugins.cmake
 **/*.png
 macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Environment Variables
+.env
+
