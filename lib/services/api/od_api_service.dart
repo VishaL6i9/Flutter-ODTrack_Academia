@@ -7,9 +7,33 @@ class ODApiService {
   ODApiService(this._apiClient);
 
   /// Fetch all OD requests (filtered by role in backend)
-  Future<List<ODRequest>> getODRequests() async {
-    final response = await _apiClient.get('/od-requests/');
+  Future<List<ODRequest>> getODRequests({DateTime? dateFrom, DateTime? dateTo}) async {
+    final queryParams = <String, String>{};
+    if (dateFrom != null) queryParams['date_from'] = dateFrom.toIso8601String();
+    if (dateTo != null) queryParams['date_to'] = dateTo.toIso8601String();
+    
+    final queryString = queryParams.isNotEmpty 
+        ? '?${Uri(queryParameters: queryParams).query}' 
+        : '';
+        
+    final response = await _apiClient.get('/od-requests/$queryString');
     final List<dynamic> data = (response['requests'] as List? ?? []);
+    return data.map((json) => ODRequest.fromJson(json as Map<String, dynamic>)).toList();
+  }
+
+  /// Fetch archived OD requests for staff (any status, typically past dates)
+  Future<List<ODRequest>> getArchivedODRequests({DateTime? dateFrom, DateTime? dateTo}) async {
+    final queryParams = <String, String>{};
+    if (dateFrom != null) queryParams['date_from'] = dateFrom.toIso8601String();
+    if (dateTo != null) queryParams['date_to'] = dateTo.toIso8601String();
+    
+    final queryString = queryParams.isNotEmpty 
+        ? '?${Uri(queryParameters: queryParams).query}' 
+        : '';
+        
+    final response = await _apiClient.get('/od-requests/archive$queryString');
+    // Archive endpoint returns a direct list, not wrapped in mapping like GET /od-requests/
+    final List<dynamic> data = response as List<dynamic>;
     return data.map((json) => ODRequest.fromJson(json as Map<String, dynamic>)).toList();
   }
 
