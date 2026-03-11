@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:odtrack_academia/models/od_request.dart';
+import 'package:odtrack_academia/models/user.dart';
 import 'package:odtrack_academia/services/calendar/calendar_sync_service.dart';
 import 'package:odtrack_academia/services/api/od_api_service.dart';
 import 'package:odtrack_academia/providers/auth_provider.dart';
@@ -17,8 +19,71 @@ class ODRequestNotifier extends StateNotifier<List<ODRequest>> {
     try {
       final requests = await _apiService.getODRequests(dateFrom: dateFrom, dateTo: dateTo);
       state = requests;
+      
+      // Update local cache for offline mode and analytics
+      try {
+        if (!Hive.isBoxOpen('od_requests_box')) {
+          await Hive.openBox<ODRequest>('od_requests_box');
+        }
+        final box = Hive.box<ODRequest>('od_requests_box');
+        
+        final Map<dynamic, ODRequest> requestMap = {
+          for (var req in requests) req.id: req
+        };
+        await box.putAll(requestMap);
+        
+        // Populate basic student info in users_box for analytics department filtering
+        if (!Hive.isBoxOpen('users_box')) {
+          await Hive.openBox<User>('users_box');
+        }
+        final usersBox = Hive.box<User>('users_box');
+        for (final req in requests) {
+          if (!usersBox.containsKey(req.studentId)) {
+            // Check if department info is embedded in studentName (e.g., "Vishal (CSE)")
+            String? dept;
+            if (req.studentName.contains('(') && req.studentName.endsWith(')')) {
+              final startIndex = req.studentName.lastIndexOf('(') + 1;
+              dept = req.studentName.substring(startIndex, req.studentName.length - 1);
+            }
+            usersBox.put(req.studentId, User(
+              id: req.studentId,
+              name: req.studentName,
+              email: '${req.registerNumber}@example.com',
+              role: 'student',
+              registerNumber: req.registerNumber,
+              department: dept ?? 'Unknown',
+            ));
+          }
+        }
+      } catch (e) {
+        debugPrint('Failed to cache OD requests or users: $e');
+      }
+      
     } catch (e) {
-      debugPrint('Error fetching OD requests: $e');
+      debugPrint('Error fetching OD requests, attempting to load from cache: $e');
+      // If network fails, try to load from cache
+      try {
+        if (!Hive.isBoxOpen('od_requests_box')) {
+          await Hive.openBox<ODRequest>('od_requests_box');
+        }
+        final box = Hive.box<ODRequest>('od_requests_box');
+        
+        var cachedRequests = box.values.toList();
+        if (dateFrom != null) {
+          cachedRequests = cachedRequests.where((r) => r.createdAt.isAfter(dateFrom) || r.createdAt.isAtSameMomentAs(dateFrom)).toList();
+        }
+        if (dateTo != null) {
+          // Adjust dateTo logic for end of day if needed
+          cachedRequests = cachedRequests.where((r) => r.createdAt.isBefore(dateTo.add(const Duration(days: 1)))).toList();
+        }
+        
+        // Sort descending by created at as API does
+        cachedRequests.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        
+        state = cachedRequests;
+      } catch (cacheError) {
+        debugPrint('Failed to load OD requests from cache: $cacheError');
+      }
     }
   }
 
