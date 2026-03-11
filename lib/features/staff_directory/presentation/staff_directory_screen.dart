@@ -4,6 +4,7 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import 'package:odtrack_academia/features/timetable/presentation/staff_timetable_screen.dart';
 import 'package:odtrack_academia/models/staff_member.dart';
 import 'package:odtrack_academia/providers/staff_provider.dart';
+import 'package:odtrack_academia/core/theme/app_theme.dart';
 
 class StaffDirectoryScreen extends ConsumerStatefulWidget {
   final String? preFilterStaffId; // Optional parameter to pre-filter to specific staff
@@ -64,9 +65,9 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
     final staffAsync = ref.watch(staffProvider);
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('Staff Directory'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: _isPreFiltered ? [
           TextButton(
             onPressed: () {
@@ -130,6 +131,10 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
               Text('Error: $err'),
               ElevatedButton(
                 onPressed: () => ref.read(staffProvider.notifier).fetchStaff(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.accentTeal,
+                  foregroundColor: Colors.black,
+                ),
                 child: const Text('Retry'),
               ),
             ],
@@ -244,11 +249,11 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
                 children: [
                   CircleAvatar(
                     radius: 24.0,
-                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    backgroundColor: AppTheme.accentPurple.withValues(alpha: 0.2),
                     child: Text(
                       staff.name.split(' ').map((n) => n[0]).take(2).join(),
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppTheme.accentPurple,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -354,15 +359,15 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                      color: AppTheme.accentTeal.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     child: Text(
                       coordinatorRoles[i],
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
+                      style: const TextStyle(
+                        color: AppTheme.accentTeal,
                         fontSize: 12.0,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
