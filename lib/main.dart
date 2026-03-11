@@ -42,7 +42,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   logger.info('WidgetsFlutterBinding initialized');
 
-  await dotenv.load(fileName: ".env");
+  await dotenv.load(fileName: '.env');
   logger.info('Environment variables loaded');
 
   await Firebase.initializeApp(
