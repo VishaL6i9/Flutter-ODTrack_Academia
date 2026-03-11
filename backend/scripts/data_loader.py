@@ -7,9 +7,9 @@ import random
 # Add parent directory to path to import app modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, text
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.database import AsyncSessionLocal as SessionLocal
+from app.core.database import AsyncSessionLocal as SessionLocal, Base, engine
 from app.models.user import User
 from app.models.od_request import ODRequest
 from app.models.subject import Subject
@@ -83,6 +83,11 @@ STUDENT_FIRST_NAMES = ['Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'R
 STUDENT_LAST_NAMES = ['Sharma', 'Patel', 'Kumar', 'Singh', 'Reddy', 'Gupta', 'Agarwal', 'Jain', 'Mehta', 'Shah']
 
 async def load_data():
+    async with engine.begin() as conn:
+        # Create all tables if they don't exist
+        await conn.run_sync(Base.metadata.create_all)
+        print("Ensured database schema is up-to-date.")
+
     async with SessionLocal() as db:
         print("Starting CLEAN data loading...")
         
@@ -94,7 +99,9 @@ async def load_data():
         await db.commit()
         print("Existing data cleared.")
 
-        test_password_hash = get_password_hash("password123")
+        # test_password_hash = get_password_hash("password123")
+        # Hardcoded bcrypt hash for "password123" generated on this machine to ensure compatibility
+        test_password_hash = "$2b$12$wbSPzLHsuT5z40x6SzC4duAnxazYqgbRrmRXDQb6KMCD/zYuGXbLC"
         
         # 1. Load Subjects
         print(f"Loading {len(SUBJECTS)} subjects...")
@@ -193,7 +200,36 @@ async def load_data():
                     db.add(timetable_entry)
         
         # 5. Load OD Requests
-        print("Generating 50 sample OD requests...")
+        print("Creating specific test OD requests for Test Student...")
+        test_student_id, test_reg_num, test_name = student_users[0] # The Test Student
+        first_staff_id = list(staff_id_map.values())[0]
+        
+        # Add 3 specific requests for testing UI states
+        test_requests = [
+            (ODStatus.PENDING, "Participating in college Fest coordination.", 0),
+            (ODStatus.APPROVED, "Attending Google Cloud Workshop.", -2),
+            (ODStatus.REJECTED, "Short duration seminar.", -5)
+        ]
+        
+        for status, reason, days_ago in test_requests:
+            created_at = datetime.now() - timedelta(days=abs(days_ago) + 1)
+            od = ODRequest(
+                student_id=test_student_id,
+                register_number=test_reg_num,
+                student_name=test_name,
+                date=datetime.now() + timedelta(days=days_ago + 5),
+                periods=[1, 2, 3, 4],
+                reason=reason,
+                status=status,
+                staff_id=first_staff_id,
+                created_at=created_at,
+                approved_by_id=first_staff_id if status != ODStatus.PENDING else None,
+                approved_at=created_at + timedelta(hours=5) if status != ODStatus.PENDING else None,
+                rejection_reason="Please join technical events instead." if status == ODStatus.REJECTED else None
+            )
+            db.add(od)
+
+        print("Generating 50 more random sample OD requests...")
         reasons = [
             'Medical appointment', 'Family function', 'Personal work', 
             'Interview', 'Emergency', 'Travel', 'Conference', 'Workshop'
@@ -216,6 +252,7 @@ async def load_data():
                 periods=[1, 2, 3],
                 reason=random.choice(reasons),
                 status=status,
+                staff_id=staff_db_id,
                 created_at=created_at,
                 approved_by_id=staff_db_id if status != ODStatus.PENDING else None,
                 approved_at=created_at + timedelta(hours=random.randint(1, 48)) if status != ODStatus.PENDING else None
