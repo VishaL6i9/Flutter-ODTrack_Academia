@@ -1,4 +1,5 @@
 from typing import Any, Annotated, List
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.api import deps
@@ -31,21 +32,45 @@ async def read_od_requests(
     current_user: Annotated[User, Depends(deps.get_current_active_user)],
     skip: int = 0,
     limit: int = 100,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
 ) -> Any:
     """
     Get OD requests based on user role.
     """
     if current_user.role == UserRole.STUDENT:
         requests = await od_service.get_multi_by_student(
-            db=db, student_id=current_user.id, skip=skip, limit=limit
+            db=db, student_id=current_user.id, skip=skip, limit=limit, date_from=date_from, date_to=date_to
         )
     elif current_user.role in [UserRole.STAFF, UserRole.ADMIN, UserRole.SUPERUSER]:
         # Staff sees all pending requests by default for their inbox
-        requests = await od_service.get_all_pending(db=db, skip=skip, limit=limit)
+        requests = await od_service.get_all_pending(
+            db=db, skip=skip, limit=limit, date_from=date_from, date_to=date_to
+        )
     else:
         requests = []
         
     return {"requests": requests}
+
+@router.get("/archive", response_model=List[ODRequest])
+async def read_archived_od_requests(
+    db: Annotated[AsyncSession, Depends(deps.get_db)],
+    current_user: Annotated[User, Depends(deps.get_current_active_user)],
+    skip: int = 0,
+    limit: int = 100,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+) -> Any:
+    """
+    Get archived OD requests (past requests) for the current user.
+    """
+    if current_user.role not in [UserRole.STAFF, UserRole.ADMIN, UserRole.SUPERUSER]:
+        raise HTTPException(status_code=403, detail="Not authorized to view archive")
+        
+    requests = await od_service.get_archived_for_staff(
+        db=db, staff_id=current_user.id, skip=skip, limit=limit, date_from=date_from, date_to=date_to
+    )
+    return requests
 
 @router.get("/stats")
 async def read_od_stats(
