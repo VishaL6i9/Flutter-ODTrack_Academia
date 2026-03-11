@@ -77,6 +77,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     final authState = ref.watch(authProvider);
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -131,7 +132,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         Text(
           'OD Request Management System',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
         ),
       ],
@@ -141,24 +142,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   Widget _buildTabBar() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: TabBar(
         controller: _tabController,
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
         indicator: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary,
-          borderRadius: BorderRadius.circular(8),
+          color: Theme.of(context).tabBarTheme.labelColor,
+          borderRadius: BorderRadius.circular(12),
         ),
-        labelColor: Colors.white,
-        unselectedLabelColor: Colors.grey[600],
+        labelColor: Colors.black,
+        unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
         tabs: const [
           Tab(
-            icon: Icon(Icons.person),
             text: 'Student',
           ),
           Tab(
-            icon: Icon(Icons.work),
             text: 'Staff',
           ),
         ],
@@ -201,7 +202,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           Text(
             'Demo: Use password123 for all students',
             style: TextStyle(
-              color: Colors.grey[600],
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,
             ),
           ),
