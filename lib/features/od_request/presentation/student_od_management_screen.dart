@@ -8,6 +8,7 @@ import 'package:odtrack_academia/providers/auth_provider.dart';
 import 'package:odtrack_academia/providers/od_request_provider.dart';
 import 'package:odtrack_academia/providers/staff_provider.dart';
 import 'package:odtrack_academia/models/staff_member.dart';
+import 'package:odtrack_academia/core/theme/app_theme.dart';
 
 class StudentOdManagementScreen extends ConsumerStatefulWidget {
   const StudentOdManagementScreen({super.key});
@@ -20,13 +21,13 @@ class _StudentOdManagementScreenState extends ConsumerState<StudentOdManagementS
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authProvider).user!;
-    final allRequests = ref.watch(odRequestProvider);
+    final allRequests = ref.watch<List<ODRequest>>(odRequestProvider);
     
     // Filter requests for current student
     final studentRequests = allRequests
-        .where((request) => request.studentId == user.id)
+        .where((ODRequest request) => request.studentId == user.id)
         .toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt)); // Sort by latest first
+      ..sort((ODRequest a, ODRequest b) => b.createdAt.compareTo(a.createdAt)); // Sort by latest first
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -66,7 +67,7 @@ class _StudentOdManagementScreenState extends ConsumerState<StudentOdManagementS
           Icon(
             MdiIcons.clipboardText,
             size: 80,
-            color: colorScheme.onSurface.withOpacity(0.4),
+            color: colorScheme.onSurface.withValues(alpha: 0.4),
           ),
           const SizedBox(height: 16),
           Text(
@@ -74,17 +75,20 @@ class _StudentOdManagementScreenState extends ConsumerState<StudentOdManagementS
             style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 32),
             child: Text(
               'You haven\'t submitted any OD requests yet. Start by creating your first request.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () => context.push(AppConstants.newOdRoute),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.accentOrange,
+              foregroundColor: Colors.black,
+            ),
             child: const Text('Create Request'),
           ),
         ],
@@ -96,7 +100,7 @@ class _StudentOdManagementScreenState extends ConsumerState<StudentOdManagementS
   Widget _buildRequestList(List<ODRequest> requests) {
     return RefreshIndicator(
       onRefresh: () async {
-        await Future.wait([
+        await Future.wait<void>([
           ref.read(odRequestProvider.notifier).fetchRequests(),
           ref.read(staffProvider.notifier).fetchStaff(),
         ]);
@@ -178,15 +182,15 @@ class _StudentOdManagementScreenState extends ConsumerState<StudentOdManagementS
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.blueAccent.withValues(alpha: 0.1),
+                        color: AppTheme.accentTeal.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.3)),
+                        border: Border.all(color: AppTheme.accentTeal.withValues(alpha: 0.3)),
                       ),
                       child: const Text(
                         'Assigned',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.blueAccent,
+                          color: AppTheme.accentTeal,
                         ),
                       ),
                     ),
@@ -280,10 +284,8 @@ class _StudentOdManagementScreenState extends ConsumerState<StudentOdManagementS
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.black, // OLED Black
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-      ),
+      backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
+      shape: Theme.of(context).bottomSheetTheme.shape,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.6,
         minChildSize: 0.4,
@@ -300,7 +302,7 @@ class _StudentOdManagementScreenState extends ConsumerState<StudentOdManagementS
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -313,7 +315,6 @@ class _StudentOdManagementScreenState extends ConsumerState<StudentOdManagementS
                     'OD Request Details',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
                     ),
                   ),
                   _buildStatusBadge(request.status),
@@ -340,7 +341,7 @@ class _StudentOdManagementScreenState extends ConsumerState<StudentOdManagementS
               const SizedBox(height: 8),
               Text(
                 request.reason,
-                style: const TextStyle(fontSize: 16, height: 1.5, color: Colors.white),
+                style: const TextStyle(fontSize: 16, height: 1.5),
               ),
               if (request.rejectionReason != null && request.status == 'rejected') ...[
                 const SizedBox(height: 24),
@@ -376,8 +377,6 @@ class _StudentOdManagementScreenState extends ConsumerState<StudentOdManagementS
                 child: OutlinedButton(
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white24),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: const Text('Close'),
@@ -398,10 +397,8 @@ class _StudentOdManagementScreenState extends ConsumerState<StudentOdManagementS
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.black, // OLED Black
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-      ),
+      backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
+      shape: Theme.of(context).bottomSheetTheme.shape,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => DraggableScrollableSheet(
           initialChildSize: 0.7,
@@ -410,7 +407,7 @@ class _StudentOdManagementScreenState extends ConsumerState<StudentOdManagementS
           expand: false,
           builder: (context, scrollController) {
             return Container(
-              color: Colors.black, // Darken background
+              color: Theme.of(context).bottomSheetTheme.backgroundColor, // Darken background
               child: SingleChildScrollView(
                 controller: scrollController,
                 padding: EdgeInsets.only(
@@ -590,7 +587,7 @@ class _StudentOdManagementScreenState extends ConsumerState<StudentOdManagementS
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Colors.blueAccent),
+                        borderSide: const BorderSide(color: AppTheme.accentTeal),
                       ),
                     ),
                   ),
@@ -675,7 +672,7 @@ class _StudentOdManagementScreenState extends ConsumerState<StudentOdManagementS
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: Colors.blueAccent),
+          Icon(icon, size: 20, color: AppTheme.accentTeal),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -686,10 +683,10 @@ class _StudentOdManagementScreenState extends ConsumerState<StudentOdManagementS
               ),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14, 
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                 ),
               ),
             ],
