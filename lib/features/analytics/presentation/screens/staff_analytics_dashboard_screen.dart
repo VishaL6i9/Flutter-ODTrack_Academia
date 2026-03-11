@@ -187,6 +187,7 @@ class _StaffAnalyticsDashboardScreenState extends ConsumerState<StaffAnalyticsDa
     final isDarkMode = theme.brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('Staff Analytics Dashboard'),
         elevation: 0,
