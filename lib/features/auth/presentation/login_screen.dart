@@ -23,7 +23,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
   // Student login controllers
   final _registerNumberController = TextEditingController();
-  DateTime? _selectedDate;
+  final _studentPasswordController = TextEditingController();
 
   // Staff login controllers
   final _emailController = TextEditingController();
@@ -41,6 +41,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   void dispose() {
     _tabController.dispose();
     _registerNumberController.dispose();
+    _studentPasswordController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -186,28 +187,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             helpText: 'Use your official college register number',
           ),
           const SizedBox(height: 16),
-          InkWell(
-            onTap: () => _selectDate(context),
-            child: EnhancedFormField(
-              label: 'Date of Birth',
-              hint: _selectedDate != null
-                  ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
-                  : 'Select your date of birth',
-              prefixIcon: Icons.calendar_today,
-              readOnly: true,
-              onTap: () => _selectDate(context),
-              validator: (value) {
-                if (_selectedDate == null) {
-                  return 'Please select your date of birth';
-                }
-                return null;
-              },
-              helpText: 'Select your date of birth for verification',
-            ),
+          EnhancedPasswordField(
+            controller: _studentPasswordController,
+            label: 'Password',
+            hint: 'Enter your password',
+            validators: [
+              RequiredValidator(fieldName: 'Password'),
+            ],
+            showStrengthIndicator: false,
+            helpText: 'Enter your student account password',
           ),
           const SizedBox(height: 16),
           Text(
-            'Demo: Use any register number with any date',
+            'Demo: Use password123 for all students',
             style: TextStyle(
               color: Colors.grey[600],
               fontSize: 12,
@@ -263,44 +255,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     );
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now().subtract(const Duration(days: 365 * 20)),
-      firstDate: DateTime(1950),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
-  }
-
   void _handleStudentLogin() {
-    if (_selectedDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Please select your date of birth'),
-            ],
-          ),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      );
-      return;
-    }
-    
     ref.read(authProvider.notifier).loginStudent(
       _registerNumberController.text,
-      _selectedDate!,
+      _studentPasswordController.text,
     );
   }
 
