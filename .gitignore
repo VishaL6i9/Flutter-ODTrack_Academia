@@ -60,3 +60,7 @@ macos/Flutter/GeneratedPluginRegistrant.swift
 # Environment Variables
 .env
 
+
+# Build-injected Secrets
+android/app/google-services.json
+
