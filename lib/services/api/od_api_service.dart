@@ -13,6 +13,18 @@ class ODApiService {
     return data.map((json) => ODRequest.fromJson(json as Map<String, dynamic>)).toList();
   }
 
+  /// Fetch OD request counts by status for the current user.
+  /// Students get their own; staff get counts of requests assigned to them.
+  Future<Map<String, int>> getODStats() async {
+    final response = await _apiClient.get('/od-requests/stats');
+    return {
+      'pending': (response['pending'] as num?)?.toInt() ?? 0,
+      'approved': (response['approved'] as num?)?.toInt() ?? 0,
+      'rejected': (response['rejected'] as num?)?.toInt() ?? 0,
+      'total': (response['total'] as num?)?.toInt() ?? 0,
+    };
+  }
+
   /// Create a new OD request
   Future<ODRequest> createODRequest(Map<String, dynamic> requestData) async {
     final response = await _apiClient.post('/od-requests/', body: requestData);
