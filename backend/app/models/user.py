@@ -29,3 +29,8 @@ class User(Base):
     specialization = Column(String, nullable=True)
     experience_years = Column(Integer, nullable=True)
     qualification = Column(String, nullable=True)
+    
+    # Student specific fields
+    register_number = Column(String, unique=True, index=True, nullable=True)
+    year = Column(String, nullable=True)
+    section = Column(String, nullable=True)
