@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.api import deps
 from app.models.user import User
-from app.schemas.od_request import ODRequest, ODRequestCreate, ODRequestUpdate
+from app.schemas.od_request import ODRequest, ODRequestCreate, ODRequestUpdate, ODRequestList
 from app.services.od_service import od_service
 from app.core.enums import UserRole
 
@@ -24,6 +24,28 @@ async def create_od_request(
     
     od_request = await od_service.create(db=db, obj_in=od_in, student_id=current_user.id)
     return od_request
+
+@router.get("/", response_model=ODRequestList)
+async def read_od_requests(
+    db: Annotated[AsyncSession, Depends(deps.get_db)],
+    current_user: Annotated[User, Depends(deps.get_current_active_user)],
+    skip: int = 0,
+    limit: int = 100,
+) -> Any:
+    """
+    Get OD requests based on user role.
+    """
+    if current_user.role == UserRole.STUDENT:
+        requests = await od_service.get_multi_by_student(
+            db=db, student_id=current_user.id, skip=skip, limit=limit
+        )
+    elif current_user.role in [UserRole.STAFF, UserRole.ADMIN, UserRole.SUPERUSER]:
+        # Staff sees all pending requests by default for their inbox
+        requests = await od_service.get_all_pending(db=db, skip=skip, limit=limit)
+    else:
+        requests = []
+        
+    return {"requests": requests}
 
 @router.get("/me", response_model=List[ODRequest])
 async def read_od_requests_me(
