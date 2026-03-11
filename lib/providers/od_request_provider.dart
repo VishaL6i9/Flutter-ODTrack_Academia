@@ -23,31 +23,25 @@ class ODRequestNotifier extends StateNotifier<List<ODRequest>> {
   }
 
   Future<void> createRequest(ODRequest request) async {
-    try {
-      final newRequest = await _apiService.createODRequest({
-        'date': request.date.toIso8601String().split('T')[0],
-        'periods': request.periods,
-        'reason': request.reason,
-        'staff_id': request.staffId,
-        'attachment_url': request.attachmentUrl,
-        'student_id': request.studentId,
-        'register_number': request.registerNumber,
-        'student_name': request.studentName,
-      });
-      
-      state = [newRequest, ...state];
+    final newRequest = await _apiService.createODRequest({
+      'date': request.date.toIso8601String().split('T')[0],
+      'periods': request.periods,
+      'reason': request.reason,
+      'attachment_url': request.attachmentUrl,
+      'register_number': request.registerNumber,
+      'student_name': request.studentName,
+    });
     
-      // Sync with calendar if service is available
-      if (_calendarSyncService != null) {
-        try {
-          await _calendarSyncService.handleODRequestCreation(newRequest);
-        } catch (e) {
-          // Log error but don't fail the request creation
-          debugPrint('Calendar sync error during request creation: $e');
-        }
+    state = [newRequest, ...state];
+  
+    // Sync with calendar if service is available
+    if (_calendarSyncService != null) {
+      try {
+        await _calendarSyncService.handleODRequestCreation(newRequest);
+      } catch (e) {
+        // Log error but don't fail the request creation
+        debugPrint('Calendar sync error during request creation: $e');
       }
-    } catch (e) {
-      debugPrint('Error creating OD request: $e');
     }
   }
 
