@@ -20,39 +20,11 @@ from app.core.enums import UserRole, ODStatus
 # --- Frontend Data Structures ---
 
 STAFF_DATA = [
-    {"id": "S001", "name": "Dr. Alan Grant", "email": "alan.grant@example.com", "department": "Computer Science", "designation": "Professor", "phone": "123-456-7890", "office": "CS-101", "specialization": "Data Structures & Algorithms", "experience_years": 15, "qualification": "Ph.D."},
-    {"id": "S002", "name": "Dr. Ellie Sattler", "email": "ellie.sattler@example.com", "department": "Computer Science", "designation": "Professor", "phone": "123-456-7891", "office": "CS-102", "specialization": "Operating Systems", "experience_years": 12, "qualification": "Ph.D."},
+    {"id": "S001", "name": "Dr. Alan Grant", "email": "alan.grant@example.com", "department": "Computer Science", "designation": "Professor", "phone": "123-456-7890", "office": "CS-101", "specialization": "Data Structures", "experience_years": 15, "qualification": "Ph.D."},
+    {"id": "S002", "name": "Dr. Ellie Sattler", "email": "ellie.sattler@example.com", "department": "Computer Science", "designation": "Professor", "phone": "123-456-7891", "office": "CS-102", "specialization": "Database Management", "experience_years": 12, "qualification": "Ph.D."},
     {"id": "S003", "name": "Dr. Ian Malcolm", "email": "ian.malcolm@example.com", "department": "Computer Science", "designation": "Professor", "phone": "123-456-7892", "office": "CS-103", "specialization": "Computer Networks", "experience_years": 14, "qualification": "Ph.D."},
     {"id": "S004", "name": "John Hammond", "email": "john.hammond@example.com", "department": "Information Technology", "designation": "Associate Professor", "phone": "123-456-7893", "office": "IT-101", "specialization": "Cloud Computing", "experience_years": 20, "qualification": "M.Tech"},
     {"id": "S005", "name": "Dennis Nedry", "email": "dennis.nedry@example.com", "department": "Information Technology", "designation": "Assistant Professor", "phone": "123-456-7894", "office": "IT-102", "specialization": "DevOps", "experience_years": 8, "qualification": "M.Tech"},
-    {"id": "S006", "name": "Dr. Sarah Connor", "email": "sarah.connor@example.com", "department": "Mathematics", "designation": "Professor", "phone": "123-456-7895", "office": "MA-101", "specialization": "Engineering Mathematics", "experience_years": 18, "qualification": "Ph.D."},
-    {"id": "S007", "name": "Dr. Kyle Reese", "email": "kyle.reese@example.com", "department": "Physics", "designation": "Associate Professor", "phone": "123-456-7896", "office": "PH-101", "specialization": "Engineering Physics", "experience_years": 10, "qualification": "Ph.D."},
-    {"id": "S008", "name": "Prof. Ellen Ripley", "email": "ellen.ripley@example.com", "department": "English", "designation": "Professor", "phone": "123-456-7897", "office": "EN-101", "specialization": "Technical English", "experience_years": 15, "qualification": "M.A."},
-    {"id": "S009", "name": "Mr. Dallas", "email": "dallas@example.com", "department": "Mechanical", "designation": "Assistant Professor", "phone": "123-456-7898", "office": "ME-101", "specialization": "Engineering Drawing", "experience_years": 7, "qualification": "M.Tech"},
-    {"id": "S010", "name": "Dr. Ash", "email": "ash@example.com", "department": "Computer Science", "designation": "Assistant Professor", "phone": "123-456-7899", "office": "CS-104", "specialization": "Programming Lab", "experience_years": 6, "qualification": "Ph.D."},
-    {"id": "S011", "name": "Dr. Lambert", "email": "lambert@example.com", "department": "Mathematics", "designation": "Associate Professor", "phone": "123-456-7900", "office": "MA-102", "specialization": "Advanced Mathematics", "experience_years": 11, "qualification": "Ph.D."},
-    {"id": "S012", "name": "Prof. Parker", "email": "parker@example.com", "department": "English", "designation": "Professor", "phone": "123-456-7901", "office": "EN-102", "specialization": "Communication Skills", "experience_years": 13, "qualification": "M.A."},
-    {"id": "S013", "name": "Dr. Neo Anderson", "email": "neo.anderson@example.com", "department": "Mathematics", "designation": "Associate Professor", "phone": "123-456-7902", "office": "MA-103", "specialization": "Discrete Mathematics", "experience_years": 12, "qualification": "Ph.D."},
-    {"id": "S014", "name": "Dr. Trinity", "email": "trinity@example.com", "department": "Computer Science", "designation": "Assistant Professor", "phone": "123-456-7903", "office": "CS-105", "specialization": "Object Oriented Programming", "experience_years": 9, "qualification": "Ph.D."},
-    {"id": "S015", "name": "Prof. Morpheus", "email": "morpheus@example.com", "department": "Computer Science", "designation": "Professor", "phone": "123-456-7904", "office": "CS-106", "specialization": "Discrete Mathematics", "experience_years": 16, "qualification": "M.Tech"},
-    {"id": "S016", "name": "Mr. Agent Smith", "email": "agent.smith@example.com", "department": "Computer Science", "designation": "Assistant Professor", "phone": "123-456-7905", "office": "CS-107", "specialization": "Programming Lab", "experience_years": 8, "qualification": "M.Tech"},
-    {"id": "S017", "name": "Dr. Oracle", "email": "oracle@example.com", "department": "Information Technology", "designation": "Professor", "phone": "123-456-7906", "office": "IT-103", "specialization": "Data Structures", "experience_years": 18, "qualification": "Ph.D."},
-    {"id": "S018", "name": "Mr. Cypher", "email": "cypher@example.com", "department": "Information Technology", "designation": "Assistant Professor", "phone": "123-456-7907", "office": "IT-104", "specialization": "Web Development", "experience_years": 7, "qualification": "M.Tech"},
-    {"id": "S019", "name": "Dr. Niobe", "email": "niobe@example.com", "department": "Information Technology", "designation": "Associate Professor", "phone": "123-456-7908", "office": "IT-105", "specialization": "Object Oriented Programming", "experience_years": 11, "qualification": "Ph.D."},
-    {"id": "S020", "name": "Prof. Commander Lock", "email": "commander.lock@example.com", "department": "Mathematics", "designation": "Professor", "phone": "123-456-7909", "office": "MA-104", "specialization": "Applied Mathematics", "experience_years": 15, "qualification": "M.Tech"},
-    {"id": "S021", "name": "Mr. Link", "email": "link@example.com", "department": "Information Technology", "designation": "Assistant Professor", "phone": "123-456-7910", "office": "IT-106", "specialization": "Web Lab", "experience_years": 6, "qualification": "M.Tech"},
-    {"id": "S022", "name": "Dr. Bruce Wayne", "email": "bruce.wayne@example.com", "department": "Computer Science", "designation": "Professor", "phone": "123-456-7911", "office": "CS-201", "specialization": "Database Management Systems", "experience_years": 14, "qualification": "Ph.D."},
-    {"id": "S023", "name": "Dr. Clark Kent", "email": "clark.kent@example.com", "department": "Computer Science", "designation": "Associate Professor", "phone": "123-456-7912", "office": "CS-202", "specialization": "Software Engineering", "experience_years": 11, "qualification": "Ph.D."},
-    {"id": "S024", "name": "Dr. Diana Prince", "email": "diana.prince@example.com", "department": "Computer Science", "designation": "Professor", "phone": "123-456-7913", "office": "CS-203", "specialization": "Database Systems", "experience_years": 13, "qualification": "Ph.D."},
-    {"id": "S025", "name": "Dr. Barry Allen", "email": "barry.allen@example.com", "department": "Computer Science", "designation": "Assistant Professor", "phone": "123-456-7914", "office": "CS-204", "specialization": "Computer Networks", "experience_years": 7, "qualification": "Ph.D."},
-    {"id": "S026", "name": "Dr. Arthur Curry", "email": "arthur.curry@example.com", "department": "Computer Science", "designation": "Associate Professor", "phone": "123-456-7915", "office": "CS-205", "specialization": "Operating Systems", "experience_years": 10, "qualification": "Ph.D."},
-    {"id": "S027", "name": "Dr. Victor Stone", "email": "victor.stone@example.com", "department": "Computer Science", "designation": "Assistant Professor", "phone": "123-456-7916", "office": "CS-206", "specialization": "Software Engineering", "experience_years": 6, "qualification": "M.Tech"},
-    {"id": "S028", "name": "Dr. Tony Stark", "email": "tony.stark@example.com", "department": "Computer Science", "designation": "Professor", "phone": "123-456-7917", "office": "CS-301", "specialization": "Artificial Intelligence", "experience_years": 18, "qualification": "Ph.D."},
-    {"id": "S029", "name": "Dr. Bruce Banner", "email": "bruce.banner@example.com", "department": "Computer Science", "designation": "Professor", "phone": "123-456-7918", "office": "CS-302", "specialization": "Machine Learning", "experience_years": 16, "qualification": "Ph.D."},
-    {"id": "S030", "name": "Dr. Natasha Romanoff", "email": "natasha.romanoff@example.com", "department": "Computer Science", "designation": "Associate Professor", "phone": "123-456-7919", "office": "CS-303", "specialization": "Cybersecurity", "experience_years": 12, "qualification": "M.Tech"},
-    {"id": "S031", "name": "Dr. Stephen Strange", "email": "stephen.strange@example.com", "department": "Information Technology", "designation": "Professor", "phone": "123-456-7920", "office": "IT-201", "specialization": "Artificial Intelligence", "experience_years": 15, "qualification": "Ph.D."},
-    {"id": "S032", "name": "Dr. Wanda Maximoff", "email": "wanda.maximoff@example.com", "department": "Information Technology", "designation": "Associate Professor", "phone": "123-456-7921", "office": "IT-202", "specialization": "Machine Learning", "experience_years": 11, "qualification": "Ph.D."},
-    {"id": "S033", "name": "Dr. Scott Lang", "email": "scott.lang@example.com", "department": "Information Technology", "designation": "Assistant Professor", "phone": "123-456-7922", "office": "IT-203", "specialization": "Cybersecurity", "experience_years": 8, "qualification": "M.Tech"},
 ]
 
 SUBJECTS = {
@@ -84,26 +56,25 @@ DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 # Sample Timetable Data snippet (representing the structure from timetable_data.dart)
 RAW_TIMETABLES = [
     {
-        "year": "1st Year",
-        "section": "Computer Science - Section A",
+        "year": "2nd Year",
+        "section": "A",
         "schedule": {
-            "Monday": [("Math", "S006"), ("Physics", "S007"), ("Eng", "S008"), ("Drawing", "S009"), (None, None)],
-            "Tuesday": [("Physics", "S007"), ("Math", "S006"), ("Drawing", "S009"), ("Eng", "S008"), (None, None)],
-            "Wednesday": [("Eng", "S008"), ("Drawing", "S009"), ("Math", "S006"), ("Physics", "S007"), (None, None)],
-            "Thursday": [("Drawing", "S009"), ("Eng", "S008"), ("Physics", "S007"), ("Math", "S006"), (None, None)],
-            "Friday": [("Math", "S006"), ("Physics", "S007"), ("Eng", "S008"), ("Lab", "S010"), (None, None)],
+            "Monday": [("DSA", "S001"), ("Math", None), ("Free", None), ("Physics", None), ("LUNCH", None)],
+            "Tuesday": [("DSA", "S001"), ("OS", None), ("Free", None), ("Lab", None), ("LUNCH", None)],
+            "Wednesday": [("Math", None), ("DSA", "S001"), ("Free", None), ("SE", None), ("LUNCH", None)],
+            "Thursday": [("OS", None), ("DBMS", "S002"), ("Free", None), ("DSA", "S001"), ("LUNCH", None)],
+            "Friday": [("Free", None), ("DSA", "S001"), ("Math", None), ("SE", None), ("LUNCH", None)],
         }
     },
-    # (Adding more years simplified for the dataloader logic)
     {
-        "year": "2nd Year",
-        "section": "Computer Science - Section A",
+        "year": "3rd Year",
+        "section": "A",
         "schedule": {
-            "Monday": [("DSA", "S001"), ("Math", "S013"), ("OOP", "S014"), ("Discrete", "S015"), (None, None)],
-            "Tuesday": [("OOP", "S014"), ("DSA", "S001"), ("Discrete", "S015"), ("Math", "S013"), (None, None)],
-            "Wednesday": [("Discrete", "S015"), ("OOP", "S014"), ("DSA", "S001"), ("Lab", "S016"), (None, None)],
-            "Thursday": [("Math", "S013"), ("Discrete", "S015"), ("OOP", "S014"), ("DSA", "S001"), (None, None)],
-            "Friday": [("Lab", "S016"), ("DSA", "S001"), ("OOP", "S014"), ("Math", "S013"), (None, None)],
+            "Monday": [("CN", "S003"), ("DBMS", "S002"), ("Free", None), ("AI", None), ("LUNCH", None)],
+            "Tuesday": [("DBMS", "S002"), ("CN", "S003"), ("Free", None), ("ML", None), ("LUNCH", None)],
+            "Wednesday": [("AI", None), ("DBMS", "S002"), ("Free", None), ("Cyber", None), ("LUNCH", None)],
+            "Thursday": [("ML", None), ("Cyber", None), ("Free", None), ("CN", "S003"), ("LUNCH", None)],
+            "Friday": [("Cyber", None), ("ML", None), ("Cloud", "S004"), ("DevOps", "S005"), ("LUNCH", None)],
         }
     }
 ]
@@ -157,20 +128,44 @@ async def load_data():
             staff_id_map[s["id"]] = user.id
             
         # 3. Load Students
-        print("Generating 30 student users...")
+        print("Generating student users...")
         student_users = []
-        for i in range(30):
+        
+        # Add SPECIFIC Test Student for the user
+        test_student = User(
+            email="test@student.com",
+            hashed_password=test_password_hash,
+            full_name="Test Student",
+            role=UserRole.STUDENT,
+            is_active=True,
+            register_number="42110565",
+            department="Computer Science",
+            year="2nd Year",
+            section="A"
+        )
+        db.add(test_student)
+        await db.flush()
+        student_users.append((test_student.id, "42110565", test_student.full_name))
+
+        # Generate 29 more student users
+        for i in range(29):
             email = f"student{i+1:03d}@college.edu"
             reg_num = f"20CS{100+i}"
             first = random.choice(STUDENT_FIRST_NAMES)
             last = random.choice(STUDENT_LAST_NAMES)
+            year = random.choice(["2nd Year", "3rd Year"])
+            section = "A"
+            
             user = User(
                 email=email,
                 hashed_password=test_password_hash,
                 full_name=f"{first} {last}",
                 role=UserRole.STUDENT,
                 is_active=True,
-                department="Computer Science" if "CS" in reg_num else "Information Technology"
+                register_number=reg_num,
+                department="Computer Science",
+                year=year,
+                section=section
             )
             db.add(user)
             await db.flush()
