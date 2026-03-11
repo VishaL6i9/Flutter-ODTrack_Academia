@@ -9,6 +9,48 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Read .env file to get Firebase API Key
+val envFile = file("../../.env")
+var firebaseAndroidKey = "YOUR_API_KEY_HERE"
+if (envFile.exists()) {
+    envFile.forEachLine { line ->
+        if (line.startsWith("FIREBASE_API_KEY_ANDROID=")) {
+            firebaseAndroidKey = line.substringAfter("=")
+        }
+    }
+}
+
+// Inject key into google-services.json before build
+tasks.register("injectFirebaseKey") {
+    val inputFile = file("google-services.json")
+    if (inputFile.exists() && firebaseAndroidKey != "YOUR_API_KEY_HERE") {
+        doFirst {
+            val content = inputFile.readText()
+            if (content.contains("YOUR_API_KEY_HERE")) {
+                inputFile.writeText(content.replace("YOUR_API_KEY_HERE", firebaseAndroidKey))
+            }
+        }
+    }
+}
+
+// Revert key after build to prevent git leak
+tasks.register("revertFirebaseKey") {
+    val inputFile = file("google-services.json")
+    if (inputFile.exists() && firebaseAndroidKey != "YOUR_API_KEY_HERE") {
+        doLast {
+             val content = inputFile.readText()
+             inputFile.writeText(content.replace(firebaseAndroidKey, "YOUR_API_KEY_HERE"))
+        }
+    }
+}
+
+tasks.whenTaskAdded {
+    if (name.contains("process") && name.contains("GoogleServices")) {
+        dependsOn("injectFirebaseKey")
+        finalizedBy("revertFirebaseKey")
+    }
+}
+
 android {
     namespace = "com.vishal.odtrack_academia"
     compileSdk = 35
