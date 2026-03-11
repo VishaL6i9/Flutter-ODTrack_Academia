@@ -10,6 +10,7 @@ import 'package:odtrack_academia/providers/od_request_provider.dart';
 import 'package:odtrack_academia/shared/widgets/loading_widget.dart';
 import 'package:odtrack_academia/shared/widgets/animated_widgets.dart';
 import 'package:odtrack_academia/shared/widgets/custom_refresh_indicator.dart';
+import 'package:odtrack_academia/core/theme/app_theme.dart';
 
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -29,8 +30,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Future<void> _initializeData() async {
-    // Simulate loading time for better UX
-    await Future<void>.delayed(const Duration(milliseconds: 800));
+    // Fetch fresh, user-specific OD requests immediately after login.
+    // This is essential for data isolation between staff and student sessions.
+    await ref.read(odRequestProvider.notifier).fetchRequests();
     if (mounted) {
       setState(() {
         _isLoading = false;
@@ -39,10 +41,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Future<void> _onRefresh() async {
-    // Refresh data
-    await Future<void>.delayed(const Duration(seconds: 1));
-    // Trigger provider refresh if needed
-    ref.invalidate(odRequestProvider);
+    await ref.read(odRequestProvider.notifier).fetchRequests();
   }
 
   @override
@@ -52,18 +51,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     if (_isLoading) {
       return Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: AppBar(
-          title: Text('Welcome, ${user.name.split(' ')[0]}'),
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: const Text('Dashboard'),
         ),
         body: const LoadingWidget.dashboard(),
       );
     }
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: Text('Welcome, ${user.name.split(' ')[0]}'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           PopupMenuButton(
             icon: CircleAvatar(
@@ -159,7 +158,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 title: 'Rejected',
                 value: rejectedRequests.toString(),
                 icon: MdiIcons.closeCircleOutline,
-                color: Colors.red,
+                color: Theme.of(context).colorScheme.error,
               ),
             ]),
           ),
@@ -172,7 +171,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 title: 'New OD Request',
                 subtitle: 'Submit a new OD request',
                 icon: MdiIcons.plus,
-                color: Colors.blue,
+                color: AppTheme.accentOrange,
                 onTap: () => context.push(AppConstants.newOdRoute),
               ),
               _ActionCard(
@@ -188,14 +187,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 title: 'Staff Directory',
                 subtitle: 'Browse faculty contacts',
                 icon: MdiIcons.accountGroup,
-                color: Colors.teal,
+                color: AppTheme.accentTeal,
                 onTap: () => context.push(AppConstants.staffDirectoryRoute),
               ),
               _ActionCard(
                 title: 'My OD Requests',
                 subtitle: 'View submitted requests',
                 icon: MdiIcons.clipboardText,
-                color: Colors.orange,
+                color: AppTheme.accentPurple,
                 onTap: () => context.push(AppConstants.myOdRequestsRoute),
               ),
             ]),
@@ -252,7 +251,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 title: 'OD Inbox',
                 subtitle: 'Review pending requests',
                 icon: MdiIcons.inbox,
-                color: Colors.blue,
+                color: AppTheme.accentOrange,
                 onTap: () => context.push(AppConstants.staffInboxRoute),
               ),
               _ActionCard(
@@ -287,7 +286,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 title: 'Staff Directory',
                 subtitle: 'Browse colleague contacts',
                 icon: MdiIcons.accountGroup,
-                color: Colors.teal,
+                color: AppTheme.accentTeal,
                 onTap: () => context.push(AppConstants.staffDirectoryRoute),
               ),
               _ActionCard(
