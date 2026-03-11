@@ -33,6 +33,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     // Fetch fresh, user-specific OD requests immediately after login.
     // This is essential for data isolation between staff and student sessions.
     await ref.read(odRequestProvider.notifier).fetchRequests();
+    // Force stats to refresh too so counts are accurate from first render.
+    ref.invalidate(odStatsProvider);
     if (mounted) {
       setState(() {
         _isLoading = false;
@@ -42,6 +44,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Future<void> _onRefresh() async {
     await ref.read(odRequestProvider.notifier).fetchRequests();
+    ref.invalidate(odStatsProvider);
   }
 
   @override
@@ -130,9 +133,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Widget _buildStudentDashboard(BuildContext context, WidgetRef ref) {
     final odRequests = ref.watch(odRequestProvider);
-    final pendingRequests = odRequests.where((r) => r.isPending).length;
-    final approvedRequests = odRequests.where((r) => r.isApproved).length;
-    final rejectedRequests = odRequests.where((r) => r.isRejected).length;
+    final statsAsync = ref.watch(odStatsProvider);
+    final stats = statsAsync.valueOrNull ?? {};
+    final pendingRequests = stats['pending'] ?? odRequests.where((r) => r.isPending).length;
+    final approvedRequests = stats['approved'] ?? odRequests.where((r) => r.isApproved).length;
+    final rejectedRequests = stats['rejected'] ?? odRequests.where((r) => r.isRejected).length;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -211,8 +216,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Widget _buildStaffDashboard(BuildContext context, WidgetRef ref) {
     final odRequests = ref.watch(odRequestProvider);
-    final pendingRequests = odRequests.where((r) => r.isPending).length;
-    final totalRequests = odRequests.length;
+    final statsAsync = ref.watch(odStatsProvider);
+    final stats = statsAsync.valueOrNull ?? {};
+    final pendingRequests = stats['pending'] ?? odRequests.where((r) => r.isPending).length;
+    final approvedRequests = stats['approved'] ?? 0;
+    final rejectedRequests = stats['rejected'] ?? 0;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -229,16 +237,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 color: Colors.orange,
               ),
               _StatCard(
-                title: 'Total Requests',
-                value: totalRequests.toString(),
-                icon: MdiIcons.fileDocumentOutline,
-                color: Colors.blue,
+                title: 'Approved',
+                value: approvedRequests.toString(),
+                icon: MdiIcons.checkCircleOutline,
+                color: Colors.green,
               ),
               _StatCard(
-                title: 'Today',
-                value: '0',
-                icon: MdiIcons.calendarToday,
-                color: Colors.green,
+                title: 'Rejected',
+                value: rejectedRequests.toString(),
+                icon: MdiIcons.closeCircleOutline,
+                color: Theme.of(context).colorScheme.error,
               ),
             ]),
           ),
