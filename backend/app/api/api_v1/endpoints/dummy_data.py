@@ -3,7 +3,7 @@ API endpoints for dummy/reference data (staff, timetables, students, etc.)
 """
 from fastapi import APIRouter, Query, Depends
 from typing import Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_db
 from app.services.dummy_data_service import dummy_data_service
 from app.core.logging import logger
@@ -11,16 +11,16 @@ from app.core.logging import logger
 router = APIRouter()
 
 @router.get("/staff")
-async def get_staff_list(db: Session = Depends(get_db)):
+async def get_staff_list(db: AsyncSession = Depends(get_db)):
     """Get list of all staff members from DB"""
     logger.info("Fetching staff list")
-    staff = dummy_data_service.get_staff_list(db)
+    staff = await dummy_data_service.get_staff_list(db)
     return {"staff": staff, "total": len(staff)}
 
 @router.get("/staff/{staff_id}")
-async def get_staff_by_id(staff_id: str, db: Session = Depends(get_db)):
+async def get_staff_by_id(staff_id: str, db: AsyncSession = Depends(get_db)):
     """Get specific staff member by ID from DB"""
-    staff_list = dummy_data_service.get_staff_list(db)
+    staff_list = await dummy_data_service.get_staff_list(db)
     staff = next((s for s in staff_list if s["id"] == staff_id), None)
     
     if not staff:
@@ -29,10 +29,10 @@ async def get_staff_by_id(staff_id: str, db: Session = Depends(get_db)):
     return staff
 
 @router.get("/staff/{staff_id}/timetable")
-async def get_staff_timetable(staff_id: str, db: Session = Depends(get_db)):
+async def get_staff_timetable(staff_id: str, db: AsyncSession = Depends(get_db)):
     """Get personal timetable for a specific staff member"""
     logger.info(f"Fetching timetable for staff: {staff_id}")
-    return dummy_data_service.get_staff_timetable(db, staff_id=staff_id)
+    return await dummy_data_service.get_staff_timetable(db, staff_id=staff_id)
 
 @router.get("/students")
 async def get_students_list(
@@ -41,12 +41,12 @@ async def get_students_list(
     section: Optional[str] = Query(None),
     limit: int = Query(100),
     offset: int = Query(0),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """Get list of students from DB"""
     logger.info(f"Fetching students list")
     
-    students = dummy_data_service.get_students_list(db)
+    students = await dummy_data_service.get_students_list(db)
     
     # Apply filters
     if department:
@@ -68,9 +68,9 @@ async def get_students_list(
     }
 
 @router.get("/students/{register_number}")
-async def get_student_by_register_number(register_number: str, db: Session = Depends(get_db)):
+async def get_student_by_register_number(register_number: str, db: AsyncSession = Depends(get_db)):
     """Get specific student by register number from DB"""
-    students = dummy_data_service.get_students_list(db)
+    students = await dummy_data_service.get_students_list(db)
     student = next((s for s in students if s["register_number"] == register_number), None)
     
     if not student:
@@ -81,12 +81,12 @@ async def get_student_by_register_number(register_number: str, db: Session = Dep
 @router.get("/timetable")
 async def get_timetable(
     section: str = Query("A"),
-    year: int = Query(3),
-    db: Session = Depends(get_db)
+    year: int = Query(2),
+    db: AsyncSession = Depends(get_db)
 ):
     """Get timetable from DB"""
     logger.info(f"Fetching timetable")
-    return dummy_data_service.get_timetable(db, section=section, year=year)
+    return await dummy_data_service.get_timetable(db, section=section, year=year)
 
 @router.get("/departments")
 async def get_departments():
@@ -112,12 +112,12 @@ async def get_department_by_code(dept_code: str):
 @router.get("/subjects")
 async def get_subjects(
     department: str = Query("CS"),
-    year: int = Query(3),
-    db: Session = Depends(get_db)
+    year: int = Query(2),
+    db: AsyncSession = Depends(get_db)
 ):
     """Get subjects from DB"""
     logger.info(f"Fetching subjects")
-    subjects = dummy_data_service.get_subjects(db, department=department, year=year)
+    subjects = await dummy_data_service.get_subjects(db, department=department, year=year)
     return {
         "subjects": subjects,
         "department": department,
@@ -132,10 +132,10 @@ async def get_academic_calendar():
     return dummy_data_service.get_academic_calendar()
 
 @router.get("/stats")
-async def get_system_stats(db: Session = Depends(get_db)):
+async def get_system_stats(db: AsyncSession = Depends(get_db)):
     """Get overall system statistics from DB"""
-    staff = dummy_data_service.get_staff_list(db)
-    students = dummy_data_service.get_students_list(db)
+    staff = await dummy_data_service.get_staff_list(db)
+    students = await dummy_data_service.get_students_list(db)
     departments = dummy_data_service.get_departments()
     
     return {
