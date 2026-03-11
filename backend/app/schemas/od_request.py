@@ -35,3 +35,6 @@ class ODRequestInDBBase(ODRequestBase):
 class ODRequest(ODRequestInDBBase):
     student: Optional[User] = None
     approved_by: Optional[User] = None
+
+class ODRequestList(BaseModel):
+    requests: List[ODRequest]
