@@ -10,6 +10,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:odtrack_academia/services/api/api_client.dart';
 import 'package:odtrack_academia/services/api/auth_service.dart';
+import 'package:odtrack_academia/providers/od_request_provider.dart';
 
 final _logger = Logger('AuthProvider');
 
@@ -54,7 +55,8 @@ class AuthState {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
-  AuthNotifier(this._authService, _) : super(const AuthState()) {
+  final Ref _ref;
+  AuthNotifier(this._authService, _, this._ref) : super(const AuthState()) {
     _logger.info('AuthNotifier initialized');
   }
 
@@ -206,6 +208,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
+    // Invalidate all data providers to clear stale session data immediately
+    _ref.invalidate(odRequestProvider);
     await _userBox.clear();
     await _secureStorage.delete(key: _tokenKey);
     await _secureStorage.delete(key: _refreshTokenKey);
@@ -225,7 +229,7 @@ final authServiceProvider = Provider<AuthService>((ref) {
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final authService = ref.watch(authServiceProvider);
   final staffAnalyticsService = ref.watch(staffAnalyticsServiceProvider);
-  final notifier = AuthNotifier(authService, staffAnalyticsService);
+  final notifier = AuthNotifier(authService, staffAnalyticsService, ref);
   
   // Bind token refresh
   ref.watch(apiClientProvider).onTokensRefreshed = (access, refresh) => notifier.updateTokens(access, refresh);
