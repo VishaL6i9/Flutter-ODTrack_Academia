@@ -319,6 +319,9 @@ class _EnhancedNewOdScreenState extends ConsumerState<EnhancedNewOdScreen> {
       try {
         FirebaseCrashlytics.instance.recordError(e, stackTrace, reason: 'OD Submission Failed');
       } catch (_) {}
+      
+      debugPrint('LOCAL DEBUG TRACE: $e');
+      debugPrint('LOCAL STACK TRACE: $stackTrace');
 
       setState(() {
         _formError = BaseError(
@@ -328,6 +331,7 @@ class _EnhancedNewOdScreenState extends ConsumerState<EnhancedNewOdScreen> {
           userMessage: 'Unable to submit your request. Please check your connection and try again.',
           isRetryable: true,
           severity: ErrorSeverity.high,
+          stackTrace: stackTrace.toString(),
         );
       });
     } finally {
