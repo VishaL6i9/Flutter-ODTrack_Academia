@@ -15,9 +15,11 @@ class SyncIndicatorWidget extends ConsumerWidget {
         // Show tooltip indicating state
         String tooltipStr = '';
         Widget iconWidget;
+        bool isSyncing = false;
 
         switch (status) {
           case SyncStatus.inProgress:
+            isSyncing = true;
             tooltipStr = 'Syncing...';
             iconWidget = const SizedBox(
               width: 16,
@@ -45,9 +47,26 @@ class SyncIndicatorWidget extends ConsumerWidget {
 
         return Tooltip(
           message: tooltipStr,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Center(child: iconWidget),
+          child: IconButton(
+            icon: iconWidget,
+            onPressed: isSyncing
+                ? null
+                : () async {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Starting manual sync...'), duration: Duration(seconds: 1)),
+                    );
+                    final syncService = ref.read(syncServiceProvider);
+                    final result = await syncService.forceSync();
+                    
+                    if (context.mounted && !result.success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Sync failed: ${result.errors.isNotEmpty ? result.errors.first : 'Unknown error'}'),
+                          backgroundColor: Colors.redAccent,
+                        ),
+                      );
+                    }
+                  },
           ),
         );
       },
