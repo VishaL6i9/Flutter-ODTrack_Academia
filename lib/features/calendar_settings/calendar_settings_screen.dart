@@ -59,7 +59,6 @@ class _CalendarSettingsScreenState extends ConsumerState<CalendarSettingsScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Calendar Settings'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
