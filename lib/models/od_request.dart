@@ -13,6 +13,21 @@ class ODRequest {
   static String _idFromJson(dynamic id) => id.toString();
   static String? _nullableIdFromJson(dynamic id) => id?.toString();
 
+  static DateTime _utcDateFromJson(String dateStr) {
+    if (!dateStr.endsWith('Z')) {
+      dateStr = '${dateStr}Z';
+    }
+    return DateTime.parse(dateStr).toLocal();
+  }
+
+  static DateTime? _nullableUtcDateFromJson(String? dateStr) {
+    if (dateStr == null) return null;
+    if (!dateStr.endsWith('Z')) {
+      dateStr = '${dateStr}Z';
+    }
+    return DateTime.parse(dateStr).toLocal();
+  }
+
   @HiveField(1)
   @JsonKey(name: 'student_id', fromJson: _idFromJson)
   final String studentId;
@@ -24,6 +39,7 @@ class ODRequest {
   final String registerNumber;
   
   @HiveField(4)
+  @JsonKey(fromJson: _utcDateFromJson)
   final DateTime date;
   
   @HiveField(5)
@@ -39,9 +55,11 @@ class ODRequest {
   final String? attachmentUrl;
   
   @HiveField(9)
+  @JsonKey(name: 'created_at', fromJson: _utcDateFromJson)
   final DateTime createdAt;
   
   @HiveField(10)
+  @JsonKey(name: 'approved_at', fromJson: _nullableUtcDateFromJson)
   final DateTime? approvedAt;
   
   @HiveField(11)
