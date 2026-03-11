@@ -21,8 +21,8 @@ class ODApiService {
 
   /// Update OD request status (for staff/admin)
   Future<ODRequest> updateODStatus(String id, String status, {String? reason}) async {
-    final response = await _apiClient.patch(
-      '/od-requests/$id', 
+    final response = await _apiClient.put(
+      '/od-requests/$id/status', 
       body: {
         'status': status,
         if (reason != null) 'rejection_reason': reason,
