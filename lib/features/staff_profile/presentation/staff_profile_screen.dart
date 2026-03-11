@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:odtrack_academia/providers/auth_provider.dart';
 import 'package:odtrack_academia/services/api/api_client.dart';
+import 'package:odtrack_academia/core/theme/app_theme.dart';
 
 class StaffProfileScreen extends ConsumerStatefulWidget {
   const StaffProfileScreen({super.key});
@@ -48,9 +49,9 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
     final user = ref.watch(authProvider).user!;
     
     return Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: AppBar(
-          title: const Text('My Profile'),
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: const Text('Staff Profile'),
           actions: [
             if (_isEditing)
               TextButton(
@@ -92,11 +93,11 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
           children: [
             CircleAvatar(
               radius: 50,
-              backgroundColor: Theme.of(context).colorScheme.primary,
+              backgroundColor: AppTheme.accentPurple.withValues(alpha: 0.2),
               child: Text(
                 (user.name as String).split(' ').map((String n) => n[0]).take(2).join(),
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppTheme.accentPurple,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
@@ -211,7 +212,7 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
               label: const Text('Save Changes'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: Colors.green,
+                backgroundColor: AppTheme.successColor,
                 foregroundColor: Colors.white,
               ),
             ),
@@ -262,13 +263,13 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
             ),
             const SizedBox(height: 12),
             ListTile(
-              leading: Icon(MdiIcons.key, color: Colors.blue),
+              leading: Icon(MdiIcons.key, color: AppTheme.accentBlue),
               title: const Text('Change Password'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: _showChangePasswordDialog,
             ),
             ListTile(
-              leading: Icon(MdiIcons.bell, color: Colors.orange),
+              leading: Icon(MdiIcons.bell, color: AppTheme.accentOrange),
               title: const Text('Notification Settings'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {
@@ -278,7 +279,7 @@ class _StaffProfileScreenState extends ConsumerState<StaffProfileScreen> {
               },
             ),
             ListTile(
-              leading: Icon(MdiIcons.help, color: Colors.green),
+              leading: Icon(MdiIcons.help, color: AppTheme.successColor),
               title: const Text('Help & Support'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {
