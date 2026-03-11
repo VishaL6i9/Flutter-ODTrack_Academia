@@ -68,3 +68,9 @@ android/app/google-services.json
 # User Uploads
 backend/uploads/
 
+
+# Android Build Configs
+android/app/build/
+android/app/.cxx/
+android/local.properties
+
