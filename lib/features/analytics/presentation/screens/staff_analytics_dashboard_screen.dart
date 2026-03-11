@@ -74,14 +74,25 @@ class _StaffAnalyticsDashboardScreenState extends ConsumerState<StaffAnalyticsDa
 
   Future<void> _initializeAnalytics() async {
     final authState = ref.read(authProvider);
-    
-    // Prioritize passed staffId, otherwise use the logged-in user's ID.
+    final analyticsService = ref.read(staffAnalyticsServiceProvider);
+
     String? staffIdToLoad = widget.staffId;
+
     if (staffIdToLoad == null && authState.user != null) {
-      staffIdToLoad = authState.user!.id;
+      final userEmail = authState.user!.email;
+      // The backend returns integer DB PKs, but our Hive analytics service
+      // uses static string keys like "S001". We must resolve the correct local
+      // ID by looking up the staff member by email.
+      final hiveStaff = await analyticsService.findStaffByEmail(userEmail);
+      if (hiveStaff != null) {
+        staffIdToLoad = hiveStaff.id;
+      } else {
+        // Fallback: try the first available staff in Hive (for cases where
+        // a known staff email is not yet seeded locally but Hive has data).
+        staffIdToLoad = await analyticsService.getFirstStaffId();
+      }
     }
-    
-    // If we have a valid staff ID, load the analytics data.
+
     if (staffIdToLoad != null && staffIdToLoad.isNotEmpty) {
       setState(() {
         _currentStaffId = staffIdToLoad!;
@@ -89,7 +100,7 @@ class _StaffAnalyticsDashboardScreenState extends ConsumerState<StaffAnalyticsDa
       await ref.read(staffAnalyticsProvider.notifier).initialize();
       await _loadAnalyticsData();
     }
-    // If no staffId is available, the screen will show an empty/loading state.
+    // If no staffId is resolvable, the screen will show an empty/error state.
   }
 
   Future<void> _loadAnalyticsData() async {
