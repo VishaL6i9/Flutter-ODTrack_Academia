@@ -4,7 +4,7 @@ import 'package:hive/hive.dart';
 part 'od_request.g.dart';
 
 @HiveType(typeId: 1)
-@JsonSerializable()
+@JsonSerializable(fieldRename: FieldRename.snake)
 class ODRequest {
   @HiveField(0)
   @JsonKey(name: 'id', fromJson: _idFromJson)
