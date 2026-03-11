@@ -4,7 +4,7 @@ import 'package:hive/hive.dart';
 part 'staff_member.g.dart';
 
 @HiveType(typeId: 2)
-@JsonSerializable()
+@JsonSerializable(fieldRename: FieldRename.snake)
 class StaffMember {
   @HiveField(0)
   final String id;
