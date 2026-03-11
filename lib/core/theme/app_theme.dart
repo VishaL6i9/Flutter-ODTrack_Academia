@@ -5,10 +5,16 @@ class AppTheme {
   // Color Palette
   static const Color primaryColor = Color(0xFF1976D2);
   static const Color accentColor = Color(0xFF03DAC6);
-  static const Color secondaryColor = Color(0xFF03DAC6);
+  static const Color secondaryColor = Color(0xFF7C4DFF); // Vibrant Purple
   static const Color errorColor = Color(0xFFB00020);
-  static const Color successColor = Color(0xFF4CAF50);
-  static const Color warningColor = Color(0xFFFF9800);
+  static const Color successColor = Color(0xFF00C853);
+  static const Color warningColor = Color(0xFFFFAB40);
+  
+  // Custom Accent Colors
+  static const Color accentOrange = Color(0xFFFF6D00);
+  static const Color accentPurple = Color(0xFF7C4DFF);
+  static const Color accentTeal = Color(0xFF00BFA5);
+  static const Color accentBlue = Color(0xFF90CAF9);
   
   // High Contrast Colors
   static const Color highContrastPrimary = Color(0xFF000000);
@@ -27,10 +33,24 @@ class AppTheme {
     
     return ThemeData(
       useMaterial3: true,
-      colorScheme: isHighContrast ? _getHighContrastLightColorScheme() : ColorScheme.fromSeed(
-        seedColor: primaryColor,
-        brightness: Brightness.light,
-      ),
+      colorScheme: isHighContrast
+          ? _getHighContrastLightColorScheme()
+          : const ColorScheme.light(
+              primary: primaryColor,
+              onPrimary: Colors.white,
+              secondary: secondaryColor,
+              onSecondary: Colors.white,
+              surface: Colors.white,
+              onSurface: Color(0xFF1D1B20),
+              surfaceContainerLowest: Colors.white,
+              surfaceContainerLow: Color(0xFFF7F2FA),
+              surfaceContainer: Color(0xFFF3EDF7),
+              surfaceContainerHigh: Color(0xFFECE6F0),
+              surfaceContainerHighest: Color(0xFFE6E0E9),
+              outline: Color(0xFF79747E),
+              outlineVariant: Color(0xFFCAC4D0),
+            ),
+      scaffoldBackgroundColor: isHighContrast ? Colors.white : const Color(0xFFFDF7FF),
       appBarTheme: AppBarTheme(
         centerTitle: true,
         elevation: 0,
@@ -126,15 +146,29 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: isHighContrast
           ? _getHighContrastDarkColorScheme()
-          : ColorScheme.fromSeed(
-              seedColor: primaryColor,
-              brightness: Brightness.dark,
+          : const ColorScheme.dark(
+              primary: primaryColor,
+              onPrimary: Colors.white,
+              secondary: secondaryColor,
+              onSecondary: Colors.white,
+              surface: Colors.black,
+              onSurface: Colors.white,
+              surfaceContainerLowest: Colors.black,
+              surfaceContainerLow: Colors.black,
+              surfaceContainer: Colors.black,
+              surfaceContainerHigh: Colors.black,
+              surfaceContainerHighest: Color(0xFF080808), // Extremely subtle lift
+              onSurfaceVariant: Colors.white70,
+              outline: Color(0xFF1F1F1F),
+              outlineVariant: Color(0xFF141414),
+              error: errorColor,
+              onError: Colors.white,
             ),
       scaffoldBackgroundColor: Colors.black,
       appBarTheme: AppBarTheme(
         centerTitle: true,
         elevation: 0,
-        scrolledUnderElevation: 1,
+        scrolledUnderElevation: 0, // Prevent grey tint on scroll
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         titleTextStyle: TextStyle(
@@ -145,7 +179,8 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         elevation: isHighContrast ? 4 : 2,
-        color: const Color(0xFF0A0A0A), // Deep black surface
+        color: Colors.black, // True OLED Black
+        surfaceTintColor: Colors.transparent,
         clipBehavior: Clip.antiAlias,
         shadowColor: Colors.black,
         shape: RoundedRectangleBorder(
@@ -287,7 +322,8 @@ class AppTheme {
         ),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: const Color(0xFF0A0A0A),
+        backgroundColor: Colors.black,
+        surfaceTintColor: Colors.transparent,
         titleTextStyle: const TextStyle(
           color: Colors.white,
           fontSize: 20,
@@ -315,21 +351,21 @@ class AppTheme {
         ),
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: Color(0xFF90CAF9),
+        color: accentOrange,
         linearTrackColor: Color(0xFF1F1F1F),
         circularTrackColor: Color(0xFF1F1F1F),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: const Color(0xFF90CAF9),
-        foregroundColor: const Color(0xFF121212),
+        backgroundColor: accentPurple,
+        foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
       ),
       tabBarTheme: const TabBarThemeData(
-        labelColor: Color(0xFF90CAF9),
+        labelColor: accentTeal,
         unselectedLabelColor: Colors.white70,
-        indicatorColor: Color(0xFF90CAF9),
+        indicatorColor: accentTeal,
         dividerColor: Color(0xFF404040),
       ),
       switchTheme: SwitchThemeData(
@@ -389,8 +425,9 @@ class AppTheme {
       onPrimary: highContrastPrimary,
       secondary: highContrastOnSecondary,
       onSecondary: highContrastSecondary,
-      surface: highContrastPrimary,
+      surface: Colors.black, // Still True Black for OLED even in high contrast
       onSurface: highContrastOnPrimary,
+      surfaceContainer: Color(0xFF080808),
       error: highContrastError,
       onError: highContrastOnError,
     );
