@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:odtrack_academia/core/constants/app_constants.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -314,15 +315,17 @@ class _EnhancedNewOdScreenState extends ConsumerState<EnhancedNewOdScreen> {
         context.pop();
       }
     } catch (e, stackTrace) {
-      debugPrint('OD Submission Error: $e');
-      debugPrint('Stacktrace: $stackTrace');
-      
+      // Send detailed error to Crashlytics instead of showing raw stacktrace in UI
+      try {
+        FirebaseCrashlytics.instance.recordError(e, stackTrace, reason: 'OD Submission Failed');
+      } catch (_) {}
+
       setState(() {
         _formError = BaseError(
           category: ErrorCategory.unknown,
           code: 'SUBMISSION_FAILED',
-          message: 'Failed to submit OD request: ${e.toString()}',
-          userMessage: 'Unable to submit your request. Error: ${e.toString()}\n\nStacktrace (Dev): $stackTrace',
+          message: 'Failed to submit OD request',
+          userMessage: 'Unable to submit your request. Please check your connection and try again.',
           isRetryable: true,
           severity: ErrorSeverity.high,
         );
