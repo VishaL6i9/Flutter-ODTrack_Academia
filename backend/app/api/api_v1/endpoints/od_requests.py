@@ -47,6 +47,23 @@ async def read_od_requests(
         
     return {"requests": requests}
 
+@router.get("/stats")
+async def read_od_stats(
+    db: Annotated[AsyncSession, Depends(deps.get_db)],
+    current_user: Annotated[User, Depends(deps.get_current_active_user)],
+) -> Any:
+    """
+    Get OD request counts by status for the current user.
+    Students get their own counts; staff get counts of all requests they handle.
+    """
+    if current_user.role == UserRole.STUDENT:
+        stats = await od_service.get_stats_by_student(db=db, student_id=current_user.id)
+    elif current_user.role in [UserRole.STAFF, UserRole.ADMIN, UserRole.SUPERUSER]:
+        stats = await od_service.get_stats_for_staff(db=db, staff_id=current_user.id)
+    else:
+        stats = {"pending": 0, "approved": 0, "rejected": 0, "total": 0}
+    return stats
+
 @router.get("/me", response_model=List[ODRequest])
 async def read_od_requests_me(
     db: Annotated[AsyncSession, Depends(deps.get_db)],
