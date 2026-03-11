@@ -8,14 +8,14 @@ class ODApiService {
 
   /// Fetch all OD requests (filtered by role in backend)
   Future<List<ODRequest>> getODRequests() async {
-    final response = await _apiClient.get('/od-requests');
+    final response = await _apiClient.get('/od-requests/');
     final List<dynamic> data = (response['requests'] as List? ?? []);
     return data.map((json) => ODRequest.fromJson(json as Map<String, dynamic>)).toList();
   }
 
   /// Create a new OD request
   Future<ODRequest> createODRequest(Map<String, dynamic> requestData) async {
-    final response = await _apiClient.post('/od-requests', body: requestData);
+    final response = await _apiClient.post('/od-requests/', body: requestData);
     return ODRequest.fromJson(response);
   }
 
