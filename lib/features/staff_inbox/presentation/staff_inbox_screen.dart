@@ -20,7 +20,12 @@ class StaffInboxScreen extends ConsumerStatefulWidget {
   ConsumerState<StaffInboxScreen> createState() => _StaffInboxScreenState();
 }
 
+enum _InboxMode { today, archive }
+
 class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
+  _InboxMode _mode = _InboxMode.today;
+  DateRangeFilter? _activeFilter;
+  
   String _selectedFilter = 'All';
   final List<String> _filters = ['All', 'Pending', 'Approved', 'Rejected'];
   bool _isProgressDialogShown = false;
@@ -33,8 +38,16 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
   }
 
   Future<void> _initializeData() async {
-    // Simulate loading time for better UX
-    await Future<void>.delayed(const Duration(milliseconds: 600));
+    // Determine today's bounds as default for inbox
+    final now = DateTime.now();
+    final startOfToday = DateTime(now.year, now.month, now.day);
+    final endOfToday = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    
+    // Default inbox state is today
+    _activeFilter = DateRangeFilter(start: startOfToday, end: endOfToday);
+    
+    await _fetchBasedOnMode();
+    
     if (mounted) {
       setState(() {
         _isLoading = false;
@@ -42,9 +55,67 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
     }
   }
 
+  Future<void> _fetchBasedOnMode() async {
+    if (_mode == _InboxMode.today) {
+      await ref.read(odRequestProvider.notifier).fetchRequests(
+        dateFrom: _activeFilter?.start,
+        dateTo: _activeFilter?.end,
+      );
+    }
+    // Archive mode fetches via odArchiveProvider automatically using activeFilter
+  }
+
+  Future<void> _pickDateRange() async {
+    final now = DateTime.now();
+    final initialDateRange = _activeFilter != null 
+        ? DateTimeRange(
+            start: _activeFilter!.start ?? now, 
+            end: _activeFilter!.end ?? now,
+          )
+        : null;
+        
+    final result = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(now.year + 1),
+      initialDateRange: initialDateRange,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: AppTheme.accentTeal,
+              onPrimary: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        _activeFilter = DateRangeFilter(
+          start: result.start,
+          end: DateTime(result.end.year, result.end.month, result.end.day, 23, 59, 59),
+        );
+      });
+      _fetchBasedOnMode();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final allRequests = ref.watch(odRequestProvider);
+    List<ODRequest> allRequests = [];
+    bool isFetchingArchive = false;
+    
+    if (_mode == _InboxMode.archive) {
+      final archiveAsync = ref.watch(odArchiveProvider(_activeFilter ?? const DateRangeFilter()));
+      allRequests = archiveAsync.valueOrNull ?? [];
+      isFetchingArchive = archiveAsync.isLoading;
+    } else {
+      allRequests = ref.watch(odRequestProvider);
+    }
+    
     final bulkOperationState = ref.watch(bulkOperationProvider);
     final filteredRequests = _getFilteredRequests(allRequests);
 
@@ -53,11 +124,11 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
       _handleBulkOperationStateChange(context, previous, current);
     });
 
-    if (_isLoading) {
+    if (_isLoading || isFetchingArchive) {
       return Scaffold(
-      appBar: AppBar(
-        title: const Text('Staff Inbox'),
-      ),
+        appBar: AppBar(
+          title: Text(_mode == _InboxMode.today ? 'Staff Inbox' : 'Staff Archive'),
+        ),
         body: const LoadingWidget.staffInbox(),
       );
     }
@@ -111,9 +182,57 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
     }
 
     return AppBar(
-      title: const Text('OD Inbox'),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(_mode == _InboxMode.today ? 'OD Inbox' : 'OD Archive'),
+          if (_activeFilter != null)
+            Text(
+              '${_activeFilter!.start?.toString().split(' ')[0] ?? ''} - ${_activeFilter!.end?.toString().split(' ')[0] ?? ''}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+        ],
+      ),
       backgroundColor: Theme.of(context).colorScheme.surface,
       actions: [
+        if (_activeFilter != null)
+          IconButton(
+            icon: const Icon(Icons.filter_alt_off),
+            onPressed: () {
+              setState(() {
+                _activeFilter = null;
+              });
+              _fetchBasedOnMode();
+            },
+            tooltip: 'Clear filter',
+          ),
+        IconButton(
+          icon: const Icon(Icons.calendar_month),
+          onPressed: _pickDateRange,
+          tooltip: 'Filter by date',
+        ),
+        PopupMenuButton<_InboxMode>(
+          icon: const Icon(Icons.more_vert),
+          onSelected: (mode) {
+            setState(() {
+              _mode = mode;
+            });
+            _fetchBasedOnMode();
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: _InboxMode.today,
+              child: Text('Inbox View'),
+            ),
+            const PopupMenuItem(
+              value: _InboxMode.archive,
+              child: Text('Archive View'),
+            ),
+          ],
+        ),
         IconButton(
           icon: const Icon(Icons.checklist),
           onPressed: () {
