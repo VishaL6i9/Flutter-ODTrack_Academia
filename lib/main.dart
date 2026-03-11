@@ -14,6 +14,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:odtrack_academia/firebase_options.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:odtrack_academia/services/sample_data_service.dart';
 import 'package:odtrack_academia/models/staff_member.dart';
@@ -40,6 +41,9 @@ void main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
   logger.info('WidgetsFlutterBinding initialized');
+
+  await dotenv.load(fileName: ".env");
+  logger.info('Environment variables loaded');
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
