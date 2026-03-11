@@ -34,4 +34,9 @@ class AuthService {
   Future<void> updateFcmToken(String token) async {
     await _apiClient.patch('/users/me/fcm-token', body: {'fcm_token': token});
   }
+
+  /// Update tokens in ApiClient
+  void updateTokens(String accessToken, String refreshToken) {
+    _apiClient.setAuthTokens(accessToken, refreshToken);
+  }
 }
