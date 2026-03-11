@@ -1,0 +1,101 @@
+### Git Commit Message Style Guide
+
+This repository follows the **Conventional Commits** convention with a small set of allowed types and project-specific rules. Use this guide to write clear, consistent commit messages that make history easy to read and automate.
+
+---
+
+### Format
+```text
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+- **Subject**: short summary in imperative mood.  
+- **Scope**: optional, single token that indicates the area affected.  
+- **Body**: explain **what** and **why**, not **how**.  
+- **Footer(s)**: metadata such as breaking changes or issue references.
+
+---
+
+### Types
+- **feat**: new feature or enhancement  
+- **fix**: bug fix  
+- **docs**: documentation only changes  
+- **style**: formatting, whitespace, or other non-functional changes  
+- **refactor**: code change that neither fixes a bug nor adds a feature  
+- **perf**: performance improvement  
+- **test**: add or fix tests  
+- **build**: changes to build system or external dependencies  
+- **ci**: CI configuration and scripts  
+- **chore**: maintenance tasks that do not modify `src` or `test` files
+
+---
+
+### Scope
+- Use a concise scope to add context, for example: `network_monitor`, `device_manager`, `ui`, `data`, `core`.  
+- Format: single token inside parentheses: `feat(network_monitor): ...`
+
+---
+
+### Examples
+```text
+feat: add network device discovery functionality
+```
+```text
+fix(core): resolve compilation errors in error handling implementation
+```
+```text
+docs: update roadmap to reflect completed error handling improvements
+```
+```text
+refactor(network_monitor): implement Hilt dependency injection
+```
+```text
+build: update project to use Hilt dependency injection configuration
+```
+```text
+feat(ui): add dark mode toggle
+
+Add a user preference and persist it across sessions.
+Closes #42
+```
+```text
+fix: correct null pointer when device list is empty
+
+This occurred when the API returned an empty array.
+BREAKING CHANGE: API response handling now requires explicit null checks.
+```
+
+---
+
+### Rules and Best Practices
+1. **Use imperative mood**: e.g., `add`, `fix`, `remove`.  
+2. **Lowercase subject**: do not capitalize the first letter of the description.  
+3. **No trailing period**: do not end the subject with a period.  
+4. **Subject length**: keep the subject to **72 characters or fewer**.  
+5. **Separate subject and body** with a blank line when a body is present.  
+6. **Wrap body at 72 characters** for readability.  
+7. **Body content**: explain *what* changed and *why*; avoid implementation details.  
+8. **Breaking changes**: include a footer starting with `BREAKING CHANGE:` followed by a clear description.  
+9. **Issue references**: add `Closes #<issue>` or `Fixes #<issue>` in the footer when applicable.  
+10. **One logical change per commit**: keep commits focused and atomic.  
+11. **Group commits by feature when appropriate**: commit related changes in logical groups that reflect the feature or task; order commits to follow the logical progression of the project’s development history.
+
+**Clarification on rules 10 and 11**  
+- Prefer **atomic commits** that represent a single logical change.  
+- When a feature requires multiple commits, group those commits logically (e.g., `feat(core): scaffold feature`, `refactor(core): extract helper`, `test(core): add feature tests`) and order them to reflect the natural development sequence.
+
+---
+
+### Quick Checklist Before Committing
+- **Type chosen** correctly.  
+- **Subject** is imperative, lowercase, concise, and under 72 chars.  
+- **Scope** added if it clarifies the change.  
+- **Body** explains *why* (and any important context).  
+- **Footer** includes breaking changes or issue links when needed.  
+- **Commits grouped logically** by feature when appropriate and ordered to reflect development history.  
+- **Each commit** represents one logical change or a clearly related group of changes.
+
+Use this guide to keep commit history useful for reviewers, changelogs, and automation.
