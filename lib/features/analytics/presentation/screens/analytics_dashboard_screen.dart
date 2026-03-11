@@ -58,6 +58,7 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('Analytics Dashboard'),
         actions: [
