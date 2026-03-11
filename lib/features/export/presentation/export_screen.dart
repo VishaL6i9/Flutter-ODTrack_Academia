@@ -44,6 +44,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen>
     final exportError = ref.watch(exportErrorProvider);
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('Export Reports'),
         bottom: TabBar(
