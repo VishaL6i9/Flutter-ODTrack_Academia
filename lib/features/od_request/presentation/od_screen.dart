@@ -19,6 +19,7 @@ import 'package:odtrack_academia/providers/staff_provider.dart';
 import 'package:odtrack_academia/providers/timetable_provider.dart';
 import 'package:odtrack_academia/shared/widgets/form.dart';
 import 'package:odtrack_academia/shared/widgets/form_field.dart';
+import 'package:odtrack_academia/core/theme/app_theme.dart';
 import 'package:odtrack_academia/shared/widgets/error_dialog.dart';
 import 'package:odtrack_academia/utils/form_validators.dart';
 
@@ -347,9 +348,9 @@ class _EnhancedNewOdScreenState extends ConsumerState<EnhancedNewOdScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('New OD Request'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: EnhancedForm(
         formKey: _formKey,
@@ -463,6 +464,11 @@ class _EnhancedNewOdScreenState extends ConsumerState<EnhancedNewOdScreen> {
                   _updateDesignatedStaff();
                 });
               },
+              selectedColor: AppTheme.accentTeal.withValues(alpha: 0.2),
+              labelStyle: TextStyle(
+                color: _selectedPeriod == periodIndex ? AppTheme.accentTeal : Colors.white70,
+                fontWeight: _selectedPeriod == periodIndex ? FontWeight.bold : FontWeight.normal,
+              ),
             );
           }),
         ),
@@ -507,8 +513,8 @@ class _EnhancedNewOdScreenState extends ConsumerState<EnhancedNewOdScreen> {
                     _staffSearchQuery = '';
                     _staffSearchController.clear();
                   }),
-                  icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Change Staff'),
+                  icon: const Icon(Icons.refresh, size: 16, color: AppTheme.accentOrange),
+                  label: const Text('Change Staff', style: TextStyle(color: AppTheme.accentOrange)),
                 ),
               ),
             ] else ...[
@@ -562,11 +568,11 @@ class _EnhancedNewOdScreenState extends ConsumerState<EnhancedNewOdScreen> {
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                               leading: CircleAvatar(
                                 radius: 20,
-                                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                                backgroundColor: AppTheme.accentPurple.withValues(alpha: 0.1),
                                 child: Text(
                                   staff.name[0],
-                                  style: TextStyle(
-                                    color: Theme.of(context).colorScheme.primary,
+                                  style: const TextStyle(
+                                    color: AppTheme.accentPurple,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
