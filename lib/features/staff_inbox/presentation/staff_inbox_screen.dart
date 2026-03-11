@@ -9,6 +9,7 @@ import 'package:odtrack_academia/models/export_models.dart';
 import 'package:odtrack_academia/models/bulk_operation_models.dart';
 import 'package:odtrack_academia/shared/widgets/bulk_operation_progress_dialog.dart';
 import 'package:odtrack_academia/shared/widgets/bulk_operation_result_dialog.dart';
+import 'package:odtrack_academia/shared/widgets/sync_indicator_widget.dart';
 
 import 'package:odtrack_academia/shared/widgets/loading_widget.dart';
 import 'package:odtrack_academia/core/theme/app_theme.dart';
@@ -198,6 +199,7 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
       ),
       backgroundColor: Theme.of(context).colorScheme.surface,
       actions: [
+        const SyncIndicatorWidget(),
         if (_activeFilter != null)
           IconButton(
             icon: const Icon(Icons.filter_alt_off),

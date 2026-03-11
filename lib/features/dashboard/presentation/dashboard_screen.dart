@@ -10,6 +10,7 @@ import 'package:odtrack_academia/providers/od_request_provider.dart';
 import 'package:odtrack_academia/shared/widgets/loading_widget.dart';
 import 'package:odtrack_academia/shared/widgets/animated_widgets.dart';
 import 'package:odtrack_academia/shared/widgets/custom_refresh_indicator.dart';
+import 'package:odtrack_academia/shared/widgets/sync_indicator_widget.dart';
 import 'package:odtrack_academia/core/theme/app_theme.dart';
 
 
@@ -67,6 +68,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       appBar: AppBar(
         title: Text('Welcome, ${user.name.split(' ')[0]}'),
         actions: [
+          const SyncIndicatorWidget(),
           PopupMenuButton(
             icon: CircleAvatar(
               backgroundColor: Theme.of(context).colorScheme.primary,
