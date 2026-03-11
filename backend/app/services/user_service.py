@@ -9,12 +9,22 @@ class UserService:
         result = await db.execute(select(User).where(User.email == email))
         return result.scalars().first()
 
+    async def get_by_register_number(self, db: AsyncSession, reg_num: str) -> User | None:
+        result = await db.execute(select(User).where(User.register_number == reg_num))
+        return result.scalars().first()
+
     async def get(self, db: AsyncSession, id: int) -> User | None:
         result = await db.execute(select(User).where(User.id == id))
         return result.scalars().first()
 
     async def authenticate(self, db: AsyncSession, email: str, password: str) -> User | None:
+        # Check by email first
         user = await self.get_by_email(db, email)
+        
+        # If not found, check by register number
+        if not user:
+            user = await self.get_by_register_number(db, email)
+            
         if not user:
             return None
         if not verify_password(password, user.hashed_password):
@@ -28,6 +38,12 @@ class UserService:
             full_name=user_in.full_name,
             role=user_in.role,
             is_active=user_in.is_active,
+            register_number=user_in.register_number,
+            year=user_in.year,
+            section=user_in.section,
+            department=user_in.department,
+            designation=user_in.designation,
+            phone=user_in.phone,
         )
         db.add(db_user)
         await db.commit()
