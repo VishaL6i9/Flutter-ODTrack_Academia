@@ -18,7 +18,7 @@ class DashboardSkeleton extends StatelessWidget {
           Row(
             children: List.generate(3, (index) => const Expanded(
               child: SkeletonCard(
-                height: 100,
+                height: 120,
                 padding: EdgeInsets.all(16),
                 child: Column(
                   children: [
@@ -125,7 +125,7 @@ class StaffInboxSkeleton extends StatelessWidget {
             child: Row(
               children: List.generate(3, (index) => const Expanded(
                 child: SkeletonCard(
-                  height: 60,
+                  height: 80,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -163,7 +163,7 @@ class RequestCardSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SkeletonCard(
-      height: 200,
+      height: 240,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
