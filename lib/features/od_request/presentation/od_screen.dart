@@ -313,13 +313,16 @@ class _EnhancedNewOdScreenState extends ConsumerState<EnhancedNewOdScreen> {
         );
         context.pop();
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('OD Submission Error: $e');
+      debugPrint('Stacktrace: $stackTrace');
+      
       setState(() {
         _formError = BaseError(
           category: ErrorCategory.unknown,
           code: 'SUBMISSION_FAILED',
           message: 'Failed to submit OD request: ${e.toString()}',
-          userMessage: 'Unable to submit your request. Please check your connection and try again.',
+          userMessage: 'Unable to submit your request. Error: ${e.toString()}\n\nStacktrace (Dev): $stackTrace',
           isRetryable: true,
           severity: ErrorSeverity.high,
         );
