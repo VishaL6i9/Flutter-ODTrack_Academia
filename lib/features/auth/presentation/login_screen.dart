@@ -198,14 +198,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             showStrengthIndicator: false,
             helpText: 'Enter your student account password',
           ),
-          const SizedBox(height: 16),
-          Text(
-            'Demo: Use password123 for all students',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontSize: 12,
-            ),
-          ),
         ],
       ),
     );
@@ -242,14 +234,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             ],
             showStrengthIndicator: false,
             helpText: 'Enter your account password',
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Demo: Use any email and password',
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 12,
-            ),
           ),
         ],
       ),
