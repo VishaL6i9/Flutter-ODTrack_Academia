@@ -19,6 +19,12 @@ class ODApiService {
     return ODRequest.fromJson(response);
   }
 
+  /// Update an existing OD request (for student edit)
+  Future<ODRequest> updateODRequest(String id, Map<String, dynamic> requestData) async {
+    final response = await _apiClient.put('/od-requests/$id/', body: requestData);
+    return ODRequest.fromJson(response);
+  }
+
   /// Update OD request status (for staff/admin)
   Future<ODRequest> updateODStatus(String id, String status, {String? reason}) async {
     final response = await _apiClient.put(
