@@ -5,7 +5,7 @@ import 'package:odtrack_academia/models/period_slot.dart';
 part 'timetable.g.dart';
 
 @HiveType(typeId: 4)
-@JsonSerializable()
+@JsonSerializable(fieldRename: FieldRename.snake)
 class Timetable {
   @HiveField(0)
   final String year;
