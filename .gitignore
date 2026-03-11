@@ -64,3 +64,7 @@ macos/Flutter/GeneratedPluginRegistrant.swift
 # Build-injected Secrets
 android/app/google-services.json
 
+
+# User Uploads
+backend/uploads/
+
