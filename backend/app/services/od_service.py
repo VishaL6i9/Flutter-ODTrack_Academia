@@ -152,4 +152,34 @@ class ODService:
         )
         return result.scalars().all()
 
+    async def get_stats_by_student(self, db: AsyncSession, student_id: int) -> dict:
+        """Get OD request counts grouped by status for a specific student."""
+        from sqlalchemy import func
+        result = await db.execute(
+            select(ODRequest.status, func.count(ODRequest.id).label("count"))
+            .where(ODRequest.student_id == student_id)
+            .group_by(ODRequest.status)
+        )
+        rows = result.all()
+        counts = {"pending": 0, "approved": 0, "rejected": 0}
+        for row in rows:
+            counts[row.status.value] = row.count
+        counts["total"] = sum(counts.values())
+        return counts
+
+    async def get_stats_for_staff(self, db: AsyncSession, staff_id: int) -> dict:
+        """Get OD request counts grouped by status for requests assigned to a staff member."""
+        from sqlalchemy import func
+        result = await db.execute(
+            select(ODRequest.status, func.count(ODRequest.id).label("count"))
+            .where(ODRequest.staff_id == staff_id)
+            .group_by(ODRequest.status)
+        )
+        rows = result.all()
+        counts = {"pending": 0, "approved": 0, "rejected": 0}
+        for row in rows:
+            counts[row.status.value] = row.count
+        counts["total"] = sum(counts.values())
+        return counts
+
 od_service = ODService()
