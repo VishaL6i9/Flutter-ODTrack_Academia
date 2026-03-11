@@ -11,8 +11,10 @@ class ODRequest {
   final String id;
   
   static String _idFromJson(dynamic id) => id.toString();
+  static String? _nullableIdFromJson(dynamic id) => id?.toString();
 
   @HiveField(1)
+  @JsonKey(name: 'student_id', fromJson: _idFromJson)
   final String studentId;
   
   @HiveField(2)
@@ -43,12 +45,14 @@ class ODRequest {
   final DateTime? approvedAt;
   
   @HiveField(11)
+  @JsonKey(name: 'approved_by', fromJson: _nullableIdFromJson)
   final String? approvedBy;
   
   @HiveField(12)
   final String? rejectionReason;
 
   @HiveField(13)
+  @JsonKey(name: 'staff_id', fromJson: _nullableIdFromJson)
   final String? staffId;
 
   const ODRequest({
