@@ -23,34 +23,38 @@ class ODService:
         )
         return result.scalars().first()
 
-    async def get_multi_by_student(self, db: AsyncSession, student_id: int, skip: int = 0, limit: int = 100) -> list[ODRequest]:
+    async def get_multi_by_student(self, db: AsyncSession, student_id: int, skip: int = 0, limit: int = 100, date_from: datetime | None = None, date_to: datetime | None = None) -> list[ODRequest]:
+        query = select(ODRequest).options(
+            selectinload(ODRequest.student), 
+            selectinload(ODRequest.approved_by),
+            selectinload(ODRequest.staff)
+        ).where(ODRequest.student_id == student_id)
+        
+        if date_from:
+            query = query.where(ODRequest.date >= date_from)
+        if date_to:
+            query = query.where(ODRequest.date <= date_to)
+            
         result = await db.execute(
-            select(ODRequest)
-            .options(
-                selectinload(ODRequest.student), 
-                selectinload(ODRequest.approved_by),
-                selectinload(ODRequest.staff)
-            )
-            .where(ODRequest.student_id == student_id)
-            .offset(skip)
-            .limit(limit)
-            .order_by(ODRequest.created_at.desc())
+            query.offset(skip).limit(limit).order_by(ODRequest.created_at.desc())
         )
         return result.scalars().all()
     
-    async def get_all_pending(self, db: AsyncSession, skip: int = 0, limit: int = 100) -> list[ODRequest]:
+    async def get_all_pending(self, db: AsyncSession, skip: int = 0, limit: int = 100, date_from: datetime | None = None, date_to: datetime | None = None) -> list[ODRequest]:
         # For staff/admin to review
+        query = select(ODRequest).options(
+            selectinload(ODRequest.student), 
+            selectinload(ODRequest.approved_by),
+            selectinload(ODRequest.staff)
+        ).where(ODRequest.status == ODStatus.PENDING)
+        
+        if date_from:
+            query = query.where(ODRequest.date >= date_from)
+        if date_to:
+            query = query.where(ODRequest.date <= date_to)
+            
         result = await db.execute(
-            select(ODRequest)
-            .options(
-                selectinload(ODRequest.student), 
-                selectinload(ODRequest.approved_by),
-                selectinload(ODRequest.staff)
-            )
-            .where(ODRequest.status == ODStatus.PENDING)
-            .offset(skip)
-            .limit(limit)
-            .order_by(ODRequest.created_at.desc())
+            query.offset(skip).limit(limit).order_by(ODRequest.created_at.desc())
         )
         return result.scalars().all()
 
@@ -149,6 +153,33 @@ class ODService:
             .offset(skip)
             .limit(limit)
             .order_by(ODRequest.created_at.desc())
+        )
+        return result.scalars().all()
+
+    async def get_archived_for_staff(self, db: AsyncSession, staff_id: int, skip: int = 0, limit: int = 100, date_from: datetime | None = None, date_to: datetime | None = None) -> list[ODRequest]:
+        """
+        Get all archived requests (date < today, OR status is not pending) visible to this staff.
+        For a more strict "inbox mode", we just filter by the date provided or default to date < today.
+        """
+        # Note: In a robust system, we might check if staff_id matches or if they are admin.
+        # But for now, we'll return all, or those assigned to them if we used staff_id.
+        # Following the implementation plan: return all previous-day + beyond, any status.
+        # Instead of strict 'date < today' (which is hard to timezone perfectly in a fast query without more context),
+        # we usually let the frontend pass the exact `date_to` representing "yesterday at 23:59:59".
+        
+        query = select(ODRequest).options(
+            selectinload(ODRequest.student), 
+            selectinload(ODRequest.approved_by),
+            selectinload(ODRequest.staff)
+        )
+        
+        if date_from:
+            query = query.where(ODRequest.date >= date_from)
+        if date_to:
+            query = query.where(ODRequest.date <= date_to)
+            
+        result = await db.execute(
+            query.offset(skip).limit(limit).order_by(ODRequest.created_at.desc())
         )
         return result.scalars().all()
 
