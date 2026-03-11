@@ -4,7 +4,7 @@ import 'package:hive/hive.dart';
 part 'user.g.dart';
 
 @HiveType(typeId: 0)
-@JsonSerializable()
+@JsonSerializable(fieldRename: FieldRename.snake)
 class User {
   @HiveField(0)
   @JsonKey(name: 'id', fromJson: _idFromJson)
