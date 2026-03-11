@@ -113,13 +113,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> loginStudent(String registerNumber, DateTime dateOfBirth) async {
+  Future<void> loginStudent(String registerNumber, String password) async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
       _logger.info('Student login started for: $registerNumber');
       // REPLACED: Real API Login
-      final tokens = await _authService.login(registerNumber, dateOfBirth.toIso8601String());
+      final tokens = await _authService.login(registerNumber, password);
       final accessToken = tokens['access_token'] as String;
       final refreshToken = tokens['refresh_token'] as String;
       
@@ -201,6 +201,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> updateTokens(String accessToken, String refreshToken) async {
     await _secureStorage.write(key: _tokenKey, value: accessToken);
     await _secureStorage.write(key: _refreshTokenKey, value: refreshToken);
+    _authService.updateTokens(accessToken, refreshToken);
     state = state.copyWith(token: accessToken, refreshToken: refreshToken);
   }
 
