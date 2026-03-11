@@ -11,6 +11,7 @@ import 'package:odtrack_academia/shared/widgets/bulk_operation_progress_dialog.d
 import 'package:odtrack_academia/shared/widgets/bulk_operation_result_dialog.dart';
 
 import 'package:odtrack_academia/shared/widgets/loading_widget.dart';
+import 'package:odtrack_academia/core/theme/app_theme.dart';
 
 class StaffInboxScreen extends ConsumerStatefulWidget {
   const StaffInboxScreen({super.key});
@@ -54,10 +55,9 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
 
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Staff Inbox'),
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        ),
+      appBar: AppBar(
+        title: const Text('Staff Inbox'),
+      ),
         body: const LoadingWidget.staffInbox(),
       );
     }
@@ -90,7 +90,7 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
     if (bulkState.isSelectionMode) {
       return AppBar(
         title: Text('${bulkState.selectionCount} selected'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () {
@@ -112,7 +112,7 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
 
     return AppBar(
       title: const Text('OD Inbox'),
-      backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       actions: [
         IconButton(
           icon: const Icon(Icons.checklist),
@@ -131,7 +131,7 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer,
+        color: AppTheme.accentPurple.withValues(alpha: 0.1),
         border: Border(
           bottom: BorderSide(
             color: Theme.of(context).dividerColor,
@@ -153,8 +153,8 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
                 pendingRequests.map((r) => r.id).toList(),
               );
             },
-            icon: const Icon(Icons.select_all),
-            label: const Text('Select All'),
+            icon: const Icon(Icons.select_all, color: AppTheme.accentTeal),
+            label: const Text('Select All', style: TextStyle(color: AppTheme.accentTeal)),
           ),
         ],
       ),
@@ -274,7 +274,7 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
                   color: isSelected 
-                      ? Theme.of(context).colorScheme.primary
+                      ? Theme.of(context).tabBarTheme.labelColor
                       : Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -282,7 +282,7 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
                   filter,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: isSelected ? Colors.white : Colors.black,
+                    color: isSelected ? Colors.black : Theme.of(context).colorScheme.onSurface,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
@@ -407,10 +407,10 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
                     const SizedBox(width: 8),
                   ],
                   CircleAvatar(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    backgroundColor: AppTheme.accentOrange.withValues(alpha: 0.2),
                     child: Text(
                       request.studentName.split(' ').map((n) => n[0]).take(2).join(),
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      style: const TextStyle(color: AppTheme.accentOrange, fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -438,15 +438,15 @@ class _StaffInboxScreenState extends ConsumerState<StaffInboxScreen> {
                   _buildStatusChip(request.status),
                 ],
               ),
-            const SizedBox(height: 12),
-            _buildInfoRow(MdiIcons.calendar, 'Date', 
-                '${request.date.day}/${request.date.month}/${request.date.year}'),
-            _buildInfoRow(MdiIcons.clockOutline, 'Periods', 
-                request.periods.map((p) => 'P$p').join(', ')),
-            _buildInfoRow(MdiIcons.textBox, 'Reason', request.reason),
-            _buildInfoRow(MdiIcons.clockOutline, 'Submitted', 
-                _formatDateTime(request.createdAt)),
-            
+              const SizedBox(height: 12),
+              _buildInfoRow(MdiIcons.calendar, 'Date', 
+                  '${request.date.day}/${request.date.month}/${request.date.year}'),
+              _buildInfoRow(MdiIcons.clockOutline, 'Periods', 
+                  request.periods.map((p) => 'P$p').join(', ')),
+              _buildInfoRow(MdiIcons.textBox, 'Reason', request.reason),
+              _buildInfoRow(MdiIcons.clockOutline, 'Submitted', 
+                  _formatDateTime(request.createdAt)),
+              
               if (request.isPending && !bulkState.isSelectionMode) ...[
                 const SizedBox(height: 16),
                 Row(
