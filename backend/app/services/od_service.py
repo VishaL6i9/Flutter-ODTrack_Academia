@@ -56,21 +56,27 @@ class ODService:
         student = await db.execute(select(User).where(User.id == student_id))
         student_obj = student.scalars().first()
         
-        # Get appropriate staff to notify (simplification: all staff/admins, this should be scoped in prod to coordinators/mentors)
+        # Get appropriate staff to notify
         staff_query = await db.execute(select(User).where(User.role.in_([UserRole.STAFF, UserRole.ADMIN, UserRole.SUPERUSER])))
         staff_list = staff_query.scalars().all()
         
         if student_obj:
-             await email_service.send_od_submission_email(student=student_obj, od_request=db_obj, staff=staff_list)
+            try:
+                await email_service.send_od_submission_email(student=student_obj, od_request=db_obj, staff=staff_list)
+            except Exception as e:
+                pass  # Notification failure should not fail the request
              
-             for staff_member in staff_list:
-                 if staff_member.fcm_token:
-                     await fcm_service.send_notification(
-                         token=staff_member.fcm_token,
-                         title="New OD Request Submitted",
-                         body=f"{student_obj.name} ({student_obj.register_number}) submitted an OD request for {db_obj.from_date.strftime('%Y-%m-%d')}.",
-                         data={"type": "new_request", "id": str(db_obj.id)}
-                     )
+            for staff_member in staff_list:
+                if staff_member.fcm_token:
+                    try:
+                        await fcm_service.send_notification(
+                            token=staff_member.fcm_token,
+                            title="New OD Request Submitted",
+                            body=f"{student_obj.full_name} ({db_obj.register_number}) submitted an OD request for {db_obj.date.strftime('%Y-%m-%d') if db_obj.date else 'N/A'}.",
+                            data={"type": "new_request", "id": str(db_obj.id)}
+                        )
+                    except Exception as e:
+                        pass  # Notification failure should not fail the request
         
         return db_obj
 
@@ -95,16 +101,22 @@ class ODService:
         full_obj = full_obj_result.scalars().first()
         
         if full_obj.student:
-            await email_service.send_od_status_update_email(student=full_obj.student, od_request=full_obj)
+            try:
+                await email_service.send_od_status_update_email(student=full_obj.student, od_request=full_obj)
+            except Exception as e:
+                pass  # Notification failure should not fail the status update
             
             if full_obj.student.fcm_token:
-                status_str = "Approved" if full_obj.status == ODStatus.APPROVED else "Rejected"
-                await fcm_service.send_notification(
-                    token=full_obj.student.fcm_token,
-                    title=f"OD Request {status_str}",
-                    body=f"Your On-Duty request from {full_obj.from_date.strftime('%Y-%m-%d')} has been {status_str.lower()}.",
-                    data={"type": "status_update", "id": str(full_obj.id)}
-                )
+                try:
+                    status_str = "Approved" if full_obj.status == ODStatus.APPROVED else "Rejected"
+                    await fcm_service.send_notification(
+                        token=full_obj.student.fcm_token,
+                        title=f"OD Request {status_str}",
+                        body=f"Your On-Duty request from {full_obj.date.strftime('%Y-%m-%d') if full_obj.date else 'N/A'} has been {status_str.lower()}.",
+                        data={"type": "status_update", "id": str(full_obj.id)}
+                    )
+                except Exception as e:
+                    pass  # Notification failure should not fail the status update
             
         return db_obj
 
