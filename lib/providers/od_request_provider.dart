@@ -140,3 +140,11 @@ final odRequestProvider = StateNotifierProvider<ODRequestNotifier, List<ODReques
   
   return notifier;
 });
+
+/// Provides pre-aggregated OD request counts by status from the backend.
+/// Works correctly for both students (own requests) and staff (assigned requests).
+/// This avoids the problem where odRequestProvider only holds pending items for staff.
+final odStatsProvider = FutureProvider<Map<String, int>>((ref) async {
+  final apiService = ref.watch(odApiServiceProvider);
+  return apiService.getODStats();
+});
