@@ -159,10 +159,10 @@ class SampleDataService {
     if (box.isNotEmpty) return; // Data already exists
 
     final staff = StaffData.allStaff;
-    print('SampleDataService: Detected ${staff.length} staff members');
+    _logger.info('SampleDataService: Detected ${staff.length} staff members');
     
     if (staff.isEmpty) {
-      print('SampleDataService: ERROR - StaffData.allStaff is empty. Aborting OD population.');
+      _logger.warning('SampleDataService: ERROR - StaffData.allStaff is empty. Aborting OD population.');
       return;
     }
 
