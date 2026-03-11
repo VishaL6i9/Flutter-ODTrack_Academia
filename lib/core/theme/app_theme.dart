@@ -130,12 +130,12 @@ class AppTheme {
               seedColor: primaryColor,
               brightness: Brightness.dark,
             ),
-      scaffoldBackgroundColor: const Color(0xFF121212),
+      scaffoldBackgroundColor: Colors.black,
       appBarTheme: AppBarTheme(
         centerTitle: true,
         elevation: 0,
         scrolledUnderElevation: 1,
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         titleTextStyle: TextStyle(
           fontWeight: isBoldText ? FontWeight.bold : FontWeight.w500,
@@ -145,9 +145,9 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         elevation: isHighContrast ? 4 : 2,
-        color: const Color(0xFF2C2C2C),
+        color: const Color(0xFF0A0A0A), // Deep black surface
         clipBehavior: Clip.antiAlias,
-        shadowColor: const Color(0xFF121212),
+        shadowColor: Colors.black,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: isHighContrast 
@@ -204,7 +204,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF2C2C2C),
+        fillColor: const Color(0xFF0F0F0F),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
@@ -261,13 +261,13 @@ class AppTheme {
         ),
       ),
       textTheme: _getAccessibleTextTheme(isBoldText, true),
-      dividerColor: const Color(0xFF404040),
+      dividerColor: const Color(0xFF1F1F1F),
       dividerTheme: const DividerThemeData(
-        color: Color(0xFF404040),
+        color: Color(0xFF1F1F1F),
         thickness: 0.5,
       ),
       chipTheme: const ChipThemeData(
-        backgroundColor: Color(0xFF3C3C3C),
+        backgroundColor: Color(0xFF1F1F1F),
         labelStyle: TextStyle(color: Colors.white),
         side: BorderSide(color: Color(0xFF404040)),
         shape: RoundedRectangleBorder(
@@ -277,17 +277,17 @@ class AppTheme {
       listTileTheme: const ListTileThemeData(
         textColor: Colors.white,
         iconColor: Colors.white70,
-        tileColor: Color(0xFF2C2C2C),
+        tileColor: Colors.transparent, // Let Scaffold/Card handle background
       ),
       popupMenuTheme: PopupMenuThemeData(
-        color: const Color(0xFF1E1E1E),
+        color: const Color(0xFF141414),
         textStyle: const TextStyle(color: Colors.white),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: const Color(0xFF0A0A0A),
         titleTextStyle: const TextStyle(
           color: Colors.white,
           fontSize: 20,
@@ -302,13 +302,13 @@ class AppTheme {
         ),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: Color(0xFF1E1E1E),
+        backgroundColor: Colors.black,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: const Color(0xFF2C2C2C),
+        backgroundColor: const Color(0xFF141414),
         contentTextStyle: const TextStyle(color: Colors.white),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
@@ -316,8 +316,8 @@ class AppTheme {
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: Color(0xFF90CAF9),
-        linearTrackColor: Color(0xFF404040),
-        circularTrackColor: Color(0xFF404040),
+        linearTrackColor: Color(0xFF1F1F1F),
+        circularTrackColor: Color(0xFF1F1F1F),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: const Color(0xFF90CAF9),
