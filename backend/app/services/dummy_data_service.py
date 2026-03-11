@@ -4,96 +4,114 @@ Now fetches from the real database populated by the data loader.
 """
 from typing import List, Dict, Any, Optional
 from datetime import datetime, time
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 from app.models.user import User
 from app.models.subject import Subject
 from app.models.timetable import Timetable
+from app.core.enums import UserRole
 
 class DummyDataService:
     """Service to provide comprehensive data for the system from DB"""
     
-    def get_staff_list(self, db: Session) -> List[Dict[str, Any]]:
+    async def get_staff_list(self, db: AsyncSession) -> List[Dict[str, Any]]:
         """Get list of active staff users from DB"""
-        staff_users = db.query(User).filter(User.role == "staff", User.is_active == True).all()
-        result = []
+        result = await db.execute(select(User).where(User.role == UserRole.STAFF, User.is_active == True))
+        staff_users = result.scalars().all()
+        result_list = []
         for user in staff_users:
-            result.append({
+            result_list.append({
                 "id": str(user.id),
-                "name": user.full_name or user.username,
+                "name": user.full_name,
                 "email": user.email,
                 "department": user.department or "General",
                 "designation": user.designation or "Staff",
-                "phone": user.phone_number,
-                "office": user.office_location,
+                "phone": user.phone,
+                "office": user.office,
                 "specialization": user.specialization,
                 "experience_years": user.experience_years,
                 "qualification": user.qualification,
-                "subjects": user.subjects or [],
-                "available_hours": user.available_hours or []
+                "subjects": ["General"],
+                "available_hours": ["9:00 - 17:00"]
             })
-        return result
+        return result_list
 
-    def get_staff_timetable(self, db: Session, staff_id: str) -> Dict[str, Any]:
+    async def get_staff_timetable(self, db: AsyncSession, staff_id: str) -> Dict[str, Any]:
         """Get personal timetable for a specific staff member across all classes"""
         from app.models.timetable import Timetable as TimetableModel
-        from app.models.subject import Subject
+        from sqlalchemy.orm import selectinload
         
-        # Get all timetables from DB
-        all_timetables = db.query(TimetableModel).all()
+        # Get all timetable entries for this staff member
+        try:
+            db_staff_id = int(staff_id)
+        except ValueError:
+            return {day: [{"subject": "Free", "staffId": None, "type": "lecture"} for _ in range(5)] for day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]}
+
+        result = await db.execute(
+            select(TimetableModel)
+            .options(selectinload(TimetableModel.subject))
+            .where(TimetableModel.staff_id == db_staff_id)
+        )
+        staff_entries = result.scalars().all()
         
         days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
         staff_schedule = {day: [{"subject": "Free", "staffId": None, "type": "lecture"} for _ in range(5)] for day in days}
         
-        for tt in all_timetables:
-            schedule_data = tt.schedule_data
-            for day, slots in schedule_data.items():
-                if day not in staff_schedule:
-                    continue
-                for i, slot in enumerate(slots):
-                    if i >= 5: continue
-                    if slot.get("staff_id") == staff_id:
-                        # Find subject info
-                        subject_code = slot.get("subject_code", "GEN")
-                        staff_schedule[day][i] = {
-                            "subject": subject_code,
-                            "staffId": f"Year {tt.year} Section {tt.section}", # Showing context in staffId field as per frontend expectation
-                            "type": slot.get("type", "lecture")
-                        }
+        for tt in staff_entries:
+            if tt.day in staff_schedule and 1 <= tt.period_number <= 5:
+                # Find subject info
+                subject_code = tt.subject.code if tt.subject else "GEN"
+                staff_schedule[tt.day][tt.period_number - 1] = {
+                    "subject": subject_code,
+                    "staffId": f"{tt.year} - {tt.section}", 
+                    "type": "lecture"
+                }
         
         return staff_schedule
     
-    @staticmethod
-    def get_timetable(db: Session, section: str = "A", year: int = 3) -> Dict[str, Any]:
+    async def get_timetable(self, db: AsyncSession, section: str = "A", year: int = 2) -> Dict[str, Any]:
         """Get timetable for a specific section and year from DB"""
-        # In a real app, we'd filter by section/year. For now, get all for the dept.
-        # This is a simplified mapping for the demo.
-        schedule_data = db.query(Timetable).all()
+        # Mapping year integer to string format used in data_loader
+        year_str = f"{year}nd Year" if year == 2 else f"{year}rd Year"
+        if year == 1: year_str = "1st Year"
+        if year == 4: year_str = "4th Year"
         
-        # Group by day
+        result = await db.execute(
+            select(Timetable)
+            .options(selectinload(Timetable.subject), selectinload(Timetable.staff))
+            .where(Timetable.section == section, Timetable.year == year_str)
+        )
+        timetable_entries = result.scalars().all()
+        
+        # Group by day - Initialize with 5 slots per day to match frontend header count
         days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-        result_schedule = {day: [] for day in days}
+        # period_number is 1-indexed (1 to 5)
+        day_slots = {day: [None] * 5 for day in days}
         
-        for entry in schedule_data:
-            if entry.day in result_schedule:
-                result_schedule[entry.day].append({
-                    "period": entry.period,
-                    "time": entry.time_slot,
-                    "subject": entry.subject.name if entry.subject else "Unknown",
-                    "staff": entry.staff.full_name if entry.staff else "Unknown",
-                    "room": entry.room_number
-                })
+        for entry in timetable_entries:
+            if entry.day in day_slots and 1 <= entry.period_number <= 5:
+                day_slots[entry.day][entry.period_number - 1] = {
+                    "subject": entry.subject.code if entry.subject else "GEN",
+                    "staffId": entry.staff.full_name if entry.staff else "Professor",
+                    "type": "lecture"
+                }
         
-        # Sort periods for each day
+        # Fill missing slots with "Free"
+        formatted_schedule = {}
         for day in days:
-            result_schedule[day].sort(key=lambda x: x["period"])
+            formatted_schedule[day] = [
+                slot if slot else {"subject": "Free", "staffId": None, "type": "lecture"}
+                for slot in day_slots[day]
+            ]
             
         return {
             "section": section,
-            "year": year,
+            "year": str(year), # Must be String
             "semester": (year * 2) - 1,
             "academic_year": "2025-2026",
             "department": "Computer Science",
-            "schedule": result_schedule
+            "schedule": formatted_schedule
         }
     
     @staticmethod
@@ -121,10 +139,10 @@ class DummyDataService:
             # ... other departments truncated for simplicity in this implementation
         ]
     
-    @staticmethod
-    def get_subjects(db: Session, department: str = "CS", year: int = 3) -> List[Dict[str, Any]]:
+    async def get_subjects(self, db: AsyncSession, department: str = "CS", year: int = 3) -> List[Dict[str, Any]]:
         """Get subjects from DB"""
-        subjects = db.query(Subject).all()
+        result = await db.execute(select(Subject))
+        subjects = result.scalars().all()
         return [
             {
                 "code": s.code,
@@ -147,19 +165,19 @@ class DummyDataService:
             ]
         }
     
-    @staticmethod
-    def get_students_list(db: Session) -> List[Dict[str, Any]]:
+    async def get_students_list(self, db: AsyncSession) -> List[Dict[str, Any]]:
         """Get list of students from DB"""
-        students = db.query(User).filter(User.role == "student").all()
+        result = await db.execute(select(User).where(User.role == UserRole.STUDENT))
+        students = result.scalars().all()
         return [
             {
                 "id": str(s.id),
-                "register_number": getattr(s, 'register_number', 'N/A'),
+                "register_number": s.register_number,
                 "name": s.full_name,
                 "email": s.email,
                 "department": s.department,
-                "year": 3, # Placeholder
-                "section": "A", # Placeholder
+                "year": s.year or "N/A",
+                "section": s.section or "N/A",
             }
             for s in students
         ]
