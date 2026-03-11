@@ -303,8 +303,7 @@ Code: ${error.code}
 Category: ${error.category.name}
 Severity: ${error.severity.name}
 Timestamp: ${_formatTimestamp(error.timestamp)}
-${error.context != null ? 'Context: ${error.context}' : ''}
-''';
+${error.context != null ? 'Context: ${error.context}\n' : ''}${error.stackTrace != null ? '---\nStacktrace:\n${error.stackTrace}' : ''}''';
     
     Clipboard.setData(ClipboardData(text: details));
     
