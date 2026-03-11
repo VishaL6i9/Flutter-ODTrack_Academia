@@ -11,6 +11,7 @@ import 'package:odtrack_academia/models/user.dart';
 import 'package:odtrack_academia/services/sync/sync_service.dart';
 import 'package:odtrack_academia/services/sync/background_sync_worker.dart';
 import 'package:odtrack_academia/services/sync/offline_operation_queue.dart';
+import 'package:odtrack_academia/services/sync/sync_notification_service.dart';
 import 'package:odtrack_academia/services/api/api_client.dart';
 import 'package:odtrack_academia/core/constants/app_constants.dart';
 
@@ -78,6 +79,9 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
     // Start background sync worker
     await _backgroundWorker.start();
     
+    // Initialize notifications
+    await SyncNotificationService().initialize();
+    
     // Listen to background worker events
     _backgroundWorker.eventStream.listen((event) {
       debugPrint('HiveSyncService: Background worker event - ${event.type}');
@@ -89,9 +93,13 @@ class HiveSyncService extends BaseServiceImpl implements SyncService {
           break;
         case 'sync_completed':
           _syncStatusController.add(SyncStatus.completed);
+          final itemsSynced = (event.data['syncedCount'] as int?) ?? 1;
+          SyncNotificationService().showSyncSuccessNotification(itemsSynced: itemsSynced);
           break;
         case 'sync_failed':
           _syncStatusController.add(SyncStatus.failed);
+          final errorMsg = (event.data['error'] as String?) ?? 'Unknown error occurred.';
+          SyncNotificationService().showSyncErrorNotification(errorMsg);
           break;
       }
     });
